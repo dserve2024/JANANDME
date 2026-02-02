@@ -179,6 +179,26 @@
     <p>กำลังโหลด...</p>
   </div>
   
+  <!-- CONTACT ONLY SECTION (สำหรับ ?contact=1) -->
+  <div id="contact-only-section" class="section" style="display:none;">
+    <div style="padding:30px 20px;">
+      <div style="text-align:center;margin-bottom:25px;">
+        <div style="font-size:50px;margin-bottom:10px;">📞</div>
+        <h2 style="color:#333;margin-bottom:5px;">ติดต่อแอดมิน</h2>
+        <p style="color:#888;font-size:13px;">พิมพ์ข้อความด้านล่าง แอดมินจะติดต่อกลับค่ะ</p>
+      </div>
+      <div class="form-group">
+        <textarea id="contact-message-direct" rows="5" style="width:100%;padding:15px;border:2px solid #eee;border-radius:12px;font-size:15px;resize:none;font-family:inherit;" placeholder="พิมพ์ข้อความที่ต้องการสอบถาม..."></textarea>
+      </div>
+      <button onclick="sendContactDirect()" style="width:100%;padding:15px;background:linear-gradient(135deg,#FF6B6B,#FF8E53);color:white;border:none;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;margin-top:10px;">
+        📨 ส่งข้อความ
+      </button>
+      <button onclick="closeContactForm()" style="width:100%;padding:12px;background:#f5f5f5;color:#666;border:none;border-radius:12px;font-size:14px;cursor:pointer;margin-top:10px;">
+        ยกเลิก
+      </button>
+    </div>
+  </div>
+  
   <!-- PENDING APPROVAL SECTION -->
   <div id="pending-approval-section" class="section" style="display:none;">
     <div style="text-align:center;padding:60px 20px;">
@@ -392,7 +412,7 @@
       </div>
     </div>
     <div class="modal-actions">
-      <button class="btn-cancel" onclick="hideModal('contactModal')">ยกเลิก</button>
+      <button class="btn-cancel" onclick="cancelContact()">ยกเลิก</button>
       <button class="btn-save" onclick="sendContactMessage()">📨 ส่ง</button>
     </div>
   </div>
@@ -425,20 +445,23 @@ async function init() {
     var profile = await liff.getProfile();
     userId = profile.userId;
     
+    // Check URL params
+    var params = new URLSearchParams(window.location.search);
+    
+    // Contact Mode - ไม่โหลดข้อมูลอื่น แสดงแค่ฟอร์ม
+    if (params.get('contact') === '1') {
+      document.getElementById('loading').style.display = 'none';
+      document.querySelector('.tabs').style.display = 'none';
+      document.getElementById('contact-only-section').style.display = 'block';
+      return;
+    }
+    
+    // Normal Mode - โหลดข้อมูลปกติ
     document.getElementById('profile-pic').src = profile.pictureUrl || '';
     document.getElementById('profile-name').textContent = profile.displayName;
     
-    // Check URL params
-    var params = new URLSearchParams(window.location.search);
     if (params.get('tab') === 'orders') {
       switchTab('orders');
-    }
-    
-    // Check if contact=1 -> auto open contact modal
-    if (params.get('contact') === '1') {
-      setTimeout(function() {
-        showContactModal();
-      }, 1000);
     }
     
     loadUserData();
@@ -980,6 +1003,50 @@ function hideModal(id) { document.getElementById(id).classList.remove('show'); }
 function showContactModal() {
   document.getElementById('contact-message').value = '';
   showModal('contactModal');
+}
+
+function cancelContact() {
+  hideModal('contactModal');
+}
+
+// Contact Direct (สำหรับ ?contact=1 mode)
+function sendContactDirect() {
+  var message = document.getElementById('contact-message-direct').value.trim();
+  
+  if (!message) {
+    showToast('❌ กรุณาพิมพ์ข้อความ');
+    return;
+  }
+  
+  // Disable button
+  var btn = document.querySelector('#contact-only-section button');
+  btn.disabled = true;
+  btn.textContent = '⏳ กำลังส่ง...';
+  
+  apiCall('contactAdmin', { message: message }).then(function(data) {
+    if (data.success) {
+      showToast('✅ ส่งข้อความสำเร็จ!');
+      setTimeout(function() {
+        if (liff.isInClient()) {
+          liff.closeWindow();
+        }
+      }, 1500);
+    } else {
+      showToast('❌ ' + (data.error || 'เกิดข้อผิดพลาด'));
+      btn.disabled = false;
+      btn.textContent = '📨 ส่งข้อความ';
+    }
+  }).catch(function() {
+    showToast('❌ เกิดข้อผิดพลาด');
+    btn.disabled = false;
+    btn.textContent = '📨 ส่งข้อความ';
+  });
+}
+
+function closeContactForm() {
+  if (liff.isInClient()) {
+    liff.closeWindow();
+  }
 }
 
 function sendContactMessage() {
