@@ -179,6 +179,36 @@
     <p>กำลังโหลด...</p>
   </div>
   
+  <!-- PENDING APPROVAL SECTION -->
+  <div id="pending-approval-section" class="section" style="display:none;">
+    <div style="text-align:center;padding:60px 20px;">
+      <div style="font-size:80px;margin-bottom:20px;">⏳</div>
+      <h2 style="margin-bottom:15px;color:#333;">รอการอนุมัติ</h2>
+      <p style="color:#666;margin-bottom:30px;line-height:1.6;">
+        บัญชีของคุณกำลังรอการตรวจสอบ<br>
+        จากทีมงาน กรุณารอสักครู่นะคะ
+      </p>
+      <p style="color:#888;font-size:13px;margin-bottom:20px;">
+        📷 ส่งรูป Order ได้เลยค่ะ<br>
+        ระบบจะบันทึกให้อัตโนมัติ
+      </p>
+      <a href="https://line.me/R/oaMessage/@janme" style="display:inline-block;padding:14px 30px;background:linear-gradient(135deg,#FF6B6B,#FF8E53);color:white;text-decoration:none;border-radius:30px;font-weight:600;">📞 ติดต่อแอดมิน</a>
+    </div>
+  </div>
+  
+  <!-- BLOCKED SECTION -->
+  <div id="blocked-section" class="section" style="display:none;">
+    <div style="text-align:center;padding:60px 20px;">
+      <div style="font-size:80px;margin-bottom:20px;">🚫</div>
+      <h2 style="margin-bottom:15px;color:#dc3545;">บัญชีถูกระงับ</h2>
+      <p style="color:#666;margin-bottom:30px;line-height:1.6;">
+        บัญชีของคุณถูกระงับการใช้งาน<br>
+        กรุณาติดต่อแอดมินเพื่อสอบถามข้อมูลเพิ่มเติม
+      </p>
+      <a href="https://line.me/R/oaMessage/@janme" style="display:inline-block;padding:14px 30px;background:#dc3545;color:white;text-decoration:none;border-radius:30px;font-weight:600;">📞 ติดต่อแอดมิน</a>
+    </div>
+  </div>
+  
   <!-- INFO SECTION -->
   <div id="info-section" class="section">
     <!-- Profile -->
@@ -186,7 +216,7 @@
       <img id="profile-pic" class="profile-pic" src="" alt="">
       <div class="profile-info">
         <div id="profile-name" class="profile-name">-</div>
-        <div class="profile-id">LINE Member</div>
+        <div class="profile-id">LINE Member <span id="profile-status" style="font-size:10px;"></span></div>
       </div>
       <div style="text-align:center;">
         <div id="total-orders" style="font-size:28px;font-weight:700;color:#FF6B6B;">0</div>
@@ -402,6 +432,24 @@ function loadUserData() {
   apiCall('getUserData').then(function(data) {
     if (data.success) {
       userData = data;
+      
+      // เช็คสถานะ blocked
+      if (data.user && data.user.blocked) {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('blocked-section').style.display = 'block';
+        document.querySelector('.tabs').style.display = 'none';
+        return;
+      }
+      
+      // เช็คสถานะ approved
+      if (data.user && !data.user.approved) {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('pending-approval-section').style.display = 'block';
+        document.querySelector('.tabs').style.display = 'none';
+        return;
+      }
+      
+      // Approved - แสดงข้อมูลปกติ
       renderAll();
     }
     document.getElementById('loading').style.display = 'none';
@@ -414,6 +462,11 @@ function loadUserData() {
 }
 
 function renderAll() {
+  // Status badge
+  if (userData.user && userData.user.approved) {
+    document.getElementById('profile-status').innerHTML = '• <span style="color:#28a745;">✓ อนุมัติแล้ว</span>';
+  }
+  
   // Summary
   document.getElementById('total-orders').textContent = userData.totalOrders || 0;
   document.getElementById('total-refund').textContent = '฿' + numberFormat(userData.totalRefund || 0);
