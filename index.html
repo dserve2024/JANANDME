@@ -192,7 +192,7 @@
         📷 ส่งรูป Order ได้เลยค่ะ<br>
         ระบบจะบันทึกให้อัตโนมัติ
       </p>
-      <a href="https://line.me/R/oaMessage/@janme" style="display:inline-block;padding:14px 30px;background:linear-gradient(135deg,#FF6B6B,#FF8E53);color:white;text-decoration:none;border-radius:30px;font-weight:600;">📞 ติดต่อแอดมิน</a>
+      <button onclick="showContactModal()" style="display:inline-block;padding:14px 30px;background:linear-gradient(135deg,#FF6B6B,#FF8E53);color:white;border:none;border-radius:30px;font-weight:600;font-size:15px;cursor:pointer;">📞 ติดต่อแอดมิน</button>
     </div>
   </div>
   
@@ -205,7 +205,7 @@
         บัญชีของคุณถูกระงับการใช้งาน<br>
         กรุณาติดต่อแอดมินเพื่อสอบถามข้อมูลเพิ่มเติม
       </p>
-      <a href="https://line.me/R/oaMessage/@janme" style="display:inline-block;padding:14px 30px;background:#dc3545;color:white;text-decoration:none;border-radius:30px;font-weight:600;">📞 ติดต่อแอดมิน</a>
+      <button onclick="showContactModal()" style="display:inline-block;padding:14px 30px;background:#dc3545;color:white;border:none;border-radius:30px;font-weight:600;font-size:15px;cursor:pointer;">📞 ติดต่อแอดมิน</button>
     </div>
   </div>
   
@@ -258,6 +258,13 @@
       <h2>🏦 บัญชีรับเงิน</h2>
     </div>
     <div id="bank-display"></div>
+    
+    <!-- Contact Admin Button -->
+    <div style="margin-top:25px;text-align:center;">
+      <button onclick="showContactModal()" style="padding:12px 25px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;border:none;border-radius:25px;font-size:14px;font-weight:600;cursor:pointer;">
+        📞 ติดต่อแอดมิน
+      </button>
+    </div>
   </div>
   
   <!-- ORDERS SECTION -->
@@ -374,6 +381,23 @@
   </div>
 </div>
 
+<!-- Contact Admin Modal -->
+<div class="modal-overlay" id="contactModal">
+  <div class="modal" style="max-width:360px;">
+    <div class="modal-header"><h3>📞 ติดต่อแอดมิน</h3></div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:#666;margin-bottom:15px;text-align:center;">พิมพ์ข้อความที่ต้องการส่งถึงแอดมิน<br>แอดมินจะติดต่อกลับในแชทค่ะ</p>
+      <div class="form-group">
+        <textarea id="contact-message" rows="4" style="width:100%;padding:12px;border:2px solid #eee;border-radius:10px;font-size:14px;resize:none;" placeholder="พิมพ์ข้อความที่นี่..."></textarea>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="hideModal('contactModal')">ยกเลิก</button>
+      <button class="btn-save" onclick="sendContactMessage()">📨 ส่ง</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -408,6 +432,13 @@ async function init() {
     var params = new URLSearchParams(window.location.search);
     if (params.get('tab') === 'orders') {
       switchTab('orders');
+    }
+    
+    // Check if contact=1 -> auto open contact modal
+    if (params.get('contact') === '1') {
+      setTimeout(function() {
+        showContactModal();
+      }, 1000);
     }
     
     loadUserData();
@@ -944,6 +975,33 @@ function switchTab(tab) {
 
 function showModal(id) { document.getElementById(id).classList.add('show'); }
 function hideModal(id) { document.getElementById(id).classList.remove('show'); }
+
+// ===== CONTACT ADMIN =====
+function showContactModal() {
+  document.getElementById('contact-message').value = '';
+  showModal('contactModal');
+}
+
+function sendContactMessage() {
+  var message = document.getElementById('contact-message').value.trim();
+  
+  if (!message) {
+    showToast('❌ กรุณาพิมพ์ข้อความ');
+    return;
+  }
+  
+  apiCall('contactAdmin', { message: message }).then(function(data) {
+    hideModal('contactModal');
+    if (data.success) {
+      showToast('✅ ส่งข้อความสำเร็จ! แอดมินจะติดต่อกลับค่ะ');
+    } else {
+      showToast('❌ ' + (data.error || 'เกิดข้อผิดพลาด'));
+    }
+  }).catch(function() {
+    hideModal('contactModal');
+    showToast('❌ เกิดข้อผิดพลาด');
+  });
+}
 
 function showToast(msg) {
   var toast = document.getElementById('toast');
