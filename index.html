@@ -16,26 +16,34 @@
     .tab { flex: 1; padding: 15px; text-align: center; cursor: pointer; border-bottom: 3px solid transparent; }
     .tab.active { color: #FF6B6B; border-bottom-color: #FF6B6B; font-weight: bold; }
     
-    .content { padding: 15px; max-width: 500px; margin: 0 auto; }
+    .content { padding: 15px; max-width: 500px; margin: 0 auto; padding-bottom: 80px; }
     .section { display: none; }
     .section.active { display: block; }
     
     .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-    .card-title { font-size: 16px; font-weight: bold; margin-bottom: 15px; color: #333; }
+    .card-title { font-size: 16px; font-weight: bold; margin-bottom: 15px; color: #333; display: flex; justify-content: space-between; align-items: center; }
     
     .form-group { margin-bottom: 15px; }
     .form-group label { display: block; font-size: 14px; color: #666; margin-bottom: 5px; }
     .form-group input, .form-group select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; }
     
-    .btn { width: 100%; padding: 15px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; }
+    .btn { padding: 12px 20px; border: none; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; }
     .btn-primary { background: #FF6B6B; color: white; }
-    .btn:disabled { background: #ccc; }
+    .btn-secondary { background: #eee; color: #333; }
+    .btn-danger { background: #dc3545; color: white; }
+    .btn-sm { padding: 8px 12px; font-size: 12px; }
+    .btn-add { background: #28a745; color: white; font-size: 20px; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+    
+    .item-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; padding: 10px; background: #f8f9fa; border-radius: 8px; }
+    .item-row input { flex: 1; }
+    .item-row .btn-remove { background: #dc3545; color: white; width: 32px; height: 32px; border-radius: 50%; font-size: 18px; display: flex; align-items: center; justify-content: center; }
     
     .order-item { background: white; border-radius: 12px; padding: 15px; margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
     .order-id { font-weight: bold; color: #FF6B6B; }
     .order-status { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; background: #FFF3CD; color: #856404; }
     
     .empty { text-align: center; padding: 40px; color: #999; }
+    .empty-small { text-align: center; padding: 20px; color: #999; font-size: 14px; }
     
     .loading { text-align: center; padding: 40px; }
     .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #FF6B6B; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px; }
@@ -47,7 +55,13 @@
     .profile-pic { width: 60px; height: 60px; border-radius: 50%; }
     .profile-name { font-size: 18px; font-weight: bold; margin-top: 10px; }
     
-    #debug { background: #333; color: #0f0; padding: 10px; font-size: 11px; font-family: monospace; margin: 10px; border-radius: 8px; max-height: 150px; overflow-y: auto; }
+    .save-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 15px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); display: none; z-index: 100; }
+    .save-bar.show { display: block; }
+    .save-bar .btn { width: 100%; }
+    
+    .bank-info { padding: 15px; background: #f8f9fa; border-radius: 8px; }
+    .bank-info p { margin-bottom: 5px; }
+    .bank-actions { margin-top: 10px; display: flex; gap: 10px; }
   </style>
 </head>
 <body>
@@ -69,44 +83,51 @@
   </div>
   
   <div id="info-section" class="section">
+    <!-- Profile -->
     <div class="card" style="text-align: center;">
       <img id="profile-pic" class="profile-pic" src="" alt="" style="display:none;">
       <div id="profile-name" class="profile-name">-</div>
     </div>
     
+    <!-- Shopee IDs -->
     <div class="card">
-      <div class="card-title">🛒 Shopee ID</div>
-      <div class="form-group">
-        <label>ไอดี Shopee (หลายไอดีคั่นด้วย ,)</label>
-        <input type="text" id="shopee-ids" placeholder="เช่น shopee_user1, shopee_user2">
+      <div class="card-title">
+        <span>🛒 Shopee ID</span>
+        <button class="btn btn-add" onclick="addShopeeId()">+</button>
       </div>
+      <div id="shopee-list"></div>
     </div>
     
+    <!-- Bank Account -->
     <div class="card">
-      <div class="card-title">🏦 บัญชีรับเงิน</div>
-      <div class="form-group">
-        <label>ธนาคาร</label>
-        <select id="bank-name">
-          <option value="">-- เลือกธนาคาร --</option>
-          <option value="กสิกรไทย">กสิกรไทย</option>
-          <option value="กรุงเทพ">กรุงเทพ</option>
-          <option value="กรุงไทย">กรุงไทย</option>
-          <option value="ไทยพาณิชย์">ไทยพาณิชย์</option>
-          <option value="ทหารไทยธนชาต">ทหารไทยธนชาต</option>
-          <option value="กรุงศรี">กรุงศรี</option>
-          <option value="ออมสิน">ออมสิน</option>
-          <option value="PromptPay">PromptPay</option>
-        </select>
+      <div class="card-title">
+        <span>🏦 บัญชีรับเงิน</span>
       </div>
-      <div class="form-group">
-        <label>เลขบัญชี</label>
-        <input type="text" id="bank-account" placeholder="เลขบัญชี หรือ เบอร์ PromptPay">
+      <div id="bank-display"></div>
+      <div id="bank-form" style="display:none;">
+        <div class="form-group">
+          <label>ธนาคาร</label>
+          <select id="bank-name">
+            <option value="">-- เลือกธนาคาร --</option>
+            <option value="กสิกรไทย">กสิกรไทย</option>
+            <option value="กรุงเทพ">กรุงเทพ</option>
+            <option value="กรุงไทย">กรุงไทย</option>
+            <option value="ไทยพาณิชย์">ไทยพาณิชย์</option>
+            <option value="ทหารไทยธนชาต">ทหารไทยธนชาต</option>
+            <option value="กรุงศรี">กรุงศรี</option>
+            <option value="ออมสิน">ออมสิน</option>
+            <option value="PromptPay">PromptPay</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>เลขบัญชี</label>
+          <input type="text" id="bank-account" placeholder="เลขบัญชี หรือ เบอร์ PromptPay">
+        </div>
+        <div class="form-group">
+          <label>ชื่อบัญชี</label>
+          <input type="text" id="account-name" placeholder="ชื่อ-นามสกุล">
+        </div>
       </div>
-      <div class="form-group">
-        <label>ชื่อบัญชี</label>
-        <input type="text" id="account-name" placeholder="ชื่อ-นามสกุล">
-      </div>
-      <button class="btn btn-primary" id="save-btn" onclick="saveData()">💾 บันทึกข้อมูล</button>
     </div>
   </div>
   
@@ -115,8 +136,12 @@
   </div>
 </div>
 
+<!-- Save Bar -->
+<div class="save-bar" id="save-bar">
+  <button class="btn btn-primary" id="save-btn" onclick="saveData()">💾 บันทึกข้อมูล</button>
+</div>
+
 <div class="toast" id="toast"></div>
-<div id="debug"></div>
 
 <script>
 // CONFIG
@@ -126,87 +151,192 @@ var CONFIG = {
 };
 
 var userId = null;
-
-function log(msg) {
-  console.log(msg);
-  var d = document.getElementById('debug');
-  d.innerHTML += msg + '<br>';
-  d.scrollTop = d.scrollHeight;
-}
+var originalData = { shopeeIds: [], bank: null };
+var currentData = { shopeeIds: [], bank: null };
+var hasChanges = false;
 
 async function init() {
-  log('1. Starting LIFF...');
-  
   try {
     await liff.init({ liffId: CONFIG.LIFF_ID });
-    log('2. LIFF init OK');
-    
-    log('3. isLoggedIn: ' + liff.isLoggedIn());
-    log('4. isInClient: ' + liff.isInClient());
     
     if (!liff.isLoggedIn()) {
-      log('5. Logging in...');
       liff.login();
       return;
     }
     
-    log('6. Getting profile...');
     var profile = await liff.getProfile();
     userId = profile.userId;
     
-    log('7. UserId: ' + userId.substring(0, 10) + '...');
-    log('8. Name: ' + profile.displayName);
-    
-    // แสดงข้อมูล profile
     if (profile.pictureUrl) {
       document.getElementById('profile-pic').src = profile.pictureUrl;
       document.getElementById('profile-pic').style.display = 'block';
     }
     document.getElementById('profile-name').textContent = profile.displayName;
     
-    log('9. Loading data...');
     loadData();
     
   } catch (err) {
-    log('ERROR: ' + err.message);
     document.getElementById('loading').innerHTML = '<p style="color:red;">Error: ' + err.message + '</p>';
   }
 }
 
 function loadData() {
   var url = CONFIG.API_URL + '?action=getUserData&userId=' + encodeURIComponent(userId);
-  log('10. Fetching: ' + url.substring(0, 50) + '...');
   
   fetch(url)
-    .then(function(res) { 
-      log('11. Status: ' + res.status);
-      return res.json(); 
-    })
+    .then(function(res) { return res.json(); })
     .then(function(data) {
-      log('12. Data received');
+      // Shopee IDs
+      originalData.shopeeIds = data.shopeeIds || [];
+      currentData.shopeeIds = JSON.parse(JSON.stringify(originalData.shopeeIds));
+      renderShopeeIds();
       
-      if (data.user) {
-        log('13. User: ' + data.user.displayName);
-        document.getElementById('shopee-ids').value = data.user.shopeeIds || '';
-        document.getElementById('bank-name').value = data.user.bankName || '';
-        document.getElementById('bank-account').value = data.user.bankAccount || '';
-        document.getElementById('account-name').value = data.user.accountName || '';
-      } else {
-        log('13. No user data yet');
+      // Bank
+      if (data.user && data.user.bankName) {
+        originalData.bank = {
+          bankName: data.user.bankName,
+          bankAccount: data.user.bankAccount,
+          accountName: data.user.accountName
+        };
+        currentData.bank = JSON.parse(JSON.stringify(originalData.bank));
       }
+      renderBank();
       
-      log('14. Orders: ' + (data.orders ? data.orders.length : 0));
+      // Orders
       renderOrders(data.orders || []);
       
       document.getElementById('loading').style.display = 'none';
       document.getElementById('info-section').classList.add('active');
-      log('15. DONE!');
     })
     .catch(function(err) {
-      log('ERROR fetch: ' + err.message);
       document.getElementById('loading').style.display = 'none';
       document.getElementById('info-section').classList.add('active');
     });
+}
+
+// ===== SHOPEE ID =====
+function renderShopeeIds() {
+  var container = document.getElementById('shopee-list');
+  
+  if (currentData.shopeeIds.length === 0) {
+    container.innerHTML = '<div class="empty-small">ยังไม่มี Shopee ID<br>กด + เพื่อเพิ่ม</div>';
+    return;
+  }
+  
+  var html = '';
+  for (var i = 0; i < currentData.shopeeIds.length; i++) {
+    html += '<div class="item-row">' +
+      '<input type="text" value="' + (currentData.shopeeIds[i].shopeeId || '') + '" onchange="updateShopeeId(' + i + ', this.value)" placeholder="Shopee ID">' +
+      '<button class="btn btn-remove" onclick="removeShopeeId(' + i + ')">×</button>' +
+    '</div>';
+  }
+  container.innerHTML = html;
+}
+
+function addShopeeId() {
+  currentData.shopeeIds.push({ shopeeId: '' });
+  renderShopeeIds();
+  checkChanges();
+}
+
+function updateShopeeId(index, value) {
+  currentData.shopeeIds[index].shopeeId = value.trim();
+  checkChanges();
+}
+
+function removeShopeeId(index) {
+  currentData.shopeeIds.splice(index, 1);
+  renderShopeeIds();
+  checkChanges();
+}
+
+// ===== BANK =====
+function renderBank() {
+  var displayDiv = document.getElementById('bank-display');
+  var formDiv = document.getElementById('bank-form');
+  
+  if (currentData.bank && currentData.bank.bankName) {
+    displayDiv.innerHTML = '<div class="bank-info">' +
+      '<p><strong>🏦 ' + currentData.bank.bankName + '</strong></p>' +
+      '<p>เลขบัญชี: ' + currentData.bank.bankAccount + '</p>' +
+      '<p>ชื่อบัญชี: ' + currentData.bank.accountName + '</p>' +
+      '<div class="bank-actions">' +
+        '<button class="btn btn-secondary btn-sm" onclick="editBank()">✏️ แก้ไข</button>' +
+        '<button class="btn btn-danger btn-sm" onclick="removeBank()">🗑️ ลบ</button>' +
+      '</div>' +
+    '</div>';
+    displayDiv.style.display = 'block';
+    formDiv.style.display = 'none';
+  } else {
+    displayDiv.innerHTML = '<div class="empty-small">ยังไม่มีบัญชีธนาคาร</div>' +
+      '<button class="btn btn-secondary" style="width:100%;margin-top:10px;" onclick="showBankForm()">+ เพิ่มบัญชี</button>';
+    displayDiv.style.display = 'block';
+    formDiv.style.display = 'none';
+  }
+}
+
+function showBankForm() {
+  document.getElementById('bank-display').style.display = 'none';
+  document.getElementById('bank-form').style.display = 'block';
+  
+  if (currentData.bank) {
+    document.getElementById('bank-name').value = currentData.bank.bankName || '';
+    document.getElementById('bank-account').value = currentData.bank.bankAccount || '';
+    document.getElementById('account-name').value = currentData.bank.accountName || '';
+  }
+  
+  // Add change listeners
+  document.getElementById('bank-name').onchange = updateBankFromForm;
+  document.getElementById('bank-account').onchange = updateBankFromForm;
+  document.getElementById('account-name').onchange = updateBankFromForm;
+  
+  checkChanges();
+}
+
+function editBank() {
+  showBankForm();
+}
+
+function updateBankFromForm() {
+  var bankName = document.getElementById('bank-name').value;
+  var bankAccount = document.getElementById('bank-account').value.trim();
+  var accountName = document.getElementById('account-name').value.trim();
+  
+  if (bankName || bankAccount || accountName) {
+    currentData.bank = {
+      bankName: bankName,
+      bankAccount: bankAccount,
+      accountName: accountName
+    };
+  } else {
+    currentData.bank = null;
+  }
+  checkChanges();
+}
+
+function removeBank() {
+  if (confirm('ต้องการลบบัญชีธนาคารนี้?')) {
+    currentData.bank = null;
+    renderBank();
+    checkChanges();
+  }
+}
+
+// ===== SAVE =====
+function checkChanges() {
+  var origShopee = JSON.stringify(originalData.shopeeIds.map(s => s.shopeeId).filter(s => s));
+  var currShopee = JSON.stringify(currentData.shopeeIds.map(s => s.shopeeId).filter(s => s));
+  
+  var origBank = JSON.stringify(originalData.bank || {});
+  var currBank = JSON.stringify(currentData.bank || {});
+  
+  hasChanges = (origShopee !== currShopee) || (origBank !== currBank);
+  
+  if (hasChanges) {
+    document.getElementById('save-bar').classList.add('show');
+  } else {
+    document.getElementById('save-bar').classList.remove('show');
+  }
 }
 
 function saveData() {
@@ -214,13 +344,18 @@ function saveData() {
   btn.disabled = true;
   btn.textContent = '⏳ กำลังบันทึก...';
   
+  // Filter empty shopee ids
+  var shopeeIds = currentData.shopeeIds
+    .map(function(s) { return s.shopeeId; })
+    .filter(function(s) { return s && s.length > 0; });
+  
   var params = new URLSearchParams({
     action: 'updateUser',
     userId: userId,
-    shopeeIds: document.getElementById('shopee-ids').value.trim(),
-    bankName: document.getElementById('bank-name').value,
-    bankAccount: document.getElementById('bank-account').value.trim(),
-    accountName: document.getElementById('account-name').value.trim()
+    shopeeIds: JSON.stringify(shopeeIds),
+    bankName: currentData.bank ? currentData.bank.bankName : '',
+    bankAccount: currentData.bank ? currentData.bank.bankAccount : '',
+    accountName: currentData.bank ? currentData.bank.accountName : ''
   });
   
   fetch(CONFIG.API_URL + '?' + params.toString())
@@ -231,6 +366,14 @@ function saveData() {
       
       if (data.success) {
         showToast('✅ บันทึกสำเร็จ!');
+        // Update original data
+        originalData.shopeeIds = JSON.parse(JSON.stringify(currentData.shopeeIds));
+        originalData.bank = currentData.bank ? JSON.parse(JSON.stringify(currentData.bank)) : null;
+        
+        // Re-render
+        renderShopeeIds();
+        renderBank();
+        checkChanges();
       } else {
         showToast('❌ ' + (data.error || 'บันทึกไม่สำเร็จ'));
       }
@@ -242,6 +385,7 @@ function saveData() {
     });
 }
 
+// ===== ORDERS =====
 function renderOrders(orders) {
   var container = document.getElementById('orders-list');
   
@@ -266,6 +410,7 @@ function renderOrders(orders) {
   container.innerHTML = html;
 }
 
+// ===== UTILS =====
 function switchTab(tab) {
   document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
   document.querySelectorAll('.section').forEach(function(s) { s.classList.remove('active'); });
