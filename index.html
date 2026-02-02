@@ -94,21 +94,20 @@
     .empty-state .btn { padding: 12px 24px; }
     
     /* Order Card */
-    .order-card { background: white; border-radius: 16px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); cursor: pointer; transition: transform 0.2s; }
+    .orders-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .order-card { background: white; border-radius: 12px; padding: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); cursor: pointer; transition: transform 0.2s; }
     .order-card:active { transform: scale(0.98); }
-    .order-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
-    .order-id { font-weight: 600; color: #FF6B6B; font-size: 14px; }
-    .order-status { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+    .order-id { font-weight: 600; color: #FF6B6B; font-size: 11px; word-break: break-all; }
+    .order-status { display: inline-block; padding: 2px 6px; border-radius: 10px; font-size: 9px; font-weight: 500; }
     .order-status.pending { background: #FFF3CD; color: #856404; }
     .order-status.completed { background: #D4EDDA; color: #155724; }
-    .order-body { display: flex; justify-content: space-between; align-items: center; }
-    .order-amount { font-size: 20px; font-weight: 700; color: #333; }
-    .order-meta { text-align: right; }
-    .order-time { font-size: 12px; color: #888; }
-    .order-by { font-size: 11px; margin-top: 4px; }
+    .order-amount { font-size: 16px; font-weight: 700; color: #333; margin: 6px 0; }
+    .order-time { font-size: 10px; color: #888; }
+    .order-by { font-size: 10px; margin-top: 2px; }
     .order-by.user { color: #FF6B6B; }
     .order-by.admin { color: #28a745; }
-    .order-refund { font-size: 12px; color: #17a2b8; margin-top: 8px; padding-top: 8px; border-top: 1px solid #eee; }
+    .order-refund { font-size: 10px; color: #17a2b8; margin-top: 6px; padding-top: 6px; border-top: 1px solid #eee; }
+    .order-shopee { font-size: 10px; color: #666; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     
     /* Filter */
     .filter-row { display: flex; gap: 8px; margin-bottom: 15px; overflow-x: auto; padding-bottom: 5px; }
@@ -120,16 +119,22 @@
     .modal-overlay.show { display: flex; }
     .modal { background: white; border-radius: 20px; width: 100%; max-width: 360px; max-height: 90vh; overflow: hidden; animation: modalIn 0.3s ease; }
     @keyframes modalIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-    .modal-header { background: linear-gradient(135deg, #FF6B6B, #FF8E53); color: white; padding: 18px; text-align: center; }
-    .modal-header h3 { font-size: 17px; }
-    .modal-body { padding: 20px; max-height: 60vh; overflow-y: auto; }
-    .modal-body .form-group { margin-bottom: 15px; }
-    .modal-body label { display: block; font-size: 13px; color: #666; margin-bottom: 6px; font-weight: 500; }
-    .modal-body input, .modal-body select { width: 100%; padding: 14px; border: 2px solid #eee; border-radius: 12px; font-size: 16px; transition: border-color 0.2s; }
+    .modal-header { background: linear-gradient(135deg, #FF6B6B, #FF8E53); color: white; padding: 14px; text-align: center; }
+    .modal-header h3 { font-size: 15px; }
+    .modal-body { padding: 15px; max-height: 60vh; overflow-y: auto; }
+    .modal-body .form-group { margin-bottom: 10px; }
+    .modal-body label { display: block; font-size: 11px; color: #666; margin-bottom: 4px; font-weight: 500; }
+    .modal-body input, .modal-body select { width: 100%; padding: 10px; border: 2px solid #eee; border-radius: 8px; font-size: 14px; transition: border-color 0.2s; }
     .modal-body input:focus, .modal-body select:focus { outline: none; border-color: #FF6B6B; }
     .modal-body input:disabled { background: #f5f5f5; color: #999; }
-    .modal-actions { display: flex; gap: 10px; padding: 0 20px 20px; }
-    .modal-actions button { flex: 1; padding: 14px; border: none; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .form-row .form-group { margin-bottom: 10px; }
+    .form-group.full { grid-column: 1 / -1; }
+    .modal-body .form-group { margin-bottom: 10px; }
+    .modal-body label { font-size: 11px; margin-bottom: 4px; }
+    .modal-body input, .modal-body select { padding: 10px; font-size: 14px; border-radius: 8px; }
+    .modal-actions { display: flex; gap: 8px; padding: 0 15px 15px; }
+    .modal-actions button { flex: 1; padding: 12px; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; }
     .btn-cancel { background: #f5f5f5; color: #666; }
     .btn-save { background: linear-gradient(135deg, #FF6B6B, #FF8E53); color: white; }
     .btn-delete { background: #dc3545; color: white; }
@@ -229,7 +234,7 @@
   <div id="orders-section" class="section">
     <div class="filter-row">
       <button class="filter-btn active" onclick="filterOrders('all', this)">ทั้งหมด</button>
-      <button class="filter-btn" onclick="filterOrders('user', this)">👤 ฉันเพิ่ม</button>
+      <button class="filter-btn" onclick="filterOrders('user', this)">👤 ตัวเอง</button>
       <button class="filter-btn" onclick="filterOrders('admin', this)">🛒 Admin</button>
       <button class="filter-btn" onclick="filterOrders('pending', this)">รอตรวจ</button>
       <button class="filter-btn" onclick="filterOrders('completed', this)">โอนแล้ว</button>
@@ -312,9 +317,9 @@
 
 <!-- Order Detail -->
 <div class="modal-overlay" id="orderModal">
-  <div class="modal" style="max-width:400px;">
-    <div class="modal-header"><h3>📦 รายละเอียด Order</h3></div>
-    <div class="modal-body" id="order-modal-body">
+  <div class="modal" style="max-width:380px;">
+    <div class="modal-header"><h3>📦 รายละเอียด</h3></div>
+    <div class="modal-body" id="order-modal-body" style="padding:15px;">
       <!-- Dynamic content -->
     </div>
     <div class="modal-actions" id="order-modal-actions">
@@ -660,30 +665,29 @@ function renderOrders(orders) {
     return;
   }
   
-  var html = '';
+  var html = '<div class="orders-grid">';
   orders.forEach(function(order) {
     var statusClass = (order.status === 'โอนแล้ว' || order.status === 'completed') ? 'completed' : 'pending';
     var byClass = order.createdBy === 'ADMIN' ? 'admin' : 'user';
-    var byText = order.createdBy === 'ADMIN' ? '🛒 Admin' : '👤 ฉันเพิ่ม';
-    var shopeeIdText = order.shopeeId ? '🏪 ' + order.shopeeId : '⚠️ ยังไม่ระบุ Shopee ID';
-    var shopeeIdClass = order.shopeeId ? '' : 'style="color:#dc3545;"';
+    var byText = order.createdBy === 'ADMIN' ? '🛒 Admin' : '👤 ตัวเอง';
+    var shopeeText = order.shopeeId || '⚠️ รอระบุ';
+    var shopeeColor = order.shopeeId ? '#666' : '#dc3545';
     
-    html += '<div class="order-card" onclick="viewOrder(\'' + order.orderId + '\')">' +
-      '<div class="order-header">' +
-        '<span class="order-id">🆔 ' + order.orderId + '</span>' +
-        '<span class="order-status ' + statusClass + '">' + (order.status || 'รอตรวจสอบ') + '</span>' +
-      '</div>' +
-      '<div style="font-size:12px;margin-bottom:8px;" ' + shopeeIdClass + '>' + shopeeIdText + '</div>' +
-      '<div class="order-body">' +
-        '<div class="order-amount">฿' + numberFormat(order.orderTotal || 0) + '</div>' +
-        '<div class="order-meta">' +
-          '<div class="order-time">🕐 ' + formatDateTime(order.orderTime) + '</div>' +
-          '<div class="order-by ' + byClass + '">' + byText + '</div>' +
-        '</div>' +
-      '</div>' +
-      (parseFloat(order.refundAmount) > 0 ? '<div class="order-refund">💰 ยอดรอคืน: ฿' + numberFormat(order.refundAmount) + '</div>' : '') +
-    '</div>';
+    html += '<div class="order-card" onclick="viewOrder(\'' + order.orderId + '\')">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">';
+    html += '<span class="order-id">' + order.orderId + '</span>';
+    html += '<span class="order-status ' + statusClass + '">' + (order.status || 'รอ') + '</span>';
+    html += '</div>';
+    html += '<div class="order-amount">฿' + numberFormat(order.orderTotal || 0) + '</div>';
+    html += '<div class="order-shopee" style="color:' + shopeeColor + ';">🏪 ' + shopeeText + '</div>';
+    html += '<div class="order-time">' + formatDateTime(order.orderTime) + '</div>';
+    html += '<div class="order-by ' + byClass + '">' + byText + '</div>';
+    if (parseFloat(order.refundAmount) > 0) {
+      html += '<div class="order-refund">💰 ฿' + numberFormat(order.refundAmount) + '</div>';
+    }
+    html += '</div>';
   });
+  html += '</div>';
   
   container.innerHTML = html;
 }
@@ -705,63 +709,68 @@ function viewOrder(orderId) {
       // Image - แปลง Google Drive URL เป็น direct link
       if (order.imageUrl) {
         var viewUrl = order.imageUrl;
-        // แปลง Google Drive URL
         if (viewUrl.indexOf('drive.google.com') !== -1) {
           var fileId = viewUrl.match(/[-\w]{25,}/);
           if (fileId) {
             viewUrl = 'https://drive.google.com/file/d/' + fileId[0] + '/view';
           }
         }
-        html += '<div class="form-group"><a href="' + viewUrl + '" target="_blank" style="display:block;padding:14px;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:10px;text-align:center;text-decoration:none;color:white;font-weight:600;">📷 ดูรูป Order</a></div>';
-      } else {
-        html += '<div class="form-group"><div style="padding:14px;background:#f0f0f0;border-radius:10px;text-align:center;color:#999;">📷 ไม่มีรูปภาพ</div></div>';
+        html += '<a href="' + viewUrl + '" target="_blank" style="display:block;padding:12px;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:8px;text-align:center;text-decoration:none;color:white;font-weight:600;margin-bottom:12px;font-size:13px;">📷 ดูรูป Order</a>';
       }
       
-      // Info
+      // Row 1: OrderID | OrderTime
+      html += '<div class="form-row">';
       html += '<div class="form-group"><label>Order ID</label><input type="text" value="' + order.orderId + '" disabled></div>';
       html += '<div class="form-group"><label>Order Time</label><input type="text" value="' + formatDateTime(order.orderTime) + '" disabled></div>';
+      html += '</div>';
       
-      // Shopee ID dropdown - ดึงจาก userData
+      // Shopee ID dropdown (full width)
       var allShopeeIds = (userData && userData.shopeeIds) ? userData.shopeeIds : [];
-      html += '<div class="form-group"><label>Shopee ID <span style="color:#dc3545;">*</span></label>';
+      html += '<div class="form-group full"><label>Shopee ID <span style="color:#dc3545;">*</span></label>';
       html += '<select id="edit-shopee-id" style="background:white;">';
-      html += '<option value="">-- เลือก Shopee ID --</option>';
-      
+      html += '<option value="">-- เลือก --</option>';
       if (allShopeeIds.length > 0) {
         allShopeeIds.forEach(function(s) {
           var selected = (s.shopeeId === order.shopeeId) ? 'selected' : '';
           html += '<option value="' + s.shopeeId + '" ' + selected + '>' + s.shopeeId + '</option>';
         });
       }
-      
-      // ถ้า order.shopeeId มีค่าแต่ไม่อยู่ใน list (เช่น Admin import)
       if (order.shopeeId && allShopeeIds.length > 0 && !allShopeeIds.find(function(s) { return s.shopeeId === order.shopeeId; })) {
         html += '<option value="' + order.shopeeId + '" selected>' + order.shopeeId + ' (Admin)</option>';
       } else if (order.shopeeId && allShopeeIds.length === 0) {
         html += '<option value="' + order.shopeeId + '" selected>' + order.shopeeId + '</option>';
       }
+      html += '</select></div>';
       
-      html += '</select>';
-      if (allShopeeIds.length === 0) {
-        html += '<div style="font-size:11px;color:#dc3545;margin-top:4px;">⚠️ ยังไม่มี Shopee ID กรุณาเพิ่มในหน้า "ข้อมูล"</div>';
-      }
+      // Order Total (full width - important)
+      html += '<div class="form-group full"><label>💰 Order Total</label><input type="number" id="edit-total" value="' + (order.orderTotal || '') + '" style="font-size:18px;font-weight:600;"></div>';
+      
+      // Row: Coins Used | Voucher
+      html += '<div class="form-row">';
+      html += '<div class="form-group"><label>Coins Used</label><input type="number" id="edit-coins" value="' + (order.coinsUsed || '') + '"></div>';
+      html += '<div class="form-group"><label>Voucher</label><input type="number" id="edit-voucher" value="' + (order.voucher || '') + '"></div>';
       html += '</div>';
       
-      // Editable fields
-      html += '<div class="form-group"><label>Subtotal</label><input type="number" id="edit-subtotal" value="' + (order.subtotal || '') + '"></div>';
+      // Row: Shipping | Shipping Discount
+      html += '<div class="form-row">';
       html += '<div class="form-group"><label>Shipping</label><input type="number" id="edit-shipping" value="' + (order.shipping || '') + '"></div>';
       html += '<div class="form-group"><label>Shipping Discount</label><input type="number" id="edit-shipping-discount" value="' + (order.shippingDiscount || '') + '"></div>';
-      html += '<div class="form-group"><label>Voucher</label><input type="number" id="edit-voucher" value="' + (order.voucher || '') + '"></div>';
-      html += '<div class="form-group"><label>Coins Used</label><input type="number" id="edit-coins" value="' + (order.coinsUsed || '') + '"></div>';
-      html += '<div class="form-group"><label>Order Total</label><input type="number" id="edit-total" value="' + (order.orderTotal || '') + '"></div>';
+      html += '</div>';
       
-      // Non-editable
-      html += '<div class="form-group"><label>ยอดรอคืน (Admin กำหนด)</label><input type="text" value="฿' + numberFormat(order.refundAmount || 0) + '" disabled></div>';
-      html += '<div class="form-group"><label>ยอดมัดจำ (Admin กำหนด)</label><input type="text" value="฿' + numberFormat(order.depositAmount || 0) + '" disabled></div>';
-      html += '<div class="form-group"><label>Status (Admin กำหนด)</label><input type="text" value="' + (order.status || '-') + '" disabled></div>';
+      // Row: Subtotal | Status
+      html += '<div class="form-row">';
+      html += '<div class="form-group"><label>Subtotal</label><input type="number" id="edit-subtotal" value="' + (order.subtotal || '') + '"></div>';
+      html += '<div class="form-group"><label>Status</label><input type="text" value="' + (order.status || '-') + '" disabled></div>';
+      html += '</div>';
+      
+      // Row: ยอดรอคืน | ยอดมัดจำ
+      html += '<div class="form-row">';
+      html += '<div class="form-group"><label>ยอดรอคืน</label><input type="text" value="฿' + numberFormat(order.refundAmount || 0) + '" disabled></div>';
+      html += '<div class="form-group"><label>ยอดมัดจำ</label><input type="text" value="฿' + numberFormat(order.depositAmount || 0) + '" disabled></div>';
+      html += '</div>';
       
       // History button
-      html += '<button class="btn-secondary" style="width:100%;margin-top:10px;" onclick="viewOrderHistory(\'' + orderId + '\')">📜 ดูประวัติแก้ไข</button>';
+      html += '<button class="btn-secondary" style="width:100%;margin-top:5px;padding:10px;font-size:13px;" onclick="viewOrderHistory(\'' + orderId + '\')">📜 ดูประวัติแก้ไข</button>';
       
       document.getElementById('order-modal-body').innerHTML = html;
       document.getElementById('order-modal-actions').innerHTML = '<button class="btn-cancel" onclick="hideModal(\'orderModal\')">ปิด</button><button class="btn-save" onclick="saveOrder()">💾 บันทึก</button>';
