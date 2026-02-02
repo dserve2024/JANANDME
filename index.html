@@ -769,8 +769,11 @@ function viewOrder(orderId) {
       html += '<div class="form-group"><label>ยอดมัดจำ</label><input type="text" value="฿' + numberFormat(order.depositAmount || 0) + '" disabled></div>';
       html += '</div>';
       
-      // History button
-      html += '<button class="btn-secondary" style="width:100%;margin-top:5px;padding:10px;font-size:13px;" onclick="viewOrderHistory(\'' + orderId + '\')">📜 ดูประวัติแก้ไข</button>';
+      // History button + Delete button
+      html += '<div style="display:flex;gap:8px;margin-top:8px;">';
+      html += '<button class="btn-secondary" style="flex:1;padding:10px;font-size:13px;" onclick="viewOrderHistory(\'' + orderId + '\')">📜 ประวัติ</button>';
+      html += '<button style="flex:1;padding:10px;font-size:13px;background:#dc3545;color:white;border:none;border-radius:8px;cursor:pointer;" onclick="confirmDeleteOrder(\'' + orderId + '\')">🗑️ ลบ</button>';
+      html += '</div>';
       
       document.getElementById('order-modal-body').innerHTML = html;
       document.getElementById('order-modal-actions').innerHTML = '<button class="btn-cancel" onclick="hideModal(\'orderModal\')">ปิด</button><button class="btn-save" onclick="saveOrder()">💾 บันทึก</button>';
@@ -821,6 +824,27 @@ function saveOrder() {
     if (data.success) {
       showToast('✅ บันทึกสำเร็จ');
       hideModal('orderModal');
+      loadOrders(currentFilter);
+      loadUserData(); // Refresh totals
+    } else {
+      showToast('❌ ' + (data.error || 'เกิดข้อผิดพลาด'));
+    }
+  });
+}
+
+function confirmDeleteOrder(orderId) {
+  document.getElementById('confirm-delete-btn').onclick = function() {
+    deleteOrder(orderId);
+  };
+  hideModal('orderModal');
+  showModal('confirmModal');
+}
+
+function deleteOrder(orderId) {
+  apiCall('deleteOrder', { orderId: orderId }).then(function(data) {
+    hideModal('confirmModal');
+    if (data.success) {
+      showToast('✅ ลบ Order สำเร็จ');
       loadOrders(currentFilter);
       loadUserData(); // Refresh totals
     } else {
