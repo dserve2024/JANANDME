@@ -169,8 +169,9 @@
 </div>
 
 <div class="tabs">
-  <div class="tab active" onclick="switchTab('info')">👤 ข้อมูล</div>
-  <div class="tab" onclick="switchTab('orders')">📋 รายการ</div>
+  <div class="tab active" data-tab="info" onclick="switchTab('info')">👤 ข้อมูล</div>
+  <div class="tab" data-tab="orders" onclick="switchTab('orders')">📋 รายการ</div>
+  <div class="tab" data-tab="admin" id="admin-tab" style="display:none;" onclick="switchTab('admin')">⚙️ Admin</div>
 </div>
 
 <div class="content">
@@ -298,6 +299,14 @@
     </div>
     <div id="orders-list"></div>
   </div>
+
+  <!-- ADMIN SECTION -->
+  <div id="admin-section" class="section">
+    <div class="section-title">
+      <h2>👥 จัดการ Users</h2>
+    </div>
+    <div id="admin-users-list"></div>
+  </div>
 </div>
 
 <!-- MODALS -->
@@ -401,6 +410,38 @@
   </div>
 </div>
 
+<!-- Create Dispute -->
+<div class="modal-overlay" id="disputeModal">
+  <div class="modal">
+    <div class="modal-header" style="background:linear-gradient(135deg,#dc3545,#c82333);"><h3>🚨 แจ้งปัญหา</h3></div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Order ID</label>
+        <input type="text" id="dispute-order-id" disabled>
+      </div>
+      <div class="form-group">
+        <label>เหตุผล</label>
+        <select id="dispute-reason">
+          <option value="">-- เลือกเหตุผล --</option>
+          <option value="ยอดเงินไม่ถูกต้อง">ยอดเงินไม่ถูกต้อง</option>
+          <option value="สถานะไม่อัปเดต">สถานะไม่อัปเดต</option>
+          <option value="ไม่ได้รับเงินคืน">ไม่ได้รับเงินคืน</option>
+          <option value="ข้อมูลผิดพลาด">ข้อมูลผิดพลาด</option>
+          <option value="อื่นๆ">อื่นๆ</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>รายละเอียดเพิ่มเติม</label>
+        <input type="text" id="dispute-detail" placeholder="อธิบายปัญหาเพิ่มเติม...">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="hideModal('disputeModal')">ยกเลิก</button>
+      <button class="btn-delete" onclick="submitDispute()">🚨 ส่งแจ้งปัญหา</button>
+    </div>
+  </div>
+</div>
+
 <!-- Contact Admin Modal -->
 <div class="modal-overlay" id="contactModal">
   <div class="modal" style="max-width:360px;">
@@ -465,7 +506,8 @@ async function init() {
     }
     
     loadUserData();
-    
+    checkAdminStatus();
+
   } catch (err) {
     document.getElementById('loading').innerHTML = '<p style="color:red;">Error: ' + err.message + '</p>';
   }
@@ -881,6 +923,7 @@ function viewOrder(orderId) {
       html += '<button class="btn-secondary" style="flex:1;padding:10px;font-size:13px;" onclick="viewOrderHistory(\'' + orderId + '\')">📜 ประวัติ</button>';
       html += '<button style="flex:1;padding:10px;font-size:13px;background:#dc3545;color:white;border:none;border-radius:8px;cursor:pointer;" onclick="confirmDeleteOrder(\'' + orderId + '\')">🗑️ ลบ</button>';
       html += '</div>';
+      html += '<button style="width:100%;margin-top:8px;padding:14px;border:none;border-radius:12px;background:#dc3545;color:white;font-size:15px;font-weight:600;cursor:pointer;" onclick="showDisputeModal(\'' + orderId + '\')">🚨 แจ้งปัญหา</button>';
       
       document.getElementById('order-modal-body').innerHTML = html;
       document.getElementById('order-modal-actions').innerHTML = '<button class="btn-cancel" onclick="hideModal(\'orderModal\')">ปิด</button><button class="btn-save" onclick="saveOrder()">💾 บันทึก</button>';
@@ -987,13 +1030,13 @@ function viewOrderHistory(orderId) {
 function switchTab(tab) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-  
-  document.querySelector('.tab:nth-child(' + (tab === 'info' ? 1 : 2) + ')').classList.add('active');
+
+  var tabEl = document.querySelector('[data-tab="' + tab + '"]');
+  if (tabEl) tabEl.classList.add('active');
   document.getElementById(tab + '-section').classList.add('active');
-  
-  if (tab === 'orders') {
-    loadOrders(currentFilter);
-  }
+
+  if (tab === 'orders') loadOrders(currentFilter);
+  if (tab === 'admin') loadAdminData();
 }
 
 function showModal(id) { document.getElementById(id).classList.add('show'); }
@@ -1104,6 +1147,108 @@ function formatDateTime(dateStr) {
   } catch (e) {
     return dateStr;
   }
+}
+
+// ===== DISPUTE =====
+function showDisputeModal(orderId) {
+  document.getElementById('dispute-order-id').value = orderId;
+  document.getElementById('dispute-reason').value = '';
+  document.getElementById('dispute-detail').value = '';
+  hideModal('orderModal');
+  showModal('disputeModal');
+}
+
+function submitDispute() {
+  var params = {
+    orderId: document.getElementById('dispute-order-id').value,
+    reason: document.getElementById('dispute-reason').value,
+    detail: document.getElementById('dispute-detail').value
+  };
+  if (!params.reason) { showToast('กรุณาเลือกเหตุผล'); return; }
+  apiCall('createDispute', params).then(function(data) {
+    if (data.success) {
+      showToast('✅ ส่งแจ้งปัญหาเรียบร้อย');
+      hideModal('disputeModal');
+    } else {
+      showToast('❌ ' + (data.error || 'เกิดข้อผิดพลาด'));
+    }
+  });
+}
+
+// ===== ADMIN =====
+var isAdminUser = false;
+
+function checkAdminStatus() {
+  apiCall('checkAdmin').then(function(data) {
+    if (data.success && data.isAdmin) {
+      isAdminUser = true;
+      document.getElementById('admin-tab').style.display = '';
+    }
+  });
+}
+
+function loadAdminData() {
+  if (!isAdminUser) return;
+  loadAdminUsers();
+}
+
+function loadAdminUsers() {
+  apiCall('adminGetUsers').then(function(data) {
+    if (!data.success) return;
+    renderAdminUsers(data.users || []);
+  });
+}
+
+function renderAdminUsers(users) {
+  var container = document.getElementById('admin-users-list');
+  if (!container) return;
+  var total = users.length;
+  var pending = users.filter(function(u) { return !u.approved && !u.blocked; }).length;
+
+  var html = '<div class="summary-row" style="margin-bottom:15px;">' +
+    '<div class="summary-card pending"><div class="summary-label">ทั้งหมด</div><div class="summary-value" style="color:#333;">' + total + '</div></div>' +
+    '<div class="summary-card deposit"><div class="summary-label">รอ Approve</div><div class="summary-value" style="color:#ffc107;">' + pending + '</div></div>' +
+  '</div>';
+
+  users.sort(function(a, b) {
+    var ap = !a.approved && !a.blocked ? 0 : a.blocked ? 2 : 1;
+    var bp = !b.approved && !b.blocked ? 0 : b.blocked ? 2 : 1;
+    return ap - bp;
+  });
+
+  users.forEach(function(user) {
+    var statusText = user.blocked ? '🚫 Blocked' : user.approved ? '✅ Active' : '⏳ Pending';
+    var statusColor = user.blocked ? '#dc3545' : user.approved ? '#28a745' : '#ffc107';
+    html += '<div class="order-card" style="margin-bottom:10px;"><div style="display:flex;align-items:center;gap:12px;">';
+    if (user.profileUrl) html += '<img src="' + user.profileUrl + '" style="width:40px;height:40px;border-radius:50%;" onerror="this.style.display=\'none\'">';
+    html += '<div style="flex:1;"><div style="font-weight:600;font-size:14px;">' + user.displayName + '</div><div style="font-size:12px;color:' + statusColor + ';">' + statusText + '</div></div>';
+    html += '<div style="text-align:right;font-size:12px;color:#666;"><div>฿' + numberFormat(user.pendingRefund || 0) + ' รอคืน</div></div></div>';
+    if (user.bankName) html += '<div style="font-size:11px;color:#888;margin-top:8px;">🏦 ' + user.bankName + ' ' + user.bankAccount + ' (' + user.accountName + ')</div>';
+    html += '<div style="display:flex;gap:8px;margin-top:10px;">';
+    if (!user.approved && !user.blocked) {
+      html += '<button onclick="adminApprove(\'' + user.userId + '\')" style="flex:1;padding:8px;border:none;border-radius:8px;background:#28a745;color:white;font-size:12px;cursor:pointer;">✅ Approve</button>';
+      html += '<button onclick="adminBlock(\'' + user.userId + '\',\'block\')" style="flex:1;padding:8px;border:none;border-radius:8px;background:#dc3545;color:white;font-size:12px;cursor:pointer;">🚫 Block</button>';
+    } else if (user.blocked) {
+      html += '<button onclick="adminBlock(\'' + user.userId + '\',\'unblock\')" style="flex:1;padding:8px;border:none;border-radius:8px;background:#28a745;color:white;font-size:12px;cursor:pointer;">✅ Unblock</button>';
+    }
+    html += '</div></div>';
+  });
+
+  container.innerHTML = html;
+}
+
+function adminApprove(targetUserId) {
+  apiCall('adminApproveUser', { targetUserId: targetUserId }).then(function(data) {
+    if (data.success) { showToast('✅ อนุมัติแล้ว'); loadAdminUsers(); }
+    else showToast('❌ ' + (data.error || 'Error'));
+  });
+}
+
+function adminBlock(targetUserId, action) {
+  apiCall('adminBlockUser', { targetUserId: targetUserId, blockAction: action }).then(function(data) {
+    if (data.success) { showToast('✅ สำเร็จ'); loadAdminUsers(); }
+    else showToast('❌ ' + (data.error || 'Error'));
+  });
 }
 
 // Start
