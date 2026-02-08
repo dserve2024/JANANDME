@@ -551,7 +551,8 @@ function loadUserData() {
     document.getElementById('loading').style.display = 'none';
     document.getElementById('info-section').classList.add('active');
   }).catch(function(err) {
-    showToast('โหลดข้อมูลไม่สำเร็จ');
+    showToast('โหลดข้อมูลไม่สำเร็จ: ' + (err.message || err));
+    console.error('loadUserData error:', err);
     document.getElementById('loading').style.display = 'none';
     document.getElementById('info-section').classList.add('active');
   });
@@ -1184,6 +1185,8 @@ function checkAdminStatus() {
       isAdminUser = true;
       document.getElementById('admin-tab').style.display = '';
     }
+  }).catch(function(err) {
+    console.error('checkAdmin error:', err);
   });
 }
 
