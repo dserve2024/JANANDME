@@ -159,6 +159,95 @@
     .loading { text-align: center; padding: 40px; }
     .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #FF6B6B; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    /* Admin Sub-Tabs */
+    .admin-sub-tabs { display:flex;gap:0;margin-bottom:14px;background:white;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06); }
+    .admin-sub-tab { flex:1;padding:10px 8px;text-align:center;font-size:12px;color:#888;cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s; }
+    .admin-sub-tab.active { color:#FF6B6B;background:#fff5f5;border-bottom-color:#FF6B6B;font-weight:600; }
+    .admin-sub-section { display:none; }
+    .admin-sub-section.active { display:block; }
+
+    /* Payment Summary */
+    .admin-pay-summary { display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px; }
+    .aps-card { background:white;border-radius:12px;padding:12px 8px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.06);position:relative;overflow:hidden; }
+    .aps-card::before { content:'';position:absolute;top:0;left:0;right:0;height:3px; }
+    .aps-card.warn::before { background:#ffc107; }
+    .aps-card.info::before { background:#17a2b8; }
+    .aps-card.ok::before { background:#28a745; }
+    .aps-card .aps-num { font-size:18px;font-weight:700; }
+    .aps-card.warn .aps-num { color:#e6a700; }
+    .aps-card.info .aps-num { color:#17a2b8; }
+    .aps-card.ok .aps-num { color:#28a745; }
+    .aps-card .aps-lbl { font-size:10px;color:#888;margin-top:2px; }
+
+    /* Payment Card */
+    .pay-card { background:white;border-radius:14px;box-shadow:0 2px 10px rgba(0,0,0,0.06);margin-bottom:10px;overflow:hidden; }
+    .pay-card-header { display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid #f0f0f0; }
+    .pay-avatar { width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#FF6B6B,#FF8E53);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:14px;flex-shrink:0; }
+    .pay-avatar img { width:100%;height:100%;border-radius:50%;object-fit:cover; }
+    .pay-user-info { flex:1;min-width:0; }
+    .pay-user-name { font-size:14px;font-weight:600;color:#333; }
+    .pay-user-bank { font-size:11px;color:#888;margin-top:1px; }
+    .pay-total-box { text-align:right; }
+    .pay-total-amount { font-size:18px;font-weight:700;color:#28a745; }
+    .pay-total-amount.deposit-color { color:#17a2b8; }
+    .pay-total-label { font-size:10px;color:#888; }
+    .pay-card-body { padding:10px 14px; }
+    .pay-order-row { display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #f5f5f5; }
+    .pay-order-row:last-child { border:none; }
+    .pay-order-left { display:flex;align-items:center;gap:8px; }
+    .pay-check { width:20px;height:20px;border-radius:5px;border:2px solid #ddd;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all 0.2s;font-size:12px;color:transparent; }
+    .pay-check.checked { background:#28a745;border-color:#28a745;color:white; }
+    .pay-oid { font-size:11px;color:#FF6B6B;font-weight:500; }
+    .pay-oid-shop { font-size:10px;color:#999; }
+    .pay-oamt { font-size:13px;font-weight:600;color:#333; }
+    .pay-card-footer { display:flex;gap:8px;padding:10px 14px 14px; }
+    .pay-btn { flex:1;padding:10px;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;text-align:center;transition:opacity 0.2s; }
+    .pay-btn:active { opacity:0.7; }
+    .pay-btn.confirm-btn { background:linear-gradient(135deg,#28a745,#20c997);color:white; }
+    .pay-btn.deposit-btn { background:linear-gradient(135deg,#17a2b8,#4dd0e1);color:white; }
+    .pay-btn.skip-btn { background:#f5f5f5;color:#888; }
+
+    /* Confirm Payment Modal */
+    .confirm-pay-modal .modal-header { background:linear-gradient(135deg,#28a745,#20c997); }
+    .confirm-pay-modal.deposit-mode .modal-header { background:linear-gradient(135deg,#17a2b8,#4dd0e1); }
+    .cpay-bank-card { background:linear-gradient(135deg,#667eea,#764ba2);border-radius:14px;padding:18px;color:white;margin-bottom:14px; }
+    .cpay-bank-label { font-size:10px;opacity:0.7;text-transform:uppercase;letter-spacing:1px; }
+    .cpay-bank-name { font-size:20px;font-weight:700;margin:4px 0; }
+    .cpay-bank-account { font-size:22px;font-weight:700;letter-spacing:2px;font-family:monospace;margin-bottom:10px; }
+    .cpay-bank-holder { font-size:15px;opacity:0.95; }
+    .cpay-bank-user { font-size:13px;opacity:0.8;margin-top:4px; }
+    .cpay-orders { margin-bottom:12px; }
+    .cpay-orders-label { font-size:12px;color:#888;margin-bottom:6px;font-weight:500; }
+    .cpay-order-item { display:flex;justify-content:space-between;padding:6px 10px;background:#f8f9fa;border-radius:8px;margin-bottom:4px;font-size:13px; }
+    .cpay-order-item .oid { color:#FF6B6B;font-weight:500; }
+    .cpay-order-item .amt { font-weight:600;color:#333; }
+    .cpay-total-box { display:flex;justify-content:space-between;align-items:center;padding:14px;background:#f0fff4;border-radius:12px;border:2px solid #28a745;margin-bottom:14px; }
+    .cpay-total-box.deposit-style { background:#f0f9ff;border-color:#17a2b8; }
+    .cpay-total-label { font-size:15px;font-weight:600;color:#333; }
+    .cpay-total-amount { font-size:24px;font-weight:700;color:#28a745; }
+    .cpay-total-amount.deposit-color { color:#17a2b8; }
+    .cpay-note { font-size:12px;color:#888;text-align:center;margin-bottom:14px;line-height:1.6;background:#fffbeb;padding:10px;border-radius:10px; }
+    .btn-confirm-green { background:linear-gradient(135deg,#28a745,#20c997);color:white; }
+    .btn-confirm-blue { background:linear-gradient(135deg,#17a2b8,#4dd0e1);color:white; }
+
+    /* Success State */
+    .pay-success { text-align:center;padding:20px 0; }
+    .pay-success .s-icon { font-size:56px;margin-bottom:10px; }
+    .pay-success .s-title { font-size:18px;font-weight:700;color:#28a745;margin-bottom:4px; }
+    .pay-success .s-sub { font-size:13px;color:#888;line-height:1.5;margin-bottom:16px; }
+    .pay-success .s-preview { background:#f8f9fa;border-radius:12px;padding:14px;border:2px dashed #28a745;margin-bottom:16px;text-align:left; }
+    .pay-success .s-preview-label { font-size:10px;color:#888;margin-bottom:6px;text-align:center; }
+    .pay-success .s-preview-bubble { background:white;border-radius:10px;padding:12px;box-shadow:0 1px 4px rgba(0,0,0,0.06); }
+    .pay-success .sp-hdr { background:#28a745;color:white;padding:8px 10px;border-radius:8px 8px 0 0;margin:-12px -12px 10px; }
+    .pay-success .sp-hdr.blue { background:#17a2b8; }
+    .pay-success .sp-shop { font-size:10px;opacity:0.9; }
+    .pay-success .sp-title { font-size:13px;font-weight:700; }
+    .pay-success .sp-row { display:flex;justify-content:space-between;font-size:11px;padding:2px 0; }
+    .pay-success .sp-total { display:flex;justify-content:space-between;font-weight:700;margin-top:6px;padding-top:6px;border-top:1px solid #eee; }
+    .pay-success .sp-total .green { color:#28a745; }
+    .pay-success .sp-total .blue { color:#17a2b8; }
+    .btn-back-list { width:100%;padding:14px;border:none;border-radius:12px;background:linear-gradient(135deg,#FF6B6B,#FF8E53);color:white;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit; }
   </style>
 </head>
 <body>
@@ -302,10 +391,18 @@
 
   <!-- ADMIN SECTION -->
   <div id="admin-section" class="section">
-    <div class="section-title">
-      <h2>👥 จัดการ Users</h2>
+    <div class="admin-sub-tabs">
+      <div class="admin-sub-tab active" onclick="switchAdminSubTab('users')">👥 Users</div>
+      <div class="admin-sub-tab" onclick="switchAdminSubTab('payment')">💸 โอนเงิน</div>
     </div>
-    <div id="admin-users-list"></div>
+    <div id="admin-users-sub" class="admin-sub-section active">
+      <div class="section-title"><h2>👥 จัดการ Users</h2></div>
+      <div id="admin-users-list"></div>
+    </div>
+    <div id="admin-payment-sub" class="admin-sub-section">
+      <div id="admin-pay-summary" class="admin-pay-summary"></div>
+      <div id="admin-pay-list"></div>
+    </div>
   </div>
 </div>
 
@@ -456,6 +553,15 @@
       <button class="btn-cancel" onclick="cancelContact()">ยกเลิก</button>
       <button class="btn-save" onclick="sendContactMessage()">📨 ส่ง</button>
     </div>
+  </div>
+</div>
+
+<!-- Confirm Payment Modal -->
+<div class="modal-overlay" id="confirmPayModal">
+  <div class="modal confirm-pay-modal" id="confirmPayModalInner" style="max-width:380px;">
+    <div class="modal-header"><h3 id="cpay-modal-title">✅ ยืนยันโอนเงินคืน</h3></div>
+    <div class="modal-body" id="cpay-modal-body" style="padding:16px;max-height:70vh;"></div>
+    <div class="modal-actions" id="cpay-modal-actions"></div>
   </div>
 </div>
 
@@ -1192,7 +1298,24 @@ function checkAdminStatus() {
 
 function loadAdminData() {
   if (!isAdminUser) return;
-  loadAdminUsers();
+  var activeSubTab = document.querySelector('.admin-sub-tab.active');
+  var tabName = activeSubTab ? activeSubTab.textContent.trim() : '';
+  if (tabName.indexOf('โอนเงิน') !== -1) loadAdminPayments();
+  else loadAdminUsers();
+}
+
+function switchAdminSubTab(sub) {
+  document.querySelectorAll('.admin-sub-tab').forEach(function(t) { t.classList.remove('active'); });
+  document.querySelectorAll('.admin-sub-section').forEach(function(s) { s.classList.remove('active'); });
+  if (sub === 'users') {
+    document.querySelectorAll('.admin-sub-tab')[0].classList.add('active');
+    document.getElementById('admin-users-sub').classList.add('active');
+    loadAdminUsers();
+  } else {
+    document.querySelectorAll('.admin-sub-tab')[1].classList.add('active');
+    document.getElementById('admin-payment-sub').classList.add('active');
+    loadAdminPayments();
+  }
 }
 
 function loadAdminUsers() {
@@ -1253,6 +1376,195 @@ function adminBlock(targetUserId, action) {
     else showToast('❌ ' + (data.error || 'Error'));
   });
 }
+
+// ===== ADMIN PAYMENTS =====
+var adminPaymentData = [];
+var paymentSelections = {};
+
+function loadAdminPayments() {
+  var listEl = document.getElementById('admin-pay-list');
+  listEl.innerHTML = '<div class="loading"><div class="spinner"></div><p>กำลังโหลด...</p></div>';
+  apiCall('adminGetPendingPayments').then(function(data) {
+    if (!data.success) {
+      listEl.innerHTML = '<div class="empty-state"><div class="icon">❌</div><p>' + (data.error || 'โหลดไม่สำเร็จ') + '</p></div>';
+      return;
+    }
+    adminPaymentData = data.users || [];
+    paymentSelections = {};
+    adminPaymentData.forEach(function(u) {
+      paymentSelections[u.userId] = new Set(u.orders.map(function(o) { return o.orderId; }));
+    });
+    renderAdminPayments();
+  }).catch(function(err) {
+    listEl.innerHTML = '<div class="empty-state"><div class="icon">❌</div><p>เกิดข้อผิดพลาด</p></div>';
+  });
+}
+
+function renderAdminPayments() {
+  var totalUsers = adminPaymentData.length;
+  var totalAmount = 0;
+  adminPaymentData.forEach(function(u) {
+    u.orders.forEach(function(o) { totalAmount += parseFloat(o.amount) || 0; });
+  });
+  var summaryEl = document.getElementById('admin-pay-summary');
+  summaryEl.innerHTML =
+    '<div class="aps-card warn"><div class="aps-num">' + totalUsers + '</div><div class="aps-lbl">รอโอน</div></div>' +
+    '<div class="aps-card info"><div class="aps-num">฿' + numberFormat(totalAmount) + '</div><div class="aps-lbl">ยอดรวม</div></div>' +
+    '<div class="aps-card ok"><div class="aps-num">0</div><div class="aps-lbl">โอนแล้ว</div></div>';
+
+  var listEl = document.getElementById('admin-pay-list');
+  if (adminPaymentData.length === 0) {
+    listEl.innerHTML = '<div class="empty-state"><div class="icon">✅</div><p>ไม่มีรายการรอโอน</p></div>';
+    return;
+  }
+  var html = '';
+  adminPaymentData.forEach(function(user) {
+    var selected = paymentSelections[user.userId] || new Set();
+    var selectedTotal = 0;
+    var isDeposit = user.type === 'deposit';
+    user.orders.forEach(function(o) {
+      if (selected.has(o.orderId)) selectedTotal += parseFloat(o.amount) || 0;
+    });
+    html += '<div class="pay-card">';
+    html += '<div class="pay-card-header">';
+    html += '<div class="pay-avatar">';
+    if (user.profileUrl) {
+      html += '<img src="' + user.profileUrl + '" onerror="this.parentElement.textContent=\'' + (user.displayName || '?').charAt(0) + '\'">';
+    } else { html += (user.displayName || '?').charAt(0); }
+    html += '</div>';
+    html += '<div class="pay-user-info"><div class="pay-user-name">' + user.displayName + '</div>';
+    html += '<div class="pay-user-bank">🏦 ' + (user.bankName || '-') + ' ' + (user.bankAccount || '') + '</div></div>';
+    html += '<div class="pay-total-box"><div class="pay-total-amount ' + (isDeposit ? 'deposit-color' : '') + '">฿' + numberFormat(selectedTotal) + '</div>';
+    html += '<div class="pay-total-label">' + selected.size + ' ' + (isDeposit ? 'มัดจำ' : 'orders') + '</div></div></div>';
+    html += '<div class="pay-card-body">';
+    user.orders.forEach(function(o) {
+      var checked = selected.has(o.orderId);
+      html += '<div class="pay-order-row"><div class="pay-order-left">';
+      html += '<div class="pay-check ' + (checked ? 'checked' : '') + '" onclick="togglePayOrder(\'' + user.userId + '\',\'' + o.orderId + '\')">✓</div>';
+      html += '<div><div class="pay-oid">#' + o.orderId + '</div>';
+      html += '<div class="pay-oid-shop">' + (isDeposit ? '🏷️ มัดจำ' : '🏪 ' + (o.shopeeId || '-')) + '</div></div></div>';
+      html += '<div class="pay-oamt">฿' + numberFormat(o.amount) + '</div></div>';
+    });
+    html += '</div>';
+    html += '<div class="pay-card-footer">';
+    html += '<button class="pay-btn skip-btn" onclick="skipPayUser(\'' + user.userId + '\')">ข้าม</button>';
+    if (isDeposit) {
+      html += '<button class="pay-btn deposit-btn" onclick="showConfirmPayModal(\'' + user.userId + '\')">✅ ยืนยันคืนมัดจำ</button>';
+    } else {
+      html += '<button class="pay-btn confirm-btn" onclick="showConfirmPayModal(\'' + user.userId + '\')">✅ ยืนยันโอนคืน</button>';
+    }
+    html += '</div></div>';
+  });
+  listEl.innerHTML = html;
+}
+
+function togglePayOrder(userId, orderId) {
+  var set = paymentSelections[userId];
+  if (!set) return;
+  if (set.has(orderId)) set.delete(orderId); else set.add(orderId);
+  renderAdminPayments();
+}
+
+function skipPayUser(userId) {
+  adminPaymentData = adminPaymentData.filter(function(u) { return u.userId !== userId; });
+  delete paymentSelections[userId];
+  renderAdminPayments();
+  showToast('⏭️ ข้ามรายการแล้ว');
+}
+
+var confirmPayUserId = null;
+
+function showConfirmPayModal(userId) {
+  confirmPayUserId = userId;
+  var user = adminPaymentData.find(function(u) { return u.userId === userId; });
+  if (!user) return;
+  var selected = paymentSelections[userId] || new Set();
+  if (selected.size === 0) { showToast('❌ กรุณาเลือกอย่างน้อย 1 รายการ'); return; }
+  var selectedOrders = user.orders.filter(function(o) { return selected.has(o.orderId); });
+  var totalAmount = selectedOrders.reduce(function(sum, o) { return sum + (parseFloat(o.amount) || 0); }, 0);
+  var isDeposit = user.type === 'deposit';
+
+  var modalInner = document.getElementById('confirmPayModalInner');
+  modalInner.className = 'modal confirm-pay-modal' + (isDeposit ? ' deposit-mode' : '');
+  document.getElementById('cpay-modal-title').textContent = isDeposit ? '✅ ยืนยันคืนเงินมัดจำ' : '✅ ยืนยันโอนเงินคืน';
+
+  var html = '<div class="cpay-bank-card">';
+  html += '<div class="cpay-bank-label">โอนเข้าบัญชี</div>';
+  html += '<div class="cpay-bank-name">' + (user.bankName || '-') + '</div>';
+  html += '<div class="cpay-bank-account">' + (user.bankAccount || '-') + '</div>';
+  html += '<div class="cpay-bank-holder">👤 ' + (user.accountName || user.displayName) + '</div>';
+  if (user.phone) html += '<div class="cpay-bank-user">📞 ' + user.phone + '</div>';
+  html += '</div>';
+  html += '<div class="cpay-orders"><div class="cpay-orders-label">📋 รายการที่เลือก (' + selectedOrders.length + ')</div>';
+  selectedOrders.forEach(function(o) {
+    html += '<div class="cpay-order-item"><span class="oid">#' + o.orderId + '</span><span class="amt">฿' + numberFormat(o.amount) + '</span></div>';
+  });
+  html += '</div>';
+  html += '<div class="cpay-total-box ' + (isDeposit ? 'deposit-style' : '') + '"><span class="cpay-total-label">💵 ยอดโอนรวม</span>';
+  html += '<span class="cpay-total-amount ' + (isDeposit ? 'deposit-color' : '') + '">฿' + numberFormat(totalAmount) + '</span></div>';
+  html += '<div class="cpay-note">⚠️ กดยืนยันแล้วระบบจะ:<br>1. อัปเดตสถานะ → "โอนแล้ว"<br>2. ส่ง Flex แจ้งลูกค้าทาง LINE<br>3. บันทึก Log</div>';
+  document.getElementById('cpay-modal-body').innerHTML = html;
+
+  var actHtml = '<button class="btn-cancel" onclick="hideModal(\'confirmPayModal\')">← กลับ</button>';
+  actHtml += isDeposit
+    ? '<button class="btn-confirm-blue" onclick="executePayment()">💸 ยืนยันโอน</button>'
+    : '<button class="btn-confirm-green" onclick="executePayment()">💸 ยืนยันโอน</button>';
+  document.getElementById('cpay-modal-actions').innerHTML = actHtml;
+  showModal('confirmPayModal');
+}
+
+function executePayment() {
+  if (!confirmPayUserId) return;
+  var user = adminPaymentData.find(function(u) { return u.userId === confirmPayUserId; });
+  if (!user) return;
+  var selected = paymentSelections[confirmPayUserId] || new Set();
+  var selectedOrders = user.orders.filter(function(o) { return selected.has(o.orderId); });
+  var totalAmount = selectedOrders.reduce(function(sum, o) { return sum + (parseFloat(o.amount) || 0); }, 0);
+  var isDeposit = user.type === 'deposit';
+
+  var btns = document.querySelectorAll('#cpay-modal-actions button');
+  btns.forEach(function(b) { b.disabled = true; });
+  btns[btns.length - 1].textContent = '⏳ กำลังดำเนินการ...';
+
+  apiCall('adminConfirmPayment', {
+    targetUserId: confirmPayUserId,
+    orderIds: Array.from(selected).join(','),
+    totalAmount: totalAmount,
+    type: isDeposit ? 'deposit' : 'refund'
+  }).then(function(data) {
+    hideModal('confirmPayModal');
+    if (data.success) {
+      showPaymentSuccess(user, selectedOrders, totalAmount, isDeposit);
+      adminPaymentData = adminPaymentData.filter(function(u) { return u.userId !== confirmPayUserId; });
+      delete paymentSelections[confirmPayUserId];
+    } else { showToast('❌ ' + (data.error || 'เกิดข้อผิดพลาด')); }
+  }).catch(function(err) {
+    hideModal('confirmPayModal');
+    showToast('❌ เกิดข้อผิดพลาด: ' + (err.message || err));
+  });
+}
+
+function showPaymentSuccess(user, orders, totalAmount, isDeposit) {
+  var listEl = document.getElementById('admin-pay-list');
+  var title = isDeposit ? '💰 คืนเงินมัดจำเรียบร้อย' : '💰 โอนเงินคืนเรียบร้อย';
+  var colorClass = isDeposit ? 'blue' : '';
+  var html = '<div class="pay-success"><div class="s-icon">✅</div><div class="s-title">โอนเงินสำเร็จ!</div>';
+  html += '<div class="s-sub">ส่งแจ้งเตือนให้ <strong>' + user.displayName + '</strong> แล้ว<br>ยอด ฿' + numberFormat(totalAmount) + ' • ' + orders.length + ' รายการ</div>';
+  html += '<div class="s-preview"><div class="s-preview-label">📱 Flex Message ที่ส่งให้ลูกค้า</div>';
+  html += '<div class="s-preview-bubble"><div class="sp-hdr ' + colorClass + '"><div class="sp-shop">🏪 JAN&ME</div><div class="sp-title">' + title + '</div></div>';
+  html += '<div style="font-size:12px;font-weight:600;margin-bottom:2px;">👤 ' + user.displayName + '</div>';
+  html += '<div style="font-size:11px;color:#888;margin-bottom:8px;">🏦 ' + (user.bankName || '-') + ' ' + (user.bankAccount || '') + '</div>';
+  orders.forEach(function(o) {
+    html += '<div class="sp-row"><span style="color:#FF6B6B;">#' + o.orderId + '</span><span>฿' + numberFormat(o.amount) + '</span></div>';
+  });
+  html += '<div class="sp-total"><span>💵 ยอดโอนรวม</span><span class="' + (isDeposit ? 'blue' : 'green') + '">฿' + numberFormat(totalAmount) + '</span></div>';
+  html += '</div></div>';
+  html += '<button class="btn-back-list" onclick="backToPaymentList()">👈 กลับหน้ารายการ</button></div>';
+  listEl.innerHTML = html;
+  document.getElementById('admin-pay-summary').innerHTML = '';
+}
+
+function backToPaymentList() { renderAdminPayments(); }
 
 // Start
 init();
