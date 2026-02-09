@@ -1431,7 +1431,8 @@ function renderAdminPayments() {
       html += '<img src="' + user.profileUrl + '" onerror="this.parentElement.textContent=\'' + (user.displayName || '?').charAt(0) + '\'">';
     } else { html += (user.displayName || '?').charAt(0); }
     html += '</div>';
-    html += '<div class="pay-user-info"><div class="pay-user-name">' + user.displayName + '</div>';
+    var nameDisplay = user.displayName + (user.accountName ? ' (' + user.accountName + ')' : '');
+    html += '<div class="pay-user-info"><div class="pay-user-name">' + nameDisplay + '</div>';
     html += '<div class="pay-user-bank">🏦 ' + (user.bankName || '-') + ' ' + (user.bankAccount || '') + '</div></div>';
     html += '<div class="pay-total-box"><div class="pay-total-amount ' + (isDeposit ? 'deposit-color' : '') + '">฿' + numberFormat(selectedTotal) + '</div>';
     html += '<div class="pay-total-label">' + selected.size + ' ' + (isDeposit ? 'มัดจำ' : 'orders') + '</div></div></div>';
