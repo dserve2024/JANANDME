@@ -659,8 +659,7 @@ function loadAdminData() {
   if (!isAdminUser) return;
   var activeSubTab = document.querySelector('#admin-section .admin-sub-tab.active');
   var tabName = activeSubTab ? activeSubTab.textContent.trim() : '';
-  if (tabName.indexOf('มัดจำ') !== -1) loadAdminDepositReturns();
-  else if (tabName.indexOf('โอนเงิน') !== -1) loadAdminPayments();
+  if (tabName.indexOf('โอนเงิน') !== -1) loadAdminPayments();
   else loadAdminUsers();
 }
 
@@ -677,10 +676,6 @@ function switchAdminSubTab(sub) {
     tabs[1].classList.add('active');
     document.getElementById('admin-payment-sub').classList.add('active');
     loadAdminPayments();
-  } else if (sub === 'deposit') {
-    tabs[2].classList.add('active');
-    document.getElementById('admin-deposit-sub').classList.add('active');
-    loadAdminDepositReturns();
   }
 }
 
@@ -797,7 +792,6 @@ function adminSetAdmin(targetUserId, action) {
 // ===== ADMIN PAYMENTS =====
 var adminPaymentData = [];
 var paymentSelections = {};
-var paymentViewMode = 'refund';
 
 function loadAdminPayments() {
   var listEl = document.getElementById('admin-pay-list');
@@ -807,9 +801,28 @@ function loadAdminPayments() {
       listEl.innerHTML = '<div class="empty-state"><div class="icon">❌</div><p>' + (data.error || 'โหลดไม่สำเร็จ') + '</p></div>';
       return;
     }
-    adminPaymentData = (data.users || []).filter(function(u) {
+    // Merge entries by userId (refund + deposit combined)
+    var rawUsers = (data.users || []).filter(function(u) {
       return u.bankName && u.bankAccount;
     });
+    var mergeMap = {};
+    var mergeOrder = [];
+    rawUsers.forEach(function(u) {
+      if (!mergeMap[u.userId]) {
+        mergeMap[u.userId] = {
+          userId: u.userId, displayName: u.displayName, profileUrl: u.profileUrl,
+          bankName: u.bankName, bankAccount: u.bankAccount,
+          accountName: u.accountName, phone: u.phone, orders: []
+        };
+        mergeOrder.push(u.userId);
+      }
+      u.orders.forEach(function(o) {
+        mergeMap[u.userId].orders.push({
+          orderId: o.orderId, shopeeId: o.shopeeId, amount: o.amount, type: u.type || 'refund'
+        });
+      });
+    });
+    adminPaymentData = mergeOrder.map(function(uid) { return mergeMap[uid]; });
     paymentSelections = {};
     adminPaymentData.forEach(function(u) {
       paymentSelections[u.userId] = new Set(u.orders.map(function(o) { return o.orderId; }));
@@ -820,57 +833,29 @@ function loadAdminPayments() {
   });
 }
 
-function switchPaymentMode(mode) {
-  paymentViewMode = mode;
-  renderAdminPayments();
-}
-
 function renderAdminPayments() {
-  // Filter by current mode
-  var filtered = adminPaymentData.filter(function(u) {
-    if (paymentViewMode === 'deposit') return u.type === 'deposit';
-    return u.type !== 'deposit';
-  });
-
-  var refundCount = adminPaymentData.filter(function(u) { return u.type !== 'deposit'; }).length;
-  var depositCount = adminPaymentData.filter(function(u) { return u.type === 'deposit'; }).length;
-
-  var totalUsers = filtered.length;
+  var totalUsers = adminPaymentData.length;
   var totalAmount = 0;
-  filtered.forEach(function(u) {
+  adminPaymentData.forEach(function(u) {
     u.orders.forEach(function(o) { totalAmount += parseFloat(o.amount) || 0; });
   });
 
   var summaryEl = document.getElementById('admin-pay-summary');
-  var isRefund = paymentViewMode === 'refund';
-  var refundActive = isRefund ? 'active' : '';
-  var depositActive = !isRefund ? 'active' : '';
-
-  var modeHtml = '<div class="filter-row" style="margin-bottom:12px;">';
-  modeHtml += '<button class="filter-btn ' + refundActive + '" onclick="switchPaymentMode(\'refund\')" style="flex:1;">💰 ยอดคืน' + (refundCount > 0 ? ' (' + refundCount + ')' : '') + '</button>';
-  modeHtml += '<button class="filter-btn ' + depositActive + '" onclick="switchPaymentMode(\'deposit\')" style="flex:1;">🏦 มัดจำ' + (depositCount > 0 ? ' (' + depositCount + ')' : '') + '</button>';
-  modeHtml += '</div>';
-
-  var modeLabel = isRefund ? 'รอโอนคืน' : 'รอคืนมัดจำ';
-  var modeColor = isRefund ? 'warn' : 'info';
-
-  summaryEl.innerHTML = modeHtml +
-    '<div class="admin-pay-summary" style="margin-bottom:0;grid-template-columns:1fr 1fr;">' +
-    '<div class="aps-card ' + modeColor + '"><div class="aps-num">' + totalUsers + '</div><div class="aps-lbl">' + modeLabel + '</div></div>' +
+  summaryEl.innerHTML = '<div class="admin-pay-summary" style="margin-bottom:0;grid-template-columns:1fr 1fr;">' +
+    '<div class="aps-card warn"><div class="aps-num">' + totalUsers + '</div><div class="aps-lbl">รอโอน</div></div>' +
     '<div class="aps-card info"><div class="aps-num">฿' + numberFormat(totalAmount) + '</div><div class="aps-lbl">ยอดรวม</div></div>' +
     '</div>';
 
   var listEl = document.getElementById('admin-pay-list');
-  if (filtered.length === 0) {
-    var emptyMsg = isRefund ? 'ไม่มียอดคืนรอโอน' : 'ไม่มีมัดจำรอคืน';
-    listEl.innerHTML = '<div class="empty-state"><div class="icon">✅</div><p>' + emptyMsg + '</p></div>';
+  if (adminPaymentData.length === 0) {
+    listEl.innerHTML = '<div class="empty-state"><div class="icon">✅</div><p>ไม่มียอดรอโอน</p></div>';
     return;
   }
+
   var html = '';
-  filtered.forEach(function(user) {
+  adminPaymentData.forEach(function(user) {
     var selected = paymentSelections[user.userId] || new Set();
     var selectedTotal = 0;
-    var isDeposit = user.type === 'deposit';
     user.orders.forEach(function(o) {
       if (selected.has(o.orderId)) selectedTotal += parseFloat(o.amount) || 0;
     });
@@ -884,25 +869,22 @@ function renderAdminPayments() {
     var nameDisplay = user.displayName + (user.accountName ? ' (' + user.accountName + ')' : '');
     html += '<div class="pay-user-info"><div class="pay-user-name">' + nameDisplay + '</div>';
     html += '<div class="pay-user-bank">🏦 ' + (user.bankName || '-') + ' ' + (user.bankAccount || '') + '</div></div>';
-    html += '<div class="pay-total-box"><div class="pay-total-amount ' + (isDeposit ? 'deposit-color' : '') + '">฿' + numberFormat(selectedTotal) + '</div>';
-    html += '<div class="pay-total-label">' + selected.size + ' ' + (isDeposit ? 'มัดจำ' : 'orders') + '</div></div></div>';
+    html += '<div class="pay-total-box"><div class="pay-total-amount">฿' + numberFormat(selectedTotal) + '</div>';
+    html += '<div class="pay-total-label">' + selected.size + ' รายการ</div></div></div>';
     html += '<div class="pay-card-body">';
     user.orders.forEach(function(o) {
       var checked = selected.has(o.orderId);
+      var isDeposit = o.type === 'deposit';
       html += '<div class="pay-order-row"><div class="pay-order-left">';
       html += '<div class="pay-check ' + (checked ? 'checked' : '') + '" onclick="togglePayOrder(\'' + user.userId + '\',\'' + o.orderId + '\')">✓</div>';
       html += '<div><div class="pay-oid">#' + o.orderId + '</div>';
       html += '<div class="pay-oid-shop">' + (isDeposit ? '🏷️ มัดจำ' : '🏪 ' + (o.shopeeId || '-')) + '</div></div></div>';
-      html += '<div class="pay-oamt">฿' + numberFormat(o.amount) + '</div></div>';
+      html += '<div class="pay-oamt"' + (isDeposit ? ' style="color:var(--blue)"' : '') + '>฿' + numberFormat(o.amount) + '</div></div>';
     });
     html += '</div>';
     html += '<div class="pay-card-footer">';
     html += '<button class="pay-btn skip-btn" onclick="skipPayUser(\'' + user.userId + '\')">ข้าม</button>';
-    if (isDeposit) {
-      html += '<button class="pay-btn deposit-btn" onclick="showConfirmPayModal(\'' + user.userId + '\')">✅ ยืนยันคืนมัดจำ</button>';
-    } else {
-      html += '<button class="pay-btn confirm-btn" onclick="showConfirmPayModal(\'' + user.userId + '\')">✅ ยืนยันโอนคืน</button>';
-    }
+    html += '<button class="pay-btn confirm-btn" onclick="showConfirmPayModal(\'' + user.userId + '\')">✅ ยืนยันโอน</button>';
     html += '</div></div>';
   });
   listEl.innerHTML = html;
@@ -932,11 +914,10 @@ function showConfirmPayModal(userId) {
   if (selected.size === 0) { showToast('❌ กรุณาเลือกอย่างน้อย 1 รายการ'); return; }
   var selectedOrders = user.orders.filter(function(o) { return selected.has(o.orderId); });
   var totalAmount = selectedOrders.reduce(function(sum, o) { return sum + (parseFloat(o.amount) || 0); }, 0);
-  var isDeposit = user.type === 'deposit';
 
   var modalInner = document.getElementById('confirmPayModalInner');
-  modalInner.className = 'modal confirm-pay-modal' + (isDeposit ? ' deposit-mode' : '');
-  document.getElementById('cpay-modal-title').textContent = isDeposit ? '✅ ยืนยันคืนเงินมัดจำ' : '✅ ยืนยันโอนเงินคืน';
+  modalInner.className = 'modal confirm-pay-modal';
+  document.getElementById('cpay-modal-title').textContent = '✅ ยืนยันโอนเงิน';
 
   var html = '<div class="cpay-bank-card">';
   html += '<div class="cpay-bank-label">โอนเข้าบัญชี</div>';
@@ -947,18 +928,17 @@ function showConfirmPayModal(userId) {
   html += '</div>';
   html += '<div class="cpay-orders"><div class="cpay-orders-label">📋 รายการที่เลือก (' + selectedOrders.length + ')</div>';
   selectedOrders.forEach(function(o) {
-    html += '<div class="cpay-order-item"><span class="oid">#' + o.orderId + '</span><span class="amt">฿' + numberFormat(o.amount) + '</span></div>';
+    var isDeposit = o.type === 'deposit';
+    html += '<div class="cpay-order-item"><span class="oid">#' + o.orderId + (isDeposit ? ' 🏷️' : '') + '</span><span class="amt">฿' + numberFormat(o.amount) + '</span></div>';
   });
   html += '</div>';
-  html += '<div class="cpay-total-box ' + (isDeposit ? 'deposit-style' : '') + '"><span class="cpay-total-label">💵 ยอดโอนรวม</span>';
-  html += '<span class="cpay-total-amount ' + (isDeposit ? 'deposit-color' : '') + '">฿' + numberFormat(totalAmount) + '</span></div>';
+  html += '<div class="cpay-total-box"><span class="cpay-total-label">💵 ยอดโอนรวม</span>';
+  html += '<span class="cpay-total-amount">฿' + numberFormat(totalAmount) + '</span></div>';
   html += '<div class="cpay-note">⚠️ กดยืนยันแล้วระบบจะ:<br>1. อัปเดตสถานะ → "โอนแล้ว"<br>2. ส่ง Flex แจ้งลูกค้าทาง LINE<br>3. บันทึก Log</div>';
   document.getElementById('cpay-modal-body').innerHTML = html;
 
   var actHtml = '<button class="btn-cancel" onclick="hideModal(\'confirmPayModal\')">← กลับ</button>';
-  actHtml += isDeposit
-    ? '<button class="btn-confirm-blue" onclick="executePayment()">💸 ยืนยันโอน</button>'
-    : '<button class="btn-confirm-green" onclick="executePayment()">💸 ยืนยันโอน</button>';
+  actHtml += '<button class="btn-confirm-green" onclick="executePayment()">💸 ยืนยันโอน</button>';
   document.getElementById('cpay-modal-actions').innerHTML = actHtml;
   showModal('confirmPayModal');
 }
@@ -970,24 +950,43 @@ function executePayment() {
   var selected = paymentSelections[confirmPayUserId] || new Set();
   var selectedOrders = user.orders.filter(function(o) { return selected.has(o.orderId); });
   var totalAmount = selectedOrders.reduce(function(sum, o) { return sum + (parseFloat(o.amount) || 0); }, 0);
-  var isDeposit = user.type === 'deposit';
 
   var btns = document.querySelectorAll('#cpay-modal-actions button');
   btns.forEach(function(b) { b.disabled = true; });
   btns[btns.length - 1].textContent = '⏳ กำลังดำเนินการ...';
 
-  apiCall('adminConfirmPayment', {
-    targetUserId: confirmPayUserId,
-    orderIds: Array.from(selected).join(','),
-    totalAmount: totalAmount,
-    type: isDeposit ? 'deposit' : 'refund'
-  }).then(function(data) {
+  // Split by type for separate API calls
+  var refundOrders = selectedOrders.filter(function(o) { return o.type !== 'deposit'; });
+  var depositOrders = selectedOrders.filter(function(o) { return o.type === 'deposit'; });
+  var promises = [];
+  if (refundOrders.length > 0) {
+    promises.push(apiCall('adminConfirmPayment', {
+      targetUserId: confirmPayUserId,
+      orderIds: refundOrders.map(function(o) { return o.orderId; }).join(','),
+      totalAmount: refundOrders.reduce(function(s, o) { return s + (parseFloat(o.amount) || 0); }, 0),
+      type: 'refund'
+    }));
+  }
+  if (depositOrders.length > 0) {
+    promises.push(apiCall('adminConfirmPayment', {
+      targetUserId: confirmPayUserId,
+      orderIds: depositOrders.map(function(o) { return o.orderId; }).join(','),
+      totalAmount: depositOrders.reduce(function(s, o) { return s + (parseFloat(o.amount) || 0); }, 0),
+      type: 'deposit'
+    }));
+  }
+
+  Promise.all(promises).then(function(results) {
     hideModal('confirmPayModal');
-    if (data.success) {
-      showPaymentSuccess(user, selectedOrders, totalAmount, isDeposit);
+    var allSuccess = results.every(function(r) { return r.success; });
+    if (allSuccess) {
+      showPaymentSuccess(user, selectedOrders, totalAmount, false);
       adminPaymentData = adminPaymentData.filter(function(u) { return u.userId !== confirmPayUserId; });
       delete paymentSelections[confirmPayUserId];
-    } else { showToast('❌ ' + (data.error || 'เกิดข้อผิดพลาด')); }
+    } else {
+      var err = results.find(function(r) { return !r.success; });
+      showToast('❌ ' + ((err && err.error) || 'เกิดข้อผิดพลาด'));
+    }
   }).catch(function(err) {
     hideModal('confirmPayModal');
     showToast('❌ เกิดข้อผิดพลาด: ' + (err.message || err));
@@ -1413,160 +1412,6 @@ function renderDepositHistory(items) {
     html += '</div>';
   });
   container.innerHTML = html;
-}
-
-// ===== ADMIN DEPOSIT RETURNS =====
-function loadAdminDepositReturns() {
-  var container = document.getElementById('admin-deposit-list');
-  container.innerHTML = '<div class="loading"><div class="spinner"></div><p>กำลังโหลด...</p></div>';
-  apiCall('adminGetDepositReturns').then(function(data) {
-    if (!data.success) {
-      container.innerHTML = '<div class="empty-state"><div class="icon">❌</div><p>' + (data.error || 'โหลดไม่สำเร็จ') + '</p></div>';
-      return;
-    }
-    renderAdminDepositReturns(data.submissions || []);
-  });
-}
-
-function getBaseSubId_(id) {
-  var m = id.match(/^(DR_\d{8}_\d{6})(?:_\d+)?$/);
-  return m ? m[1] : id;
-}
-
-function renderAdminDepositReturns(items) {
-  var container = document.getElementById('admin-deposit-list');
-
-  // Group by base submissionId
-  var groups = {};
-  var groupOrder = [];
-  items.forEach(function(item) {
-    var base = getBaseSubId_(item.submissionId);
-    if (!groups[base]) {
-      groups[base] = { items: [], base: base };
-      groupOrder.push(base);
-    }
-    groups[base].items.push(item);
-  });
-
-  var pendingGroups = groupOrder.filter(function(g) { return groups[g].items[0].status === 'รอตรวจ'; }).length;
-  var html = '<div class="summary-row" style="margin-bottom:15px;">';
-  html += '<div class="summary-card pending"><div class="summary-label">ทั้งหมด</div><div class="summary-value" style="color:var(--txt);">' + groupOrder.length + '</div></div>';
-  html += '<div class="summary-card deposit"><div class="summary-label">รอตรวจ</div><div class="summary-value" style="color:var(--amber);">' + pendingGroups + '</div></div>';
-  html += '</div>';
-
-  if (groupOrder.length === 0) {
-    html += '<div class="empty-state"><div class="icon">📦</div><p>ไม่มีรายการส่งคืนมัดจำ</p></div>';
-    container.innerHTML = html;
-    return;
-  }
-
-  groupOrder.forEach(function(base) {
-    var group = groups[base].items;
-    var first = group[0];
-    var isPending = first.status === 'รอตรวจ';
-    var isApproved = first.status === 'อนุมัติ';
-    var isRejected = first.status === 'ปฏิเสธ';
-    var statusColor = isPending ? 'var(--amber)' : isApproved ? 'var(--green)' : 'var(--red)';
-    var statusIcon = isPending ? '⏳' : isApproved ? '✅' : '❌';
-    var totalDep = 0;
-    var allSubIds = [];
-    group.forEach(function(g) { totalDep += parseFloat(g.depositAmount) || 0; allSubIds.push(g.submissionId); });
-    var itemCount = Math.round(totalDep / 100);
-    var allSubIdsStr = allSubIds.join(',');
-
-    html += '<div class="adr-card">';
-
-    // Header
-    html += '<div class="adr-header">';
-    if (first.profileUrl) html += '<img src="' + first.profileUrl + '" class="adr-avatar" onerror="this.style.display=\'none\'">';
-    html += '<div class="adr-user"><div class="adr-name">' + (first.displayName || 'Unknown') + '</div>';
-    html += '<div class="adr-time">⏰ ' + (first.submittedAt || '') + '</div></div>';
-    html += '<div class="adr-right"><div class="adr-amount">฿' + numberFormat(totalDep) + '<span class="adr-count">' + itemCount + '</span></div>';
-    html += '<div class="adr-status" style="color:' + statusColor + '">' + statusIcon + ' ' + first.status + '</div></div>';
-    html += '</div>';
-
-    // Body
-    html += '<div class="adr-body">';
-
-    // Orders list
-    html += '<div class="adr-orders">';
-    group.forEach(function(g) {
-      html += '<div class="adr-order-row">';
-      html += '<div><div class="adr-oid">' + g.orderId + '</div>';
-      if (g.shopeeId) html += '<div class="adr-shop">🏪 ' + g.shopeeId + '</div>';
-      html += '</div>';
-      html += '<div class="adr-dep">฿' + numberFormat(g.depositAmount || 0) + '</div>';
-      html += '</div>';
-    });
-    html += '</div>';
-
-    // Photo buttons (bigger, from first item since photos are shared)
-    var photos = first.productPhotos || [];
-    var tracks = first.trackingPhotos || [];
-    html += '<div class="adr-photos">';
-    photos.forEach(function(url, idx) {
-      if (url) {
-        var fid = url.match(/[-\w]{25,}/);
-        var viewUrl = fid ? 'https://drive.google.com/file/d/' + fid[0] + '/view' : url;
-        html += '<a href="' + viewUrl + '" target="_blank" class="adr-photo-btn product">📷 รูปสินค้า ' + (idx + 1) + '</a>';
-      }
-    });
-    tracks.forEach(function(url, idx) {
-      if (url) {
-        var fid = url.match(/[-\w]{25,}/);
-        var viewUrl = fid ? 'https://drive.google.com/file/d/' + fid[0] + '/view' : url;
-        html += '<a href="' + viewUrl + '" target="_blank" class="adr-photo-btn tracking">🚚 Tracking ' + (idx + 1) + '</a>';
-      }
-    });
-    html += '</div>';
-
-    // Note
-    if (first.note) {
-      html += '<div class="adr-note">💬 ' + first.note + '</div>';
-    }
-
-    // Actions
-    if (isPending) {
-      html += '<div class="adr-actions">';
-      html += '<button class="btn-approve" onclick="adminReviewDeposit(\'' + allSubIdsStr + '\',\'approve\')">✅ อนุมัติ</button>';
-      html += '<button class="btn-reject" onclick="promptRejectDeposit(\'' + allSubIdsStr + '\')">❌ ปฏิเสธ</button>';
-      html += '</div>';
-    }
-    if (isRejected && first.adminNote) {
-      html += '<div class="adr-result" style="background:var(--red-soft);color:var(--red);">💬 เหตุผล: ' + first.adminNote + '</div>';
-    }
-    if (isApproved) {
-      html += '<div class="adr-result" style="background:var(--green-soft);color:var(--green);">✅ อนุมัติโดย ' + (first.reviewedBy || '') + ' เมื่อ ' + (first.reviewedAt || '') + '</div>';
-    }
-
-    html += '</div></div>';
-  });
-
-  container.innerHTML = html;
-}
-
-function adminReviewDeposit(submissionIds, action) {
-  apiCall('adminReviewDeposit', { submissionId: submissionIds, reviewAction: action }).then(function(data) {
-    if (data.success) {
-      showToast(action === 'approve' ? '✅ อนุมัติแล้ว' : '❌ ปฏิเสธแล้ว');
-      loadAdminDepositReturns();
-    } else {
-      showToast('❌ ' + (data.error || 'Error'));
-    }
-  });
-}
-
-function promptRejectDeposit(submissionIds) {
-  var reason = prompt('เหตุผลที่ปฏิเสธ:');
-  if (reason === null) return;
-  apiCall('adminReviewDeposit', { submissionId: submissionIds, reviewAction: 'reject', adminNote: reason }).then(function(data) {
-    if (data.success) {
-      showToast('❌ ปฏิเสธแล้ว');
-      loadAdminDepositReturns();
-    } else {
-      showToast('❌ ' + (data.error || 'Error'));
-    }
-  });
 }
 
 // Start

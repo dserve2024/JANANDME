@@ -118,23 +118,19 @@
       <!-- Summary 4 boxes -->
       <div class="fin-grid">
         <div class="fin-box ready">
-          <div class="fin-icon">💰</div>
-          <div class="fin-label">ยอดรอคืน</div>
+          <div class="fin-top"><span class="fin-icon">💰</span><span class="fin-label">ยอดรอคืน</span></div>
           <div id="total-refund" class="fin-value">฿0</div>
         </div>
         <div class="fin-box ready">
-          <div class="fin-icon">🏦</div>
-          <div class="fin-label">ยอดมัดจำ</div>
+          <div class="fin-top"><span class="fin-icon">🏦</span><span class="fin-label">ยอดมัดจำ</span></div>
           <div id="total-deposit" class="fin-value">฿0</div>
         </div>
         <div class="fin-box expect">
-          <div class="fin-icon">📋</div>
-          <div class="fin-label">คาดว่าจะได้รับ</div>
+          <div class="fin-top"><span class="fin-icon">📋</span><span class="fin-label">คาดว่าจะได้รับ</span></div>
           <div id="expected-refund" class="fin-value">฿0</div>
         </div>
         <div class="fin-box expect">
-          <div class="fin-icon">📦</div>
-          <div class="fin-label">คาดมัดจำ</div>
+          <div class="fin-top"><span class="fin-icon">📦</span><span class="fin-label">คาดมัดจำ</span></div>
           <div id="pending-deposit" class="fin-value">฿0</div>
         </div>
       </div>
@@ -200,7 +196,6 @@
     <div class="admin-sub-tabs">
       <div class="admin-sub-tab" onclick="switchAdminSubTab('users')">👥 Users</div>
       <div class="admin-sub-tab active" onclick="switchAdminSubTab('payment')">💸 โอนเงิน</div>
-      <div class="admin-sub-tab" onclick="switchAdminSubTab('deposit')">📦 มัดจำ</div>
     </div>
     <div id="admin-users-sub" class="admin-sub-section">
       <div class="section-title"><h2>👥 จัดการ Users</h2></div>
@@ -209,9 +204,6 @@
     <div id="admin-payment-sub" class="admin-sub-section active">
       <div id="admin-pay-summary"></div>
       <div id="admin-pay-list"></div>
-    </div>
-    <div id="admin-deposit-sub" class="admin-sub-section">
-      <div id="admin-deposit-list"></div>
     </div>
   </div>
 
