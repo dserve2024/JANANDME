@@ -1474,7 +1474,7 @@ function renderAdminDepositReturns(items) {
     var totalDep = 0;
     var allSubIds = [];
     group.forEach(function(g) { totalDep += parseFloat(g.depositAmount) || 0; allSubIds.push(g.submissionId); });
-    var itemCount = Math.round(totalDep / 100);
+    var itemCount = group.length;
     var allSubIdsStr = allSubIds.join(',');
 
     html += '<div class="adr-card">';
