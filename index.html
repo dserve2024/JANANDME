@@ -159,14 +159,30 @@
 
   <!-- ORDERS SECTION -->
   <div id="orders-section" class="section">
-    <div class="filter-row">
-      <button class="filter-btn active" onclick="filterOrders('all', this)">ทั้งหมด</button>
-      <button class="filter-btn" onclick="filterOrders('user', this)">👤 ตัวเอง</button>
-      <button class="filter-btn" onclick="filterOrders('admin', this)">🛒 Admin</button>
-      <button class="filter-btn" onclick="filterOrders('pending', this)">รอตรวจ</button>
-      <button class="filter-btn" onclick="filterOrders('completed', this)">โอนแล้ว</button>
+    <div class="admin-sub-tabs">
+      <div class="admin-sub-tab active" onclick="switchOrderSubTab('list')">📋 รายการ</div>
+      <div class="admin-sub-tab" onclick="switchOrderSubTab('upload')">📤 ส่งคืนมัดจำ</div>
     </div>
-    <div id="orders-list"></div>
+    <!-- Sub: Order List -->
+    <div id="orders-list-sub" class="admin-sub-section active">
+      <div class="filter-row">
+        <button class="filter-btn active" onclick="filterOrders('all', this)">ทั้งหมด</button>
+        <button class="filter-btn" onclick="filterOrders('user', this)">👤 ตัวเอง</button>
+        <button class="filter-btn" onclick="filterOrders('admin', this)">🛒 Admin</button>
+        <button class="filter-btn" onclick="filterOrders('pending', this)">รอตรวจ</button>
+        <button class="filter-btn" onclick="filterOrders('completed', this)">โอนแล้ว</button>
+      </div>
+      <div id="orders-list"></div>
+    </div>
+    <!-- Sub: Deposit Return Upload -->
+    <div id="orders-upload-sub" class="admin-sub-section">
+      <div class="section-toggle">
+        <div class="st-btn active" onclick="showUploadSub('new',this)">📤 ส่งใหม่</div>
+        <div class="st-btn" onclick="showUploadSub('history',this)">📋 ประวัติ</div>
+      </div>
+      <div id="upload-new"></div>
+      <div id="upload-history" style="display:none"></div>
+    </div>
   </div>
 
   <!-- ADMIN SECTION -->
@@ -174,6 +190,7 @@
     <div class="admin-sub-tabs">
       <div class="admin-sub-tab" onclick="switchAdminSubTab('users')">👥 Users</div>
       <div class="admin-sub-tab active" onclick="switchAdminSubTab('payment')">💸 โอนเงิน</div>
+      <div class="admin-sub-tab" onclick="switchAdminSubTab('deposit')">📦 มัดจำ</div>
     </div>
     <div id="admin-users-sub" class="admin-sub-section">
       <div class="section-title"><h2>👥 จัดการ Users</h2></div>
@@ -182,6 +199,9 @@
     <div id="admin-payment-sub" class="admin-sub-section active">
       <div id="admin-pay-summary"></div>
       <div id="admin-pay-list"></div>
+    </div>
+    <div id="admin-deposit-sub" class="admin-sub-section">
+      <div id="admin-deposit-list"></div>
     </div>
   </div>
 
