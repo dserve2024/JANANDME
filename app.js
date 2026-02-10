@@ -700,7 +700,8 @@ function renderAdminUsers(users) {
 
     html += '<div class="order-card" style="margin-bottom:10px;"><div style="display:flex;align-items:center;gap:12px;">';
     if (user.profileUrl) html += '<img src="' + user.profileUrl + '" style="width:40px;height:40px;border-radius:50%;border:2px solid var(--border);" onerror="this.style.display=\'none\'">';
-    html += '<div style="flex:1;"><div style="font-weight:700;font-size:14px;">' + user.displayName + '</div><div style="font-size:12px;color:' + statusColor + ';font-weight:600;">' + statusText + '</div></div>';
+    var adminBadge = user.isAdmin ? ' <span style="display:inline-block;padding:1px 6px;border-radius:var(--r-full);background:var(--amber-soft);color:var(--amber);font-size:9px;font-weight:700;vertical-align:middle;">👑 ADMIN</span>' : '';
+    html += '<div style="flex:1;"><div style="font-weight:700;font-size:14px;">' + user.displayName + adminBadge + '</div><div style="font-size:12px;color:' + statusColor + ';font-weight:600;">' + statusText + '</div></div>';
 
     // Toggle switch for approved/blocked users
     if (isActive || isBlocked) {
@@ -719,13 +720,20 @@ function renderAdminUsers(users) {
     if (user.bankName) html += '<div style="font-size:11px;color:var(--txt3);margin-top:8px;">🏦 ' + user.bankName + ' ' + user.bankAccount + ' (' + user.accountName + ')</div>';
     if (isActive || isBlocked) html += '<div style="font-size:11px;color:var(--txt3);margin-top:4px;">฿' + numberFormat(user.pendingRefund || 0) + ' รอคืน</div>';
 
-    // Action buttons for pending users only
+    // Action buttons
+    html += '<div style="display:flex;gap:8px;margin-top:10px;">';
     if (isPending) {
-      html += '<div style="display:flex;gap:8px;margin-top:10px;">';
       html += '<button onclick="adminApprove(\'' + user.userId + '\')" style="flex:1;padding:8px;border:none;border-radius:var(--r-xs);background:var(--green);color:white;font-size:12px;cursor:pointer;font-weight:700;font-family:var(--f-th);">✅ Approve</button>';
       html += '<button onclick="adminBlock(\'' + user.userId + '\',\'block\')" style="flex:1;padding:8px;border:none;border-radius:var(--r-xs);background:var(--red);color:white;font-size:12px;cursor:pointer;font-weight:700;font-family:var(--f-th);">🚫 Block</button>';
-      html += '</div>';
     }
+    if (isActive) {
+      if (user.isAdmin) {
+        html += '<button onclick="adminSetAdmin(\'' + user.userId + '\',\'remove\')" style="flex:1;padding:8px;border:1.5px solid var(--amber);border-radius:var(--r-xs);background:var(--amber-soft);color:var(--amber);font-size:11px;cursor:pointer;font-weight:700;font-family:var(--f-th);">👑 ถอด Admin</button>';
+      } else {
+        html += '<button onclick="adminSetAdmin(\'' + user.userId + '\',\'add\')" style="flex:1;padding:8px;border:1.5px solid var(--border-s);border-radius:var(--r-xs);background:var(--surface);color:var(--txt2);font-size:11px;cursor:pointer;font-weight:700;font-family:var(--f-th);">👑 ตั้ง Admin</button>';
+      }
+    }
+    html += '</div>';
     html += '</div>';
   });
 
@@ -749,6 +757,17 @@ function adminBlock(targetUserId, action) {
 function adminToggleBlock(targetUserId, isChecked) {
   var action = isChecked ? 'unblock' : 'block';
   adminBlock(targetUserId, action);
+}
+
+function adminSetAdmin(targetUserId, action) {
+  apiCall('adminSetAdmin', { targetUserId: targetUserId, adminAction: action }).then(function(data) {
+    if (data.success) {
+      showToast(action === 'add' ? '👑 ตั้งเป็น Admin แล้ว' : '👑 ถอด Admin แล้ว');
+      loadAdminUsers();
+    } else {
+      showToast('❌ ' + (data.error || 'Error'));
+    }
+  });
 }
 
 // ===== ADMIN PAYMENTS =====
