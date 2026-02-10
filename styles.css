@@ -8,6 +8,7 @@
   --blue: #2E7AB8; --blue-soft: #EBF3FB;
   --amber: #C48508; --amber-soft: #FDF6E4;
   --red: #C9302C; --red-soft: #FDECEC;
+  --purple: #2E7AB8; --purple-soft: #EBF3FB;
   --r-xs: 6px; --r-sm: 10px; --r-md: 16px; --r-lg: 22px; --r-full: 999px;
   --sh-card: 0 1px 4px rgba(25,22,19,.04), 0 0 0 1px rgba(25,22,19,.03);
   --f-th: 'Sarabun', sans-serif; --f-en: 'Plus Jakarta Sans', sans-serif; --f-mono: 'JetBrains Mono', monospace;
@@ -406,9 +407,9 @@ body { font-family: var(--f-th); background: var(--bg); color: var(--txt); min-h
 
 .order-select-item { background:var(--surface); border-radius:var(--r-md); padding:14px; box-shadow:var(--sh-card); display:flex; align-items:center; gap:12px; cursor:pointer; transition:all .2s var(--ease-out); border:2px solid transparent; margin-bottom:8px; }
 .order-select-item:active { transform:scale(.97); }
-.order-select-item.selected { border-color:var(--purple); background:var(--purple-soft); }
+.order-select-item.selected { border-color:var(--green); background:var(--green-soft); }
 .order-select-item .osi-radio { width:24px; height:24px; border-radius:6px; border:2px solid var(--border-s); display:flex; align-items:center; justify-content:center; font-size:13px; color:transparent; flex-shrink:0; transition:all .2s; }
-.order-select-item.selected .osi-radio { background:var(--purple); border-color:var(--purple); color:white; }
+.order-select-item.selected .osi-radio { background:var(--green); border-color:var(--green); color:white; }
 .osi-info { flex:1; min-width:0; }
 .osi-id { font-family:var(--f-mono); font-weight:700; color:var(--accent); font-size:11px; letter-spacing:-.2px; }
 .osi-shop { font-size:11px; color:var(--txt3); margin-top:1px; }

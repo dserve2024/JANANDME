@@ -60,7 +60,6 @@ function apiPost(data) {
   data.userId = userId;
   return fetch(CONFIG.API_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
   }).then(function(r) { return r.json(); });
 }
