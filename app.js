@@ -191,7 +191,9 @@ function addShopeeId() {
     return;
   }
 
+  showLoading('กำลังบันทึก...');
   apiCall('addShopeeId', { shopeeId: shopeeId }).then(function(data) {
+    hideLoading();
     if (data.success) {
       showToast('✅ เพิ่ม Shopee ID สำเร็จ');
       hideModal('addShopeeModal');
@@ -199,6 +201,9 @@ function addShopeeId() {
     } else {
       showToast('❌ ' + (data.error || 'เกิดข้อผิดพลาด'));
     }
+  }).catch(function() {
+    hideLoading();
+    showToast('❌ เกิดข้อผิดพลาด');
   });
 }
 
@@ -251,7 +256,9 @@ function confirmDeleteShopee() {
 }
 
 function deleteShopeeId(shopeeId) {
+  showLoading('กำลังลบ...');
   apiCall('deleteShopeeId', { shopeeId: shopeeId }).then(function(data) {
+    hideLoading();
     hideModal('confirmModal');
     if (data.success) {
       showToast('✅ ลบ Shopee ID สำเร็จ');
@@ -259,6 +266,9 @@ function deleteShopeeId(shopeeId) {
     } else {
       showToast('❌ ' + (data.error || 'เกิดข้อผิดพลาด'));
     }
+  }).catch(function() {
+    hideLoading();
+    showToast('❌ เกิดข้อผิดพลาด');
   });
 }
 
@@ -298,10 +308,9 @@ function saveBank() {
     phone: document.getElementById('input-phone').value.trim()
   };
 
-  var btn = document.querySelector('#bankModal .btn-save');
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ กำลังบันทึก...'; }
-
+  showLoading('กำลังบันทึก...');
   apiCall('updateBank', params).then(function(data) {
+    hideLoading();
     if (data.success) {
       showToast('✅ บันทึกสำเร็จ');
       hideModal('bankModal');
@@ -309,10 +318,9 @@ function saveBank() {
     } else {
       showToast('❌ ' + (data.error || 'เกิดข้อผิดพลาด'));
     }
-    if (btn) { btn.disabled = false; btn.textContent = 'บันทึก'; }
   }).catch(function() {
+    hideLoading();
     showToast('❌ เกิดข้อผิดพลาด');
-    if (btn) { btn.disabled = false; btn.textContent = 'บันทึก'; }
   });
 }
 
@@ -482,10 +490,9 @@ function saveOrder() {
     if (!confirm('⚠️ ยอดรวมมากกว่า 10,000 บาท\nต้องการบันทึกหรือไม่?')) return;
   }
 
-  var btn = document.querySelector('#orderModal .btn-save');
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ กำลังบันทึก...'; }
-
+  showLoading('กำลังบันทึก...');
   apiCall('updateOrder', params).then(function(data) {
+    hideLoading();
     if (data.success) {
       showToast('✅ บันทึกสำเร็จ');
       hideModal('orderModal');
@@ -494,10 +501,9 @@ function saveOrder() {
     } else {
       showToast('❌ ' + (data.error || 'เกิดข้อผิดพลาด'));
     }
-    if (btn) { btn.disabled = false; btn.textContent = '💾 บันทึก'; }
   }).catch(function() {
+    hideLoading();
     showToast('❌ เกิดข้อผิดพลาด');
-    if (btn) { btn.disabled = false; btn.textContent = '💾 บันทึก'; }
   });
 }
 
@@ -508,7 +514,9 @@ function confirmDeleteOrder(orderId) {
 }
 
 function deleteOrder(orderId) {
+  showLoading('กำลังลบ...');
   apiCall('deleteOrder', { orderId: orderId }).then(function(data) {
+    hideLoading();
     hideModal('confirmModal');
     if (data.success) {
       showToast('✅ ลบ Order สำเร็จ');
@@ -517,6 +525,9 @@ function deleteOrder(orderId) {
     } else {
       showToast('❌ ' + (data.error || 'เกิดข้อผิดพลาด'));
     }
+  }).catch(function() {
+    hideLoading();
+    showToast('❌ เกิดข้อผิดพลาด');
   });
 }
 
@@ -599,9 +610,7 @@ function sendContactDirect() {
   var message = document.getElementById('contact-message-direct').value.trim();
   if (!message) { showToast('❌ กรุณาพิมพ์ข้อความ'); return; }
 
-  var btn = document.querySelector('#contact-only-section button[onclick="sendContactDirect()"]');
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ กำลังส่ง...'; }
-
+  showLoading('กำลังส่งข้อความ...');
   var payload = {
     source: 'liff_contact_admin',
     message: message,
@@ -609,17 +618,17 @@ function sendContactDirect() {
   };
 
   apiPost(payload).then(function(data) {
+    hideLoading();
     if (data.success) {
       contactImageData = null;
       showToast('✅ ส่งข้อความสำเร็จ!');
       setTimeout(function() { if (liff.isInClient()) liff.closeWindow(); }, 1500);
     } else {
       showToast('❌ ' + (data.error || 'เกิดข้อผิดพลาด'));
-      if (btn) { btn.disabled = false; btn.textContent = '📨 ส่งข้อความ'; }
     }
   }).catch(function() {
+    hideLoading();
     showToast('❌ เกิดข้อผิดพลาด');
-    if (btn) { btn.disabled = false; btn.textContent = '📨 ส่งข้อความ'; }
   });
 }
 
@@ -629,6 +638,7 @@ function sendContactMessage() {
   var message = document.getElementById('contact-message').value.trim();
   if (!message) { showToast('❌ กรุณาพิมพ์ข้อความ'); return; }
 
+  showLoading('กำลังส่งข้อความ...');
   var payload = {
     source: 'liff_contact_admin',
     message: message,
@@ -636,6 +646,7 @@ function sendContactMessage() {
   };
 
   apiPost(payload).then(function(data) {
+    hideLoading();
     hideModal('contactModal');
     contactImageData = null;
     var previewEl = document.getElementById('contact-image-preview');
@@ -643,6 +654,7 @@ function sendContactMessage() {
     if (data.success) showToast('✅ ส่งข้อความสำเร็จ! แอดมินจะติดต่อกลับค่ะ');
     else showToast('❌ ' + (data.error || 'เกิดข้อผิดพลาด'));
   }).catch(function() {
+    hideLoading();
     hideModal('contactModal');
     showToast('❌ เกิดข้อผิดพลาด');
   });
@@ -653,6 +665,18 @@ function showToast(msg) {
   toast.textContent = msg;
   toast.classList.add('show');
   setTimeout(function() { toast.classList.remove('show'); }, 2500);
+}
+
+function showLoading(msg) {
+  var el = document.getElementById('loadingOverlay');
+  var txt = document.getElementById('loadingText');
+  if (txt) txt.textContent = msg || 'กำลังดำเนินการ...';
+  if (el) el.classList.add('show');
+}
+
+function hideLoading() {
+  var el = document.getElementById('loadingOverlay');
+  if (el) el.classList.remove('show');
 }
 
 function numberFormat(num) {
@@ -694,9 +718,14 @@ function submitDispute() {
     detail: document.getElementById('dispute-detail').value
   };
   if (!params.reason) { showToast('กรุณาเลือกเหตุผล'); return; }
+  showLoading('กำลังส่ง...');
   apiCall('createDispute', params).then(function(data) {
+    hideLoading();
     if (data.success) { showToast('✅ ส่งแจ้งปัญหาเรียบร้อย'); hideModal('disputeModal'); }
     else showToast('❌ ' + (data.error || 'เกิดข้อผิดพลาด'));
+  }).catch(function() {
+    hideLoading();
+    showToast('❌ เกิดข้อผิดพลาด');
   });
 }
 
@@ -1013,9 +1042,7 @@ function executePayment() {
   var selectedOrders = user.orders.filter(function(o) { return selected.has(o.orderId); });
   var totalAmount = selectedOrders.reduce(function(sum, o) { return sum + (parseFloat(o.amount) || 0); }, 0);
 
-  var btns = document.querySelectorAll('#cpay-modal-actions button');
-  btns.forEach(function(b) { b.disabled = true; });
-  btns[btns.length - 1].textContent = '⏳ กำลังดำเนินการ...';
+  showLoading('กำลังดำเนินการ...');
 
   // Split by type for separate API calls
   var refundOrders = selectedOrders.filter(function(o) { return o.type !== 'deposit'; });
@@ -1039,6 +1066,7 @@ function executePayment() {
   }
 
   Promise.all(promises).then(function(results) {
+    hideLoading();
     hideModal('confirmPayModal');
     var allSuccess = results.every(function(r) { return r.success; });
     if (allSuccess) {
@@ -1050,6 +1078,7 @@ function executePayment() {
       showToast('❌ ' + ((err && err.error) || 'เกิดข้อผิดพลาด'));
     }
   }).catch(function(err) {
+    hideLoading();
     hideModal('confirmPayModal');
     showToast('❌ เกิดข้อผิดพลาด: ' + (err.message || err));
   });
@@ -1384,9 +1413,6 @@ function removeDepositFile(type, index) {
 }
 
 function submitDepositReturn() {
-  var btn = document.getElementById('btnSubmitDeposit');
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ กำลังส่ง...'; }
-
   var orderKeys = Object.keys(selectedDepositOrders);
   var orders = orderKeys.map(function(k) {
     var o = selectedDepositOrders[k];
@@ -1404,18 +1430,19 @@ function submitDepositReturn() {
     note: note
   };
 
+  showLoading('กำลังส่งคำขอ...');
   apiPost(payload).then(function(data) {
+    hideLoading();
     if (data.success) {
       showToast('✅ ส่งข้อมูลสำเร็จ!');
       depositCurrentStep = 5;
       renderDepositWizard();
     } else {
       showToast('❌ ' + (data.error || 'เกิดข้อผิดพลาด'));
-      if (btn) { btn.disabled = false; btn.textContent = '📨 ส่งให้แอดมิน'; }
     }
   }).catch(function(err) {
+    hideLoading();
     showToast('❌ เกิดข้อผิดพลาด');
-    if (btn) { btn.disabled = false; btn.textContent = '📨 ส่งให้แอดมิน'; }
   });
 }
 
@@ -1598,26 +1625,36 @@ function renderAdminDepositReturns(items) {
 }
 
 function adminReviewDeposit(submissionIds, action) {
+  showLoading('กำลังดำเนินการ...');
   apiCall('adminReviewDeposit', { submissionId: submissionIds, reviewAction: action }).then(function(data) {
+    hideLoading();
     if (data.success) {
       showToast(action === 'approve' ? '✅ อนุมัติแล้ว' : '❌ ปฏิเสธแล้ว');
       loadAdminDepositReturns();
     } else {
       showToast('❌ ' + (data.error || 'Error'));
     }
+  }).catch(function() {
+    hideLoading();
+    showToast('❌ เกิดข้อผิดพลาด');
   });
 }
 
 function promptRejectDeposit(submissionIds) {
   var reason = prompt('เหตุผลที่ปฏิเสธ:');
   if (reason === null) return;
+  showLoading('กำลังดำเนินการ...');
   apiCall('adminReviewDeposit', { submissionId: submissionIds, reviewAction: 'reject', adminNote: reason }).then(function(data) {
+    hideLoading();
     if (data.success) {
       showToast('❌ ปฏิเสธแล้ว');
       loadAdminDepositReturns();
     } else {
       showToast('❌ ' + (data.error || 'Error'));
     }
+  }).catch(function() {
+    hideLoading();
+    showToast('❌ เกิดข้อผิดพลาด');
   });
 }
 
