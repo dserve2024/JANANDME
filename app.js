@@ -1573,9 +1573,12 @@ function renderAdminDepositReturns(items) {
     html += '<div class="adr-body">';
     html += '<div class="adr-orders">';
     group.forEach(function(g) {
+      var os = (g.orderStatus || '').toLowerCase();
+      var isShipped = os === 'shipped';
       html += '<div class="adr-order-row">';
       html += '<div><div class="adr-oid">' + g.orderId + '</div>';
       if (g.shopeeId) html += '<div class="adr-shop">🏪 ' + g.shopeeId + '</div>';
+      if (isShipped) html += '<div class="adr-shop" style="color:#e67e22;font-weight:600">⚠️ Shipped (ยังไม่ Completed)</div>';
       html += '</div>';
       html += '<div class="adr-dep">฿' + numberFormat(g.depositAmount || 0) + '</div>';
       html += '</div>';
