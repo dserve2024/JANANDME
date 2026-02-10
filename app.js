@@ -754,6 +754,7 @@ function adminToggleBlock(targetUserId, isChecked) {
 // ===== ADMIN PAYMENTS =====
 var adminPaymentData = [];
 var paymentSelections = {};
+var paymentViewMode = 'refund';
 
 function loadAdminPayments() {
   var listEl = document.getElementById('admin-pay-list');
@@ -776,25 +777,54 @@ function loadAdminPayments() {
   });
 }
 
+function switchPaymentMode(mode) {
+  paymentViewMode = mode;
+  renderAdminPayments();
+}
+
 function renderAdminPayments() {
-  var totalUsers = adminPaymentData.length;
+  // Filter by current mode
+  var filtered = adminPaymentData.filter(function(u) {
+    if (paymentViewMode === 'deposit') return u.type === 'deposit';
+    return u.type !== 'deposit';
+  });
+
+  var refundCount = adminPaymentData.filter(function(u) { return u.type !== 'deposit'; }).length;
+  var depositCount = adminPaymentData.filter(function(u) { return u.type === 'deposit'; }).length;
+
+  var totalUsers = filtered.length;
   var totalAmount = 0;
-  adminPaymentData.forEach(function(u) {
+  filtered.forEach(function(u) {
     u.orders.forEach(function(o) { totalAmount += parseFloat(o.amount) || 0; });
   });
+
   var summaryEl = document.getElementById('admin-pay-summary');
-  summaryEl.innerHTML =
-    '<div class="aps-card warn"><div class="aps-num">' + totalUsers + '</div><div class="aps-lbl">รอโอน</div></div>' +
+  var isRefund = paymentViewMode === 'refund';
+  var refundActive = isRefund ? 'active' : '';
+  var depositActive = !isRefund ? 'active' : '';
+
+  var modeHtml = '<div class="filter-row" style="margin-bottom:12px;">';
+  modeHtml += '<button class="filter-btn ' + refundActive + '" onclick="switchPaymentMode(\'refund\')" style="flex:1;">💰 ยอดคืน' + (refundCount > 0 ? ' (' + refundCount + ')' : '') + '</button>';
+  modeHtml += '<button class="filter-btn ' + depositActive + '" onclick="switchPaymentMode(\'deposit\')" style="flex:1;">🏦 มัดจำ' + (depositCount > 0 ? ' (' + depositCount + ')' : '') + '</button>';
+  modeHtml += '</div>';
+
+  var modeLabel = isRefund ? 'รอโอนคืน' : 'รอคืนมัดจำ';
+  var modeColor = isRefund ? 'warn' : 'info';
+
+  summaryEl.innerHTML = modeHtml +
+    '<div class="admin-pay-summary" style="margin-bottom:0;grid-template-columns:1fr 1fr;">' +
+    '<div class="aps-card ' + modeColor + '"><div class="aps-num">' + totalUsers + '</div><div class="aps-lbl">' + modeLabel + '</div></div>' +
     '<div class="aps-card info"><div class="aps-num">฿' + numberFormat(totalAmount) + '</div><div class="aps-lbl">ยอดรวม</div></div>' +
-    '<div class="aps-card ok"><div class="aps-num">0</div><div class="aps-lbl">โอนแล้ว</div></div>';
+    '</div>';
 
   var listEl = document.getElementById('admin-pay-list');
-  if (adminPaymentData.length === 0) {
-    listEl.innerHTML = '<div class="empty-state"><div class="icon">✅</div><p>ไม่มีรายการรอโอน</p></div>';
+  if (filtered.length === 0) {
+    var emptyMsg = isRefund ? 'ไม่มียอดคืนรอโอน' : 'ไม่มีมัดจำรอคืน';
+    listEl.innerHTML = '<div class="empty-state"><div class="icon">✅</div><p>' + emptyMsg + '</p></div>';
     return;
   }
   var html = '';
-  adminPaymentData.forEach(function(user) {
+  filtered.forEach(function(user) {
     var selected = paymentSelections[user.userId] || new Set();
     var selectedTotal = 0;
     var isDeposit = user.type === 'deposit';
