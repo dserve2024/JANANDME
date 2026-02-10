@@ -694,19 +694,39 @@ function renderAdminUsers(users) {
   users.forEach(function(user) {
     var statusText = user.blocked ? '🚫 Blocked' : user.approved ? '✅ Active' : '⏳ Pending';
     var statusColor = user.blocked ? 'var(--red)' : user.approved ? 'var(--green)' : 'var(--amber)';
+    var isActive = user.approved && !user.blocked;
+    var isBlocked = user.blocked;
+    var isPending = !user.approved && !user.blocked;
+
     html += '<div class="order-card" style="margin-bottom:10px;"><div style="display:flex;align-items:center;gap:12px;">';
     if (user.profileUrl) html += '<img src="' + user.profileUrl + '" style="width:40px;height:40px;border-radius:50%;border:2px solid var(--border);" onerror="this.style.display=\'none\'">';
     html += '<div style="flex:1;"><div style="font-weight:700;font-size:14px;">' + user.displayName + '</div><div style="font-size:12px;color:' + statusColor + ';font-weight:600;">' + statusText + '</div></div>';
-    html += '<div style="text-align:right;font-size:12px;color:var(--txt3);"><div>฿' + numberFormat(user.pendingRefund || 0) + ' รอคืน</div></div></div>';
+
+    // Toggle switch for approved/blocked users
+    if (isActive || isBlocked) {
+      var checked = isActive ? 'checked' : '';
+      var toggleLabel = isActive ? 'Active' : 'Blocked';
+      var labelColor = isActive ? 'color:var(--green);' : 'color:var(--red);';
+      html += '<div class="toggle-wrap">';
+      html += '<span class="toggle-label" style="' + labelColor + '">' + toggleLabel + '</span>';
+      html += '<label class="toggle"><input type="checkbox" ' + checked + ' onchange="adminToggleBlock(\'' + user.userId + '\', this.checked)"><span class="slider"></span></label>';
+      html += '</div>';
+    } else {
+      html += '<div style="text-align:right;font-size:12px;color:var(--txt3);"><div>฿' + numberFormat(user.pendingRefund || 0) + ' รอคืน</div></div>';
+    }
+
+    html += '</div>';
     if (user.bankName) html += '<div style="font-size:11px;color:var(--txt3);margin-top:8px;">🏦 ' + user.bankName + ' ' + user.bankAccount + ' (' + user.accountName + ')</div>';
-    html += '<div style="display:flex;gap:8px;margin-top:10px;">';
-    if (!user.approved && !user.blocked) {
+    if (isActive || isBlocked) html += '<div style="font-size:11px;color:var(--txt3);margin-top:4px;">฿' + numberFormat(user.pendingRefund || 0) + ' รอคืน</div>';
+
+    // Action buttons for pending users only
+    if (isPending) {
+      html += '<div style="display:flex;gap:8px;margin-top:10px;">';
       html += '<button onclick="adminApprove(\'' + user.userId + '\')" style="flex:1;padding:8px;border:none;border-radius:var(--r-xs);background:var(--green);color:white;font-size:12px;cursor:pointer;font-weight:700;font-family:var(--f-th);">✅ Approve</button>';
       html += '<button onclick="adminBlock(\'' + user.userId + '\',\'block\')" style="flex:1;padding:8px;border:none;border-radius:var(--r-xs);background:var(--red);color:white;font-size:12px;cursor:pointer;font-weight:700;font-family:var(--f-th);">🚫 Block</button>';
-    } else if (user.blocked) {
-      html += '<button onclick="adminBlock(\'' + user.userId + '\',\'unblock\')" style="flex:1;padding:8px;border:none;border-radius:var(--r-xs);background:var(--green);color:white;font-size:12px;cursor:pointer;font-weight:700;font-family:var(--f-th);">✅ Unblock</button>';
+      html += '</div>';
     }
-    html += '</div></div>';
+    html += '</div>';
   });
 
   container.innerHTML = html;
@@ -726,6 +746,11 @@ function adminBlock(targetUserId, action) {
   });
 }
 
+function adminToggleBlock(targetUserId, isChecked) {
+  var action = isChecked ? 'unblock' : 'block';
+  adminBlock(targetUserId, action);
+}
+
 // ===== ADMIN PAYMENTS =====
 var adminPaymentData = [];
 var paymentSelections = {};
@@ -738,7 +763,9 @@ function loadAdminPayments() {
       listEl.innerHTML = '<div class="empty-state"><div class="icon">❌</div><p>' + (data.error || 'โหลดไม่สำเร็จ') + '</p></div>';
       return;
     }
-    adminPaymentData = data.users || [];
+    adminPaymentData = (data.users || []).filter(function(u) {
+      return u.bankName && u.bankAccount;
+    });
     paymentSelections = {};
     adminPaymentData.forEach(function(u) {
       paymentSelections[u.userId] = new Set(u.orders.map(function(o) { return o.orderId; }));
