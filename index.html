@@ -59,6 +59,9 @@
       <div class="form-group">
         <textarea id="contact-message-direct" rows="5" style="width:100%;padding:15px;border:1.5px solid var(--border-s);border-radius:var(--r-sm);font-size:15px;resize:none;font-family:var(--f-th);background:var(--bg);color:var(--txt);" placeholder="พิมพ์ข้อความที่ต้องการสอบถาม..."></textarea>
       </div>
+      <div id="contact-image-preview-direct" style="margin-top:8px;"></div>
+      <button type="button" onclick="document.getElementById('contactImageInputDirect').click()" style="width:100%;padding:12px;background:var(--surface);color:var(--txt2);border:1.5px dashed var(--border-s);border-radius:var(--r-sm);font-size:14px;cursor:pointer;margin-top:10px;font-family:var(--f-th);">📷 แนบรูปภาพ</button>
+      <input type="file" id="contactImageInputDirect" accept="image/*" style="display:none" onchange="handleContactImage(this.files,'contact-image-preview-direct')">
       <button onclick="sendContactDirect()" style="width:100%;padding:15px;background:var(--accent);color:white;border:none;border-radius:var(--r-sm);font-size:16px;font-weight:700;cursor:pointer;margin-top:10px;font-family:var(--f-th);">
         📨 ส่งข้อความ
       </button>
@@ -476,6 +479,9 @@
       <div class="form-group">
         <textarea id="contact-message" rows="4" style="width:100%;padding:12px;border:1.5px solid var(--border-s);border-radius:var(--r-sm);font-size:14px;resize:none;font-family:var(--f-th);background:var(--bg);color:var(--txt);" placeholder="พิมพ์ข้อความที่นี่..."></textarea>
       </div>
+      <div id="contact-image-preview" style="margin-top:8px;"></div>
+      <button type="button" onclick="document.getElementById('contactImageInput').click()" style="width:100%;padding:10px;background:var(--surface);color:var(--txt2);border:1.5px dashed var(--border-s);border-radius:var(--r-sm);font-size:13px;cursor:pointer;margin-top:8px;font-family:var(--f-th);">📷 แนบรูปภาพ</button>
+      <input type="file" id="contactImageInput" accept="image/*" style="display:none" onchange="handleContactImage(this.files,'contact-image-preview')">
     </div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="cancelContact()">ยกเลิก</button>

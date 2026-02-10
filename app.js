@@ -546,32 +546,66 @@ function showModal(id) { document.getElementById(id).classList.add('show'); }
 function hideModal(id) { document.getElementById(id).classList.remove('show'); }
 
 // ===== CONTACT ADMIN =====
+var contactImageData = null; // { base64, preview }
+
 function showContactModal() {
   document.getElementById('contact-message').value = '';
+  contactImageData = null;
+  var previewEl = document.getElementById('contact-image-preview');
+  if (previewEl) previewEl.innerHTML = '';
   showModal('contactModal');
 }
 
-function cancelContact() { hideModal('contactModal'); }
+function cancelContact() {
+  contactImageData = null;
+  hideModal('contactModal');
+}
+
+function handleContactImage(files, previewId) {
+  if (!files || !files.length) return;
+  compressImage(files[0], 1024, 0.8, function(base64, preview) {
+    contactImageData = { base64: base64, preview: preview };
+    var el = document.getElementById(previewId);
+    if (el) {
+      el.innerHTML = '<div style="position:relative;display:inline-block;">' +
+        '<img src="' + preview + '" style="max-width:100%;max-height:150px;border-radius:8px;border:1px solid var(--border-s);">' +
+        '<button onclick="removeContactImage(\'' + previewId + '\')" style="position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;background:var(--red);color:white;border:none;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>' +
+        '</div>';
+    }
+  });
+}
+
+function removeContactImage(previewId) {
+  contactImageData = null;
+  var el = document.getElementById(previewId);
+  if (el) el.innerHTML = '';
+}
 
 function sendContactDirect() {
   var message = document.getElementById('contact-message-direct').value.trim();
   if (!message) { showToast('❌ กรุณาพิมพ์ข้อความ'); return; }
 
-  var btn = document.querySelector('#contact-only-section button');
-  btn.disabled = true;
-  btn.textContent = '⏳ กำลังส่ง...';
+  var btn = document.querySelector('#contact-only-section button[onclick="sendContactDirect()"]');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ กำลังส่ง...'; }
 
-  apiCall('contactAdmin', { message: message }).then(function(data) {
+  var payload = {
+    source: 'liff_contact_admin',
+    message: message,
+    image: contactImageData ? contactImageData.base64 : null
+  };
+
+  apiPost(payload).then(function(data) {
     if (data.success) {
+      contactImageData = null;
       showToast('✅ ส่งข้อความสำเร็จ!');
       setTimeout(function() { if (liff.isInClient()) liff.closeWindow(); }, 1500);
     } else {
       showToast('❌ ' + (data.error || 'เกิดข้อผิดพลาด'));
-      btn.disabled = false; btn.textContent = '📨 ส่งข้อความ';
+      if (btn) { btn.disabled = false; btn.textContent = '📨 ส่งข้อความ'; }
     }
   }).catch(function() {
     showToast('❌ เกิดข้อผิดพลาด');
-    btn.disabled = false; btn.textContent = '📨 ส่งข้อความ';
+    if (btn) { btn.disabled = false; btn.textContent = '📨 ส่งข้อความ'; }
   });
 }
 
@@ -581,8 +615,17 @@ function sendContactMessage() {
   var message = document.getElementById('contact-message').value.trim();
   if (!message) { showToast('❌ กรุณาพิมพ์ข้อความ'); return; }
 
-  apiCall('contactAdmin', { message: message }).then(function(data) {
+  var payload = {
+    source: 'liff_contact_admin',
+    message: message,
+    image: contactImageData ? contactImageData.base64 : null
+  };
+
+  apiPost(payload).then(function(data) {
     hideModal('contactModal');
+    contactImageData = null;
+    var previewEl = document.getElementById('contact-image-preview');
+    if (previewEl) previewEl.innerHTML = '';
     if (data.success) showToast('✅ ส่งข้อความสำเร็จ! แอดมินจะติดต่อกลับค่ะ');
     else showToast('❌ ' + (data.error || 'เกิดข้อผิดพลาด'));
   }).catch(function() {
