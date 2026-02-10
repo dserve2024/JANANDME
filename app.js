@@ -298,6 +298,9 @@ function saveBank() {
     phone: document.getElementById('input-phone').value.trim()
   };
 
+  var btn = document.querySelector('#bankModal .btn-save');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ กำลังบันทึก...'; }
+
   apiCall('updateBank', params).then(function(data) {
     if (data.success) {
       showToast('✅ บันทึกสำเร็จ');
@@ -306,6 +309,10 @@ function saveBank() {
     } else {
       showToast('❌ ' + (data.error || 'เกิดข้อผิดพลาด'));
     }
+    if (btn) { btn.disabled = false; btn.textContent = 'บันทึก'; }
+  }).catch(function() {
+    showToast('❌ เกิดข้อผิดพลาด');
+    if (btn) { btn.disabled = false; btn.textContent = 'บันทึก'; }
   });
 }
 
@@ -475,6 +482,9 @@ function saveOrder() {
     if (!confirm('⚠️ ยอดรวมมากกว่า 10,000 บาท\nต้องการบันทึกหรือไม่?')) return;
   }
 
+  var btn = document.querySelector('#orderModal .btn-save');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ กำลังบันทึก...'; }
+
   apiCall('updateOrder', params).then(function(data) {
     if (data.success) {
       showToast('✅ บันทึกสำเร็จ');
@@ -484,6 +494,10 @@ function saveOrder() {
     } else {
       showToast('❌ ' + (data.error || 'เกิดข้อผิดพลาด'));
     }
+    if (btn) { btn.disabled = false; btn.textContent = '💾 บันทึก'; }
+  }).catch(function() {
+    showToast('❌ เกิดข้อผิดพลาด');
+    if (btn) { btn.disabled = false; btn.textContent = '💾 บันทึก'; }
   });
 }
 
