@@ -727,11 +727,13 @@ function renderAdminUsers(users) {
       html += '<button onclick="adminBlock(\'' + user.userId + '\',\'block\')" style="flex:1;padding:8px;border:none;border-radius:var(--r-xs);background:var(--red);color:white;font-size:12px;cursor:pointer;font-weight:700;font-family:var(--f-th);">🚫 Block</button>';
     }
     if (isActive) {
-      if (user.isAdmin) {
-        html += '<button onclick="adminSetAdmin(\'' + user.userId + '\',\'remove\')" style="flex:1;padding:8px;border:1.5px solid var(--amber);border-radius:var(--r-xs);background:var(--amber-soft);color:var(--amber);font-size:11px;cursor:pointer;font-weight:700;font-family:var(--f-th);">👑 ถอด Admin</button>';
-      } else {
-        html += '<button onclick="adminSetAdmin(\'' + user.userId + '\',\'add\')" style="flex:1;padding:8px;border:1.5px solid var(--border-s);border-radius:var(--r-xs);background:var(--surface);color:var(--txt2);font-size:11px;cursor:pointer;font-weight:700;font-family:var(--f-th);">👑 ตั้ง Admin</button>';
-      }
+      var adminChecked = user.isAdmin ? 'checked' : '';
+      var adminLabel = user.isAdmin ? 'Admin' : 'User';
+      var adminLabelColor = user.isAdmin ? 'color:var(--amber);' : 'color:var(--txt3);';
+      html += '<div class="toggle-wrap">';
+      html += '<span class="toggle-label" style="' + adminLabelColor + '">👑 ' + adminLabel + '</span>';
+      html += '<label class="toggle toggle-amber"><input type="checkbox" ' + adminChecked + ' onchange="adminToggleAdmin(\'' + user.userId + '\', this.checked)"><span class="slider"></span></label>';
+      html += '</div>';
     }
     html += '</div>';
     html += '</div>';
@@ -757,6 +759,11 @@ function adminBlock(targetUserId, action) {
 function adminToggleBlock(targetUserId, isChecked) {
   var action = isChecked ? 'unblock' : 'block';
   adminBlock(targetUserId, action);
+}
+
+function adminToggleAdmin(targetUserId, isChecked) {
+  var action = isChecked ? 'add' : 'remove';
+  adminSetAdmin(targetUserId, action);
 }
 
 function adminSetAdmin(targetUserId, action) {
