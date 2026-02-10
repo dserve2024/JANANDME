@@ -659,7 +659,8 @@ function loadAdminData() {
   if (!isAdminUser) return;
   var activeSubTab = document.querySelector('#admin-section .admin-sub-tab.active');
   var tabName = activeSubTab ? activeSubTab.textContent.trim() : '';
-  if (tabName.indexOf('โอนเงิน') !== -1) loadAdminPayments();
+  if (tabName.indexOf('มัดจำ') !== -1) loadAdminDepositReturns();
+  else if (tabName.indexOf('โอนเงิน') !== -1) loadAdminPayments();
   else loadAdminUsers();
 }
 
@@ -676,6 +677,10 @@ function switchAdminSubTab(sub) {
     tabs[1].classList.add('active');
     document.getElementById('admin-payment-sub').classList.add('active');
     loadAdminPayments();
+  } else if (sub === 'deposit') {
+    tabs[2].classList.add('active');
+    document.getElementById('admin-deposit-sub').classList.add('active');
+    loadAdminDepositReturns();
   }
 }
 
@@ -1412,6 +1417,151 @@ function renderDepositHistory(items) {
     html += '</div>';
   });
   container.innerHTML = html;
+}
+
+// ===== ADMIN DEPOSIT RETURNS =====
+function loadAdminDepositReturns() {
+  var container = document.getElementById('admin-deposit-list');
+  container.innerHTML = '<div class="loading"><div class="spinner"></div><p>กำลังโหลด...</p></div>';
+  apiCall('adminGetDepositReturns').then(function(data) {
+    if (!data.success) {
+      container.innerHTML = '<div class="empty-state"><div class="icon">❌</div><p>' + (data.error || 'โหลดไม่สำเร็จ') + '</p></div>';
+      return;
+    }
+    renderAdminDepositReturns(data.submissions || []);
+  });
+}
+
+function getBaseSubId_(id) {
+  var m = id.match(/^(DR_\d{8}_\d{6})(?:_\d+)?$/);
+  return m ? m[1] : id;
+}
+
+function renderAdminDepositReturns(items) {
+  var container = document.getElementById('admin-deposit-list');
+
+  var groups = {};
+  var groupOrder = [];
+  items.forEach(function(item) {
+    var base = getBaseSubId_(item.submissionId);
+    if (!groups[base]) {
+      groups[base] = { items: [], base: base };
+      groupOrder.push(base);
+    }
+    groups[base].items.push(item);
+  });
+
+  var pendingGroups = groupOrder.filter(function(g) { return groups[g].items[0].status === 'รอตรวจ'; }).length;
+  var html = '<div class="summary-row" style="margin-bottom:15px;">';
+  html += '<div class="summary-card pending"><div class="summary-label">ทั้งหมด</div><div class="summary-value" style="color:var(--txt);">' + groupOrder.length + '</div></div>';
+  html += '<div class="summary-card deposit"><div class="summary-label">รอตรวจ</div><div class="summary-value" style="color:var(--amber);">' + pendingGroups + '</div></div>';
+  html += '</div>';
+
+  if (groupOrder.length === 0) {
+    html += '<div class="empty-state"><div class="icon">📦</div><p>ไม่มีรายการส่งคืนมัดจำ</p></div>';
+    container.innerHTML = html;
+    return;
+  }
+
+  groupOrder.forEach(function(base) {
+    var group = groups[base].items;
+    var first = group[0];
+    var isPending = first.status === 'รอตรวจ';
+    var isApproved = first.status === 'อนุมัติ';
+    var isRejected = first.status === 'ปฏิเสธ';
+    var statusColor = isPending ? 'var(--amber)' : isApproved ? 'var(--green)' : 'var(--red)';
+    var statusIcon = isPending ? '⏳' : isApproved ? '✅' : '❌';
+    var totalDep = 0;
+    var allSubIds = [];
+    group.forEach(function(g) { totalDep += parseFloat(g.depositAmount) || 0; allSubIds.push(g.submissionId); });
+    var itemCount = Math.round(totalDep / 100);
+    var allSubIdsStr = allSubIds.join(',');
+
+    html += '<div class="adr-card">';
+    html += '<div class="adr-header">';
+    if (first.profileUrl) html += '<img src="' + first.profileUrl + '" class="adr-avatar" onerror="this.style.display=\'none\'">';
+    html += '<div class="adr-user"><div class="adr-name">' + (first.displayName || 'Unknown') + '</div>';
+    html += '<div class="adr-time">⏰ ' + (first.submittedAt || '') + '</div></div>';
+    html += '<div class="adr-right"><div class="adr-amount">฿' + numberFormat(totalDep) + '<span class="adr-count">' + itemCount + '</span></div>';
+    html += '<div class="adr-status" style="color:' + statusColor + '">' + statusIcon + ' ' + first.status + '</div></div>';
+    html += '</div>';
+
+    html += '<div class="adr-body">';
+    html += '<div class="adr-orders">';
+    group.forEach(function(g) {
+      html += '<div class="adr-order-row">';
+      html += '<div><div class="adr-oid">' + g.orderId + '</div>';
+      if (g.shopeeId) html += '<div class="adr-shop">🏪 ' + g.shopeeId + '</div>';
+      html += '</div>';
+      html += '<div class="adr-dep">฿' + numberFormat(g.depositAmount || 0) + '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+
+    var photos = first.productPhotos || [];
+    var tracks = first.trackingPhotos || [];
+    html += '<div class="adr-photos">';
+    photos.forEach(function(url, idx) {
+      if (url) {
+        var fid = url.match(/[-\w]{25,}/);
+        var viewUrl = fid ? 'https://drive.google.com/file/d/' + fid[0] + '/view' : url;
+        html += '<a href="' + viewUrl + '" target="_blank" class="adr-photo-btn product">📷 รูปสินค้า ' + (idx + 1) + '</a>';
+      }
+    });
+    tracks.forEach(function(url, idx) {
+      if (url) {
+        var fid = url.match(/[-\w]{25,}/);
+        var viewUrl = fid ? 'https://drive.google.com/file/d/' + fid[0] + '/view' : url;
+        html += '<a href="' + viewUrl + '" target="_blank" class="adr-photo-btn tracking">🚚 Tracking ' + (idx + 1) + '</a>';
+      }
+    });
+    html += '</div>';
+
+    if (first.note) {
+      html += '<div class="adr-note">💬 ' + first.note + '</div>';
+    }
+
+    if (isPending) {
+      html += '<div class="adr-actions">';
+      html += '<button class="btn-approve" onclick="adminReviewDeposit(\'' + allSubIdsStr + '\',\'approve\')">✅ อนุมัติ</button>';
+      html += '<button class="btn-reject" onclick="promptRejectDeposit(\'' + allSubIdsStr + '\')">❌ ปฏิเสธ</button>';
+      html += '</div>';
+    }
+    if (isRejected && first.adminNote) {
+      html += '<div class="adr-result" style="background:var(--red-soft);color:var(--red);">💬 เหตุผล: ' + first.adminNote + '</div>';
+    }
+    if (isApproved) {
+      html += '<div class="adr-result" style="background:var(--green-soft);color:var(--green);">✅ อนุมัติโดย ' + (first.reviewedBy || '') + ' เมื่อ ' + (first.reviewedAt || '') + '</div>';
+    }
+
+    html += '</div></div>';
+  });
+
+  container.innerHTML = html;
+}
+
+function adminReviewDeposit(submissionIds, action) {
+  apiCall('adminReviewDeposit', { submissionId: submissionIds, reviewAction: action }).then(function(data) {
+    if (data.success) {
+      showToast(action === 'approve' ? '✅ อนุมัติแล้ว' : '❌ ปฏิเสธแล้ว');
+      loadAdminDepositReturns();
+    } else {
+      showToast('❌ ' + (data.error || 'Error'));
+    }
+  });
+}
+
+function promptRejectDeposit(submissionIds) {
+  var reason = prompt('เหตุผลที่ปฏิเสธ:');
+  if (reason === null) return;
+  apiCall('adminReviewDeposit', { submissionId: submissionIds, reviewAction: 'reject', adminNote: reason }).then(function(data) {
+    if (data.success) {
+      showToast('❌ ปฏิเสธแล้ว');
+      loadAdminDepositReturns();
+    } else {
+      showToast('❌ ' + (data.error || 'Error'));
+    }
+  });
 }
 
 // Start
