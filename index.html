@@ -4,379 +4,159 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>JAN&ME</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; min-height: 100vh; }
-    
-    .header { background: linear-gradient(135deg, #FF6B6B, #FF8E53); color: white; padding: 20px; text-align: center; }
-    .header h1 { font-size: 22px; margin-bottom: 4px; }
-    .header p { font-size: 13px; opacity: 0.9; }
-    
-    .tabs { display: flex; background: white; border-bottom: 1px solid #eee; position: sticky; top: 0; z-index: 100; }
-    .tab { flex: 1; padding: 14px; text-align: center; cursor: pointer; border-bottom: 3px solid transparent; font-size: 14px; transition: all 0.2s; }
-    .tab.active { color: #FF6B6B; border-bottom-color: #FF6B6B; font-weight: 600; }
-    
-    .content { padding: 15px; max-width: 500px; margin: 0 auto; padding-bottom: 30px; }
-    .section { display: none; }
-    .section.active { display: block; }
-    
-    /* Profile */
-    .profile-section { display: flex; align-items: center; gap: 15px; padding: 16px; background: white; border-radius: 16px; margin-bottom: 15px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
-    .profile-pic { width: 56px; height: 56px; border-radius: 50%; border: 3px solid #FF6B6B; }
-    .profile-info { flex: 1; }
-    .profile-name { font-size: 18px; font-weight: 600; color: #333; }
-    .profile-id { font-size: 12px; color: #999; margin-top: 2px; }
-    
-    /* Summary Cards */
-    .summary-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px; }
-    .summary-card { background: white; border-radius: 16px; padding: 16px; text-align: center; box-shadow: 0 2px 12px rgba(0,0,0,0.06); position: relative; overflow: hidden; }
-    .summary-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; }
-    .summary-card.pending::before { background: linear-gradient(90deg, #ffc107, #ffdb4d); }
-    .summary-card.deposit::before { background: linear-gradient(90deg, #17a2b8, #4dd0e1); }
-    .summary-icon { font-size: 28px; margin-bottom: 8px; }
-    .summary-label { font-size: 12px; color: #888; margin-bottom: 4px; }
-    .summary-value { font-size: 22px; font-weight: 700; }
-    .summary-card.pending .summary-value { color: #e6a700; }
-    .summary-card.deposit .summary-value { color: #17a2b8; }
-    
-    /* Section Title */
-    .section-title { display: flex; justify-content: space-between; align-items: center; margin: 20px 0 12px; padding: 0 4px; }
-    .section-title h2 { font-size: 15px; color: #333; font-weight: 600; }
-    .btn-add { background: linear-gradient(135deg, #FF6B6B, #FF8E53); color: white; border: none; width: 32px; height: 32px; border-radius: 50%; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(255,107,107,0.4); }
-    
-    /* Shopee Grid */
-    .shopee-grid { display: grid; gap: 12px; }
-    .shopee-grid.single { grid-template-columns: 1fr; }
-    .shopee-grid.multi { grid-template-columns: 1fr 1fr; }
-    
-    /* Shopee Card */
-    .shopee-card { background: white; border-radius: 16px; padding: 14px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
-    .shopee-card:active { transform: scale(0.98); }
-    .shopee-card.full { display: flex; align-items: center; gap: 12px; }
-    .shopee-card.compact { text-align: center; padding: 16px 12px; }
-    
-    .shopee-icon { width: 44px; height: 44px; background: linear-gradient(135deg, #EE4D2D, #FF6633); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px; flex-shrink: 0; }
-    .shopee-card.compact .shopee-icon { width: 40px; height: 40px; margin: 0 auto 10px; font-size: 18px; }
-    
-    .shopee-info { flex: 1; min-width: 0; }
-    .shopee-name { font-weight: 600; font-size: 14px; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .shopee-card.compact .shopee-name { font-size: 13px; margin-bottom: 8px; }
-    
-    .shopee-stats { display: flex; align-items: center; gap: 6px; margin-top: 4px; font-size: 12px; }
-    .shopee-card.compact .shopee-stats { justify-content: center; }
-    .stat-paid { color: #28a745; font-weight: 600; }
-    .stat-total { color: #666; }
-    
-    /* Progress Ring */
-    .progress-ring { width: 44px; height: 44px; position: relative; flex-shrink: 0; }
-    .shopee-card.compact .progress-ring { width: 46px; height: 46px; margin: 0 auto 6px; }
-    .progress-ring svg { transform: rotate(-90deg); }
-    .progress-ring circle { fill: none; stroke-width: 4; }
-    .progress-ring .bg { stroke: #eee; }
-    .progress-ring .progress { stroke: #28a745; stroke-linecap: round; }
-    .progress-ring .progress.warning { stroke: #ffc107; }
-    .progress-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 10px; font-weight: 700; color: #333; }
-    
-    /* Bank Card */
-    .bank-card { background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 16px; padding: 20px; color: white; box-shadow: 0 4px 15px rgba(102,126,234,0.4); cursor: pointer; transition: transform 0.2s; }
-    .bank-card:active { transform: scale(0.98); }
-    .bank-label { font-size: 10px; opacity: 0.8; text-transform: uppercase; letter-spacing: 1px; }
-    .bank-name { font-size: 18px; font-weight: 700; margin: 2px 0 12px; }
-    .bank-account { font-size: 16px; letter-spacing: 2px; font-family: monospace; }
-    .bank-holder { margin-top: 12px; font-size: 13px; opacity: 0.9; }
-    .bank-phone { margin-top: 6px; font-size: 12px; opacity: 0.8; }
-    
-    /* Empty State */
-    .empty-state { background: white; border-radius: 16px; text-align: center; padding: 30px 20px; color: #999; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
-    .empty-state .icon { font-size: 40px; margin-bottom: 10px; }
-    .empty-state p { font-size: 13px; margin-bottom: 15px; }
-    .empty-state .btn { padding: 12px 24px; }
-    
-    /* Order Card */
-    .orders-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .order-card { background: white; border-radius: 12px; padding: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); cursor: pointer; transition: transform 0.2s; }
-    .order-card:active { transform: scale(0.98); }
-    .order-id { font-weight: 600; color: #FF6B6B; font-size: 11px; word-break: break-all; }
-    .order-status { display: inline-block; padding: 2px 6px; border-radius: 10px; font-size: 9px; font-weight: 500; }
-    .order-status.pending { background: #FFF3CD; color: #856404; }
-    .order-status.completed { background: #D4EDDA; color: #155724; }
-    .order-amount { font-size: 16px; font-weight: 700; color: #333; margin: 6px 0; }
-    .order-time { font-size: 10px; color: #888; }
-    .order-by { font-size: 10px; margin-top: 2px; }
-    .order-by.user { color: #FF6B6B; }
-    .order-by.admin { color: #28a745; }
-    .order-refund { font-size: 10px; color: #17a2b8; margin-top: 6px; padding-top: 6px; border-top: 1px solid #eee; }
-    .order-shopee { font-size: 10px; color: #666; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    
-    /* Filter */
-    .filter-row { display: flex; gap: 8px; margin-bottom: 15px; overflow-x: auto; padding-bottom: 5px; }
-    .filter-btn { padding: 8px 16px; border: 1px solid #ddd; border-radius: 20px; font-size: 12px; white-space: nowrap; cursor: pointer; background: white; transition: all 0.2s; }
-    .filter-btn.active { background: #FF6B6B; color: white; border-color: #FF6B6B; }
-    
-    /* Modal */
-    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
-    .modal-overlay.show { display: flex; }
-    .modal { background: white; border-radius: 20px; width: 100%; max-width: 360px; max-height: 90vh; overflow: hidden; animation: modalIn 0.3s ease; }
-    @keyframes modalIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-    .modal-header { background: linear-gradient(135deg, #FF6B6B, #FF8E53); color: white; padding: 14px; text-align: center; }
-    .modal-header h3 { font-size: 15px; }
-    .modal-body { padding: 15px; max-height: 60vh; overflow-y: auto; }
-    .modal-body .form-group { margin-bottom: 10px; }
-    .modal-body label { display: block; font-size: 11px; color: #666; margin-bottom: 4px; font-weight: 500; }
-    .modal-body input, .modal-body select { width: 100%; padding: 10px; border: 2px solid #eee; border-radius: 8px; font-size: 14px; transition: border-color 0.2s; }
-    .modal-body input:focus, .modal-body select:focus { outline: none; border-color: #FF6B6B; }
-    .modal-body input:disabled { background: #f5f5f5; color: #999; }
-    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .form-row .form-group { margin-bottom: 10px; }
-    .form-group.full { grid-column: 1 / -1; }
-    .modal-body .form-group { margin-bottom: 10px; }
-    .modal-body label { font-size: 11px; margin-bottom: 4px; }
-    .modal-body input, .modal-body select { padding: 10px; font-size: 14px; border-radius: 8px; }
-    .modal-actions { display: flex; gap: 8px; padding: 0 15px 15px; }
-    .modal-actions button { flex: 1; padding: 12px; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; }
-    .btn-cancel { background: #f5f5f5; color: #666; }
-    .btn-save { background: linear-gradient(135deg, #FF6B6B, #FF8E53); color: white; }
-    .btn-delete { background: #dc3545; color: white; }
-    .btn-secondary { background: #6c757d; color: white; }
-    
-    /* History */
-    .history-item { padding: 10px; border-bottom: 1px solid #eee; font-size: 12px; }
-    .history-item:last-child { border-bottom: none; }
-    .history-time { color: #999; margin-bottom: 4px; }
-    .history-change { color: #333; }
-    .history-change .old { color: #dc3545; text-decoration: line-through; }
-    .history-change .new { color: #28a745; }
-    
-    /* Order Image */
-    .order-image { width: 100%; border-radius: 12px; margin-bottom: 15px; }
-    
-    /* Toast */
-    .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 12px 24px; border-radius: 8px; display: none; z-index: 2000; font-size: 14px; }
-    .toast.show { display: block; }
-    
-    /* Loading */
-    .loading { text-align: center; padding: 40px; }
-    .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #FF6B6B; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px; }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-    /* Admin Sub-Tabs */
-    .admin-sub-tabs { display:flex;gap:0;margin-bottom:14px;background:white;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06); }
-    .admin-sub-tab { flex:1;padding:10px 8px;text-align:center;font-size:12px;color:#888;cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s; }
-    .admin-sub-tab.active { color:#FF6B6B;background:#fff5f5;border-bottom-color:#FF6B6B;font-weight:600; }
-    .admin-sub-section { display:none; }
-    .admin-sub-section.active { display:block; }
-
-    /* Payment Summary */
-    .admin-pay-summary { display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px; }
-    .aps-card { background:white;border-radius:12px;padding:12px 8px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.06);position:relative;overflow:hidden; }
-    .aps-card::before { content:'';position:absolute;top:0;left:0;right:0;height:3px; }
-    .aps-card.warn::before { background:#ffc107; }
-    .aps-card.info::before { background:#17a2b8; }
-    .aps-card.ok::before { background:#28a745; }
-    .aps-card .aps-num { font-size:18px;font-weight:700; }
-    .aps-card.warn .aps-num { color:#e6a700; }
-    .aps-card.info .aps-num { color:#17a2b8; }
-    .aps-card.ok .aps-num { color:#28a745; }
-    .aps-card .aps-lbl { font-size:10px;color:#888;margin-top:2px; }
-
-    /* Payment Card */
-    .pay-card { background:white;border-radius:14px;box-shadow:0 2px 10px rgba(0,0,0,0.06);margin-bottom:10px;overflow:hidden; }
-    .pay-card-header { display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid #f0f0f0; }
-    .pay-avatar { width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#FF6B6B,#FF8E53);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:14px;flex-shrink:0; }
-    .pay-avatar img { width:100%;height:100%;border-radius:50%;object-fit:cover; }
-    .pay-user-info { flex:1;min-width:0; }
-    .pay-user-name { font-size:14px;font-weight:600;color:#333; }
-    .pay-user-bank { font-size:11px;color:#888;margin-top:1px; }
-    .pay-total-box { text-align:right; }
-    .pay-total-amount { font-size:18px;font-weight:700;color:#28a745; }
-    .pay-total-amount.deposit-color { color:#17a2b8; }
-    .pay-total-label { font-size:10px;color:#888; }
-    .pay-card-body { padding:10px 14px; }
-    .pay-order-row { display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #f5f5f5; }
-    .pay-order-row:last-child { border:none; }
-    .pay-order-left { display:flex;align-items:center;gap:8px; }
-    .pay-check { width:20px;height:20px;border-radius:5px;border:2px solid #ddd;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all 0.2s;font-size:12px;color:transparent; }
-    .pay-check.checked { background:#28a745;border-color:#28a745;color:white; }
-    .pay-oid { font-size:11px;color:#FF6B6B;font-weight:500; }
-    .pay-oid-shop { font-size:10px;color:#999; }
-    .pay-oamt { font-size:13px;font-weight:600;color:#333; }
-    .pay-card-footer { display:flex;gap:8px;padding:10px 14px 14px; }
-    .pay-btn { flex:1;padding:10px;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;text-align:center;transition:opacity 0.2s; }
-    .pay-btn:active { opacity:0.7; }
-    .pay-btn.confirm-btn { background:linear-gradient(135deg,#28a745,#20c997);color:white; }
-    .pay-btn.deposit-btn { background:linear-gradient(135deg,#17a2b8,#4dd0e1);color:white; }
-    .pay-btn.skip-btn { background:#f5f5f5;color:#888; }
-
-    /* Confirm Payment Modal */
-    .confirm-pay-modal .modal-header { background:linear-gradient(135deg,#28a745,#20c997); }
-    .confirm-pay-modal.deposit-mode .modal-header { background:linear-gradient(135deg,#17a2b8,#4dd0e1); }
-    .cpay-bank-card { background:linear-gradient(135deg,#667eea,#764ba2);border-radius:14px;padding:18px;color:white;margin-bottom:14px; }
-    .cpay-bank-label { font-size:10px;opacity:0.7;text-transform:uppercase;letter-spacing:1px; }
-    .cpay-bank-name { font-size:20px;font-weight:700;margin:4px 0; }
-    .cpay-bank-account { font-size:22px;font-weight:700;letter-spacing:2px;font-family:monospace;margin-bottom:10px; }
-    .cpay-bank-holder { font-size:15px;opacity:0.95; }
-    .cpay-bank-user { font-size:13px;opacity:0.8;margin-top:4px; }
-    .cpay-orders { margin-bottom:12px; }
-    .cpay-orders-label { font-size:12px;color:#888;margin-bottom:6px;font-weight:500; }
-    .cpay-order-item { display:flex;justify-content:space-between;padding:6px 10px;background:#f8f9fa;border-radius:8px;margin-bottom:4px;font-size:13px; }
-    .cpay-order-item .oid { color:#FF6B6B;font-weight:500; }
-    .cpay-order-item .amt { font-weight:600;color:#333; }
-    .cpay-total-box { display:flex;justify-content:space-between;align-items:center;padding:14px;background:#f0fff4;border-radius:12px;border:2px solid #28a745;margin-bottom:14px; }
-    .cpay-total-box.deposit-style { background:#f0f9ff;border-color:#17a2b8; }
-    .cpay-total-label { font-size:15px;font-weight:600;color:#333; }
-    .cpay-total-amount { font-size:24px;font-weight:700;color:#28a745; }
-    .cpay-total-amount.deposit-color { color:#17a2b8; }
-    .cpay-note { font-size:12px;color:#888;text-align:center;margin-bottom:14px;line-height:1.6;background:#fffbeb;padding:10px;border-radius:10px; }
-    .btn-confirm-green { background:linear-gradient(135deg,#28a745,#20c997);color:white; }
-    .btn-confirm-blue { background:linear-gradient(135deg,#17a2b8,#4dd0e1);color:white; }
-
-    /* Success State */
-    .pay-success { text-align:center;padding:20px 0; }
-    .pay-success .s-icon { font-size:56px;margin-bottom:10px; }
-    .pay-success .s-title { font-size:18px;font-weight:700;color:#28a745;margin-bottom:4px; }
-    .pay-success .s-sub { font-size:13px;color:#888;line-height:1.5;margin-bottom:16px; }
-    .pay-success .s-preview { background:#f8f9fa;border-radius:12px;padding:14px;border:2px dashed #28a745;margin-bottom:16px;text-align:left; }
-    .pay-success .s-preview-label { font-size:10px;color:#888;margin-bottom:6px;text-align:center; }
-    .pay-success .s-preview-bubble { background:white;border-radius:10px;padding:12px;box-shadow:0 1px 4px rgba(0,0,0,0.06); }
-    .pay-success .sp-hdr { background:#28a745;color:white;padding:8px 10px;border-radius:8px 8px 0 0;margin:-12px -12px 10px; }
-    .pay-success .sp-hdr.blue { background:#17a2b8; }
-    .pay-success .sp-shop { font-size:10px;opacity:0.9; }
-    .pay-success .sp-title { font-size:13px;font-weight:700; }
-    .pay-success .sp-row { display:flex;justify-content:space-between;font-size:11px;padding:2px 0; }
-    .pay-success .sp-total { display:flex;justify-content:space-between;font-weight:700;margin-top:6px;padding-top:6px;border-top:1px solid #eee; }
-    .pay-success .sp-total .green { color:#28a745; }
-    .pay-success .sp-total .blue { color:#17a2b8; }
-    .btn-back-list { width:100%;padding:14px;border:none;border-radius:12px;background:linear-gradient(135deg,#FF6B6B,#FF8E53);color:white;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit; }
-  </style>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
+<!-- HEADER -->
 <div class="header">
-  <h1>🏪 JAN&ME</h1>
-  <p>ระบบจัดการ Order</p>
+  <div class="header-inner">
+    <div class="header-logo">🏪</div>
+    <div>
+      <h1>JAN&ME</h1>
+      <div class="subtitle">ORDER MANAGEMENT</div>
+    </div>
+  </div>
 </div>
 
+<!-- TABS -->
 <div class="tabs">
-  <div class="tab active" data-tab="info" onclick="switchTab('info')">👤 ข้อมูล</div>
-  <div class="tab" data-tab="orders" onclick="switchTab('orders')">📋 รายการ</div>
-  <div class="tab" data-tab="admin" id="admin-tab" style="display:none;" onclick="switchTab('admin')">⚙️ Admin</div>
+  <div class="tab active" data-tab="info" onclick="switchTab('info')">
+    <span class="tab-icon">👤</span> ข้อมูล
+  </div>
+  <div class="tab" data-tab="orders" onclick="switchTab('orders')">
+    <span class="tab-icon">📋</span> รายการ
+  </div>
+  <div class="tab" data-tab="admin" id="admin-tab" style="display:none;" onclick="switchTab('admin')">
+    <span class="tab-icon">⚙️</span> Admin
+  </div>
+  <div class="tab" data-tab="guide" onclick="switchTab('guide')">
+    <span class="tab-icon">📖</span> คู่มือ
+  </div>
 </div>
 
+<!-- CONTENT -->
 <div class="content">
+
+  <!-- LOADING -->
   <div id="loading" class="loading">
     <div class="spinner"></div>
     <p>กำลังโหลด...</p>
   </div>
-  
-  <!-- CONTACT ONLY SECTION (สำหรับ ?contact=1) -->
+
+  <!-- CONTACT ONLY SECTION -->
   <div id="contact-only-section" class="section" style="display:none;">
     <div style="padding:30px 20px;">
       <div style="text-align:center;margin-bottom:25px;">
         <div style="font-size:50px;margin-bottom:10px;">📞</div>
-        <h2 style="color:#333;margin-bottom:5px;">ติดต่อแอดมิน</h2>
-        <p style="color:#888;font-size:13px;">พิมพ์ข้อความด้านล่าง แอดมินจะติดต่อกลับค่ะ</p>
+        <h2 style="color:var(--txt);margin-bottom:5px;">ติดต่อแอดมิน</h2>
+        <p style="color:var(--txt3);font-size:13px;">พิมพ์ข้อความด้านล่าง แอดมินจะติดต่อกลับค่ะ</p>
       </div>
       <div class="form-group">
-        <textarea id="contact-message-direct" rows="5" style="width:100%;padding:15px;border:2px solid #eee;border-radius:12px;font-size:15px;resize:none;font-family:inherit;" placeholder="พิมพ์ข้อความที่ต้องการสอบถาม..."></textarea>
+        <textarea id="contact-message-direct" rows="5" style="width:100%;padding:15px;border:1.5px solid var(--border-s);border-radius:var(--r-sm);font-size:15px;resize:none;font-family:var(--f-th);background:var(--bg);color:var(--txt);" placeholder="พิมพ์ข้อความที่ต้องการสอบถาม..."></textarea>
       </div>
-      <button onclick="sendContactDirect()" style="width:100%;padding:15px;background:linear-gradient(135deg,#FF6B6B,#FF8E53);color:white;border:none;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;margin-top:10px;">
+      <button onclick="sendContactDirect()" style="width:100%;padding:15px;background:var(--accent);color:white;border:none;border-radius:var(--r-sm);font-size:16px;font-weight:700;cursor:pointer;margin-top:10px;font-family:var(--f-th);">
         📨 ส่งข้อความ
       </button>
-      <button onclick="closeContactForm()" style="width:100%;padding:12px;background:#f5f5f5;color:#666;border:none;border-radius:12px;font-size:14px;cursor:pointer;margin-top:10px;">
+      <button onclick="closeContactForm()" style="width:100%;padding:12px;background:var(--bg);color:var(--txt3);border:1.5px solid var(--border-s);border-radius:var(--r-sm);font-size:14px;cursor:pointer;margin-top:10px;font-family:var(--f-th);">
         ยกเลิก
       </button>
     </div>
   </div>
-  
+
   <!-- PENDING APPROVAL SECTION -->
   <div id="pending-approval-section" class="section" style="display:none;">
     <div style="text-align:center;padding:60px 20px;">
       <div style="font-size:80px;margin-bottom:20px;">⏳</div>
-      <h2 style="margin-bottom:15px;color:#333;">รอการอนุมัติ</h2>
-      <p style="color:#666;margin-bottom:30px;line-height:1.6;">
+      <h2 style="margin-bottom:15px;color:var(--txt);">รอการอนุมัติ</h2>
+      <p style="color:var(--txt2);margin-bottom:30px;line-height:1.6;">
         บัญชีของคุณกำลังรอการตรวจสอบ<br>
         จากทีมงาน กรุณารอสักครู่นะคะ
       </p>
-      <p style="color:#888;font-size:13px;margin-bottom:20px;">
+      <p style="color:var(--txt3);font-size:13px;margin-bottom:20px;">
         📷 ส่งรูป Order ได้เลยค่ะ<br>
         ระบบจะบันทึกให้อัตโนมัติ
       </p>
-      <button onclick="showContactModal()" style="display:inline-block;padding:14px 30px;background:linear-gradient(135deg,#FF6B6B,#FF8E53);color:white;border:none;border-radius:30px;font-weight:600;font-size:15px;cursor:pointer;">📞 ติดต่อแอดมิน</button>
+      <button onclick="showContactModal()" class="contact-btn">📞 ติดต่อแอดมิน</button>
     </div>
   </div>
-  
+
   <!-- BLOCKED SECTION -->
   <div id="blocked-section" class="section" style="display:none;">
     <div style="text-align:center;padding:60px 20px;">
       <div style="font-size:80px;margin-bottom:20px;">🚫</div>
-      <h2 style="margin-bottom:15px;color:#dc3545;">บัญชีถูกระงับ</h2>
-      <p style="color:#666;margin-bottom:30px;line-height:1.6;">
+      <h2 style="margin-bottom:15px;color:var(--red);">บัญชีถูกระงับ</h2>
+      <p style="color:var(--txt2);margin-bottom:30px;line-height:1.6;">
         บัญชีของคุณถูกระงับการใช้งาน<br>
         กรุณาติดต่อแอดมินเพื่อสอบถามข้อมูลเพิ่มเติม
       </p>
-      <button onclick="showContactModal()" style="display:inline-block;padding:14px 30px;background:#dc3545;color:white;border:none;border-radius:30px;font-weight:600;font-size:15px;cursor:pointer;">📞 ติดต่อแอดมิน</button>
+      <button onclick="showContactModal()" style="display:inline-block;padding:14px 30px;background:var(--red);color:white;border:none;border-radius:var(--r-full);font-weight:700;font-size:15px;cursor:pointer;font-family:var(--f-th);">📞 ติดต่อแอดมิน</button>
     </div>
   </div>
-  
+
   <!-- INFO SECTION -->
   <div id="info-section" class="section">
-    <!-- Profile -->
-    <div class="profile-section">
-      <img id="profile-pic" class="profile-pic" src="" alt="">
-      <div class="profile-info">
-        <div id="profile-name" class="profile-name">-</div>
-        <div class="profile-id">LINE Member <span id="profile-status" style="font-size:10px;"></span></div>
+    <div class="stagger">
+      <!-- Profile -->
+      <div class="profile-section">
+        <img id="profile-pic" class="profile-pic" src="" alt="">
+        <div class="profile-info">
+          <div id="profile-name" class="profile-name">-</div>
+          <div class="profile-id">LINE Member</div>
+          <div id="profile-status" class="profile-badge"></div>
+        </div>
+        <div class="profile-orders">
+          <div id="total-orders" class="num">0</div>
+          <div class="lbl">ORDERS</div>
+        </div>
       </div>
+
+      <!-- Summary -->
+      <div class="summary-row">
+        <div class="summary-card pending">
+          <div class="summary-icon">💰</div>
+          <div class="summary-label">ยอดรอคืน</div>
+          <div id="total-refund" class="summary-value">฿0</div>
+        </div>
+        <div class="summary-card deposit">
+          <div class="summary-icon">🏦</div>
+          <div class="summary-label">ยอดมัดจำ</div>
+          <div id="total-deposit" class="summary-value">฿0</div>
+        </div>
+      </div>
+
+      <!-- Shopee IDs -->
+      <div class="section-title">
+        <h2>🛒 Shopee ID</h2>
+        <button class="btn-add" onclick="showAddShopeeModal()">+</button>
+      </div>
+      <div id="shopee-list"></div>
+
+      <!-- Orders รอระบุ ShopeeId -->
+      <div id="pending-orders-section" style="display:none;">
+        <div class="section-title" style="margin-top:20px;">
+          <h2>⚠️ รอระบุ Shopee ID</h2>
+        </div>
+        <div id="pending-orders-list"></div>
+      </div>
+
+      <!-- Bank -->
+      <div class="section-title">
+        <h2>🏦 บัญชีรับเงิน</h2>
+      </div>
+      <div id="bank-display"></div>
+
+      <!-- Contact Admin Button -->
       <div style="text-align:center;">
-        <div id="total-orders" style="font-size:28px;font-weight:700;color:#FF6B6B;">0</div>
-        <div style="font-size:11px;color:#888;">orders</div>
+        <button onclick="showContactModal()" class="contact-btn">📞 ติดต่อแอดมิน</button>
       </div>
-    </div>
-    
-    <!-- Summary -->
-    <div class="summary-row">
-      <div class="summary-card pending">
-        <div class="summary-icon">💰</div>
-        <div class="summary-label">ยอดรอคืน</div>
-        <div id="total-refund" class="summary-value">฿0</div>
-      </div>
-      <div class="summary-card deposit">
-        <div class="summary-icon">🏦</div>
-        <div class="summary-label">ยอดมัดจำ</div>
-        <div id="total-deposit" class="summary-value">฿0</div>
-      </div>
-    </div>
-    
-    <!-- Shopee IDs -->
-    <div class="section-title">
-      <h2>🛒 Shopee ID</h2>
-      <button class="btn-add" onclick="showAddShopeeModal()">+</button>
-    </div>
-    <div id="shopee-list"></div>
-    
-    <!-- Orders รอระบุ ShopeeId -->
-    <div id="pending-orders-section" style="display:none;">
-      <div class="section-title" style="margin-top:20px;">
-        <h2>⚠️ รอระบุ Shopee ID</h2>
-      </div>
-      <div id="pending-orders-list"></div>
-    </div>
-    
-    <!-- Bank -->
-    <div class="section-title">
-      <h2>🏦 บัญชีรับเงิน</h2>
-    </div>
-    <div id="bank-display"></div>
-    
-    <!-- Contact Admin Button -->
-    <div style="margin-top:25px;text-align:center;">
-      <button onclick="showContactModal()" style="padding:12px 25px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;border:none;border-radius:25px;font-size:14px;font-weight:600;cursor:pointer;">
-        📞 ติดต่อแอดมิน
-      </button>
     </div>
   </div>
-  
+
   <!-- ORDERS SECTION -->
   <div id="orders-section" class="section">
     <div class="filter-row">
@@ -404,14 +184,141 @@
       <div id="admin-pay-list"></div>
     </div>
   </div>
+
+  <!-- GUIDE SECTION -->
+  <div id="guide-section" class="section">
+    <div class="guide-content stagger">
+
+      <div class="guide-hero">
+        <div class="g-icon">📖</div>
+        <h2>คู่มือการใช้งาน</h2>
+        <p>ขั้นตอนง่ายๆ สำหรับสมาชิก JAN&ME<br>ดูแลเรื่องเงินคืนและมัดจำให้ครบทุกขั้นตอน</p>
+      </div>
+
+      <!-- Step 1 -->
+      <div class="guide-section">
+        <div class="gs-title"><span class="gs-num">1</span> เริ่มต้นใช้งาน</div>
+        <div class="guide-card">
+          <h4>👤 สมัครสมาชิก</h4>
+          <ul>
+            <li>Add Friend บัญชี LINE Official "@janandme"</li>
+            <li>ระบบจะสร้างบัญชีให้อัตโนมัติ</li>
+            <li>รอแอดมินอนุมัติ (ปกติไม่เกิน 24 ชม.)</li>
+          </ul>
+          <div class="guide-tip">💡 หากรอนานเกินไป กดปุ่ม "ติดต่อแอดมิน" ในหน้าข้อมูลได้เลย</div>
+        </div>
+        <div class="guide-card">
+          <h4>🛒 เพิ่ม Shopee ID</h4>
+          <ul>
+            <li>ไปที่หน้า "ข้อมูล" → กดปุ่ม + ที่หัวข้อ Shopee ID</li>
+            <li>พิมพ์ชื่อบัญชี Shopee ที่ใช้สั่งซื้อ</li>
+            <li>สามารถเพิ่มได้หลายบัญชี</li>
+          </ul>
+        </div>
+        <div class="guide-card">
+          <h4>🏦 เพิ่มบัญชีรับเงิน</h4>
+          <ul>
+            <li>กดที่การ์ดบัญชีรับเงิน หรือกดปุ่ม "+ เพิ่มบัญชี"</li>
+            <li>เลือกธนาคาร กรอกเลขบัญชี ชื่อบัญชี</li>
+            <li>ใช้สำหรับรับเงินคืนจากแอดมิน</li>
+          </ul>
+          <div class="guide-tip">⚠️ ตรวจสอบเลขบัญชีให้ถูกต้อง เพื่อป้องกันการโอนผิด</div>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="guide-section">
+        <div class="gs-title"><span class="gs-num">2</span> การส่ง Order</div>
+        <div class="guide-card">
+          <h4>📷 ส่งรูป Order จาก Shopee</h4>
+          <ul>
+            <li>เปิดแอป Shopee → ไปที่คำสั่งซื้อที่สำเร็จแล้ว</li>
+            <li>Screenshot หน้ารายละเอียดคำสั่งซื้อ</li>
+            <li>ส่งรูปเข้าแชท LINE Bot โดยตรง</li>
+            <li>ระบบจะอ่านข้อมูลจากรูปอัตโนมัติ (OCR)</li>
+          </ul>
+        </div>
+        <div class="guide-card">
+          <h4>🆔 ระบุ Shopee ID ให้ Order</h4>
+          <ul>
+            <li>หาก Order ยังไม่มี Shopee ID จะแสดงที่หัวข้อ "รอระบุ"</li>
+            <li>กดที่รายการ → เลือก Shopee ID จาก dropdown</li>
+            <li>กดบันทึก</li>
+          </ul>
+          <div class="guide-tip">💡 Order ที่ไม่มี Shopee ID จะไม่ถูกนำไปคำนวณยอดเงินคืน</div>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="guide-section">
+        <div class="gs-title"><span class="gs-num">3</span> ยอดเงินคืน & มัดจำ</div>
+        <div class="guide-card">
+          <h4>💰 ยอดรอคืน (Refund)</h4>
+          <p>คำนวณจากสูตร:</p>
+          <p style="font-family:var(--f-mono);font-size:11px;background:var(--bg);padding:8px;border-radius:var(--r-xs);margin-top:6px;">
+            refund = subtotal + shipping<br>
+            &nbsp;&nbsp;- shippingDiscount - voucher<br>
+            &nbsp;&nbsp;- depositAmount
+          </p>
+          <ul style="margin-top:8px;">
+            <li>เฉพาะ Order ที่สถานะ "สำเร็จแล้ว"</li>
+            <li>หักยอดที่จ่ายคืนแล้วออกอัตโนมัติ</li>
+          </ul>
+        </div>
+        <div class="guide-card">
+          <h4>🏦 ยอดมัดจำ (Deposit)</h4>
+          <p>คำนวณจาก:</p>
+          <p style="font-family:var(--f-mono);font-size:11px;background:var(--bg);padding:8px;border-radius:var(--r-xs);margin-top:6px;">
+            deposit = จำนวนชิ้น x 100 บาท
+          </p>
+          <ul style="margin-top:8px;">
+            <li>เก็บมัดจำทุก Order</li>
+            <li>คืนมัดจำเมื่อ Order สำเร็จและตรวจสอบเรียบร้อย</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="guide-section">
+        <div class="gs-title"><span class="gs-num">4</span> สถานะ Order</div>
+        <div class="guide-card">
+          <table class="guide-table">
+            <tr><th>สถานะ</th><th>ความหมาย</th><th>แก้ไขได้?</th></tr>
+            <tr><td>รอตรวจสอบ</td><td>ส่งรูปแล้ว รอแอดมินตรวจ</td><td><span class="tag yes">ได้</span></td></tr>
+            <tr><td>สำเร็จแล้ว</td><td>ตรวจสอบผ่าน รอโอนเงินคืน</td><td><span class="tag no">ไม่ได้</span></td></tr>
+            <tr><td>โอนแล้ว</td><td>โอนเงินคืนเรียบร้อย</td><td><span class="tag no">ไม่ได้</span></td></tr>
+            <tr><td>ยกเลิกแล้ว</td><td>Order ถูกยกเลิก</td><td><span class="tag no">ไม่ได้</span></td></tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- Step 5 -->
+      <div class="guide-section">
+        <div class="gs-title"><span class="gs-num">5</span> แจ้งปัญหา</div>
+        <div class="guide-card">
+          <h4>🚨 วิธีแจ้งปัญหา</h4>
+          <ul>
+            <li>กดที่ Order ที่ต้องการ → กดปุ่ม "แจ้งปัญหา"</li>
+            <li>เลือกเหตุผลและอธิบายรายละเอียด</li>
+            <li>แอดมินจะได้รับแจ้งเตือนทันที</li>
+          </ul>
+          <div class="guide-tip">💡 หากมีปัญหาเร่งด่วน กดปุ่ม "ติดต่อแอดมิน" ที่หน้าข้อมูล หรือพิมพ์ข้อความในแชท LINE Bot ได้โดยตรง</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
 </div>
 
-<!-- MODALS -->
+<!-- ===== MODALS ===== -->
 
 <!-- Add Shopee ID -->
 <div class="modal-overlay" id="addShopeeModal">
   <div class="modal">
-    <div class="modal-header"><h3>🛒 เพิ่ม Shopee ID</h3></div>
+    <div class="modal-header">
+      <h3>🛒 เพิ่ม Shopee ID</h3>
+    </div>
     <div class="modal-body">
       <div class="form-group">
         <label>Shopee ID / ชื่อร้าน</label>
@@ -427,18 +334,16 @@
 
 <!-- View/Delete Shopee ID -->
 <div class="modal-overlay" id="viewShopeeModal">
-  <div class="modal" style="max-width:400px;">
+  <div class="modal">
     <div class="modal-header"><h3>🛒 Shopee ID</h3></div>
-    <div class="modal-body" id="shopee-modal-body">
-      <!-- Dynamic content -->
-    </div>
+    <div class="modal-body" id="shopee-modal-body"></div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="hideModal('viewShopeeModal')">ปิด</button>
     </div>
   </div>
 </div>
 
-<!-- Add/Edit Bank -->
+<!-- Bank Modal -->
 <div class="modal-overlay" id="bankModal">
   <div class="modal">
     <div class="modal-header"><h3>🏦 บัญชีรับเงิน</h3></div>
@@ -479,11 +384,9 @@
 
 <!-- Order Detail -->
 <div class="modal-overlay" id="orderModal">
-  <div class="modal" style="max-width:380px;">
+  <div class="modal">
     <div class="modal-header"><h3>📦 รายละเอียด</h3></div>
-    <div class="modal-body" id="order-modal-body" style="padding:15px;">
-      <!-- Dynamic content -->
-    </div>
+    <div class="modal-body" id="order-modal-body" style="padding:15px;"></div>
     <div class="modal-actions" id="order-modal-actions">
       <button class="btn-cancel" onclick="hideModal('orderModal')">ปิด</button>
       <button class="btn-save" onclick="saveOrder()">💾 บันทึก</button>
@@ -494,10 +397,10 @@
 <!-- Confirm Delete -->
 <div class="modal-overlay" id="confirmModal">
   <div class="modal" style="max-width:300px;">
-    <div class="modal-body" style="text-align:center; padding:30px;">
+    <div class="modal-body" style="text-align:center;padding:30px;">
       <div style="font-size:40px;margin-bottom:15px;">⚠️</div>
-      <p style="font-size:15px;color:#333;margin-bottom:10px;">ยืนยันการลบ?</p>
-      <p style="font-size:13px;color:#888;">ลบแล้วข้อมูลจะหายไม่สามารถกู้คืนได้</p>
+      <p style="font-size:15px;color:var(--txt);margin-bottom:10px;">ยืนยันการลบ?</p>
+      <p style="font-size:13px;color:var(--txt3);">ลบแล้วข้อมูลจะหายไม่สามารถกู้คืนได้</p>
     </div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="hideModal('confirmModal')">ยกเลิก</button>
@@ -506,10 +409,10 @@
   </div>
 </div>
 
-<!-- Create Dispute -->
+<!-- Dispute Modal -->
 <div class="modal-overlay" id="disputeModal">
   <div class="modal">
-    <div class="modal-header" style="background:linear-gradient(135deg,#dc3545,#c82333);"><h3>🚨 แจ้งปัญหา</h3></div>
+    <div class="modal-header" style="background:var(--red);"><h3>🚨 แจ้งปัญหา</h3></div>
     <div class="modal-body">
       <div class="form-group">
         <label>Order ID</label>
@@ -540,12 +443,12 @@
 
 <!-- Contact Admin Modal -->
 <div class="modal-overlay" id="contactModal">
-  <div class="modal" style="max-width:360px;">
+  <div class="modal">
     <div class="modal-header"><h3>📞 ติดต่อแอดมิน</h3></div>
     <div class="modal-body">
-      <p style="font-size:13px;color:#666;margin-bottom:15px;text-align:center;">พิมพ์ข้อความที่ต้องการส่งถึงแอดมิน<br>แอดมินจะติดต่อกลับในแชทค่ะ</p>
+      <p style="font-size:13px;color:var(--txt2);margin-bottom:15px;text-align:center;">พิมพ์ข้อความที่ต้องการส่งถึงแอดมิน<br>แอดมินจะติดต่อกลับในแชทค่ะ</p>
       <div class="form-group">
-        <textarea id="contact-message" rows="4" style="width:100%;padding:12px;border:2px solid #eee;border-radius:10px;font-size:14px;resize:none;" placeholder="พิมพ์ข้อความที่นี่..."></textarea>
+        <textarea id="contact-message" rows="4" style="width:100%;padding:12px;border:1.5px solid var(--border-s);border-radius:var(--r-sm);font-size:14px;resize:none;font-family:var(--f-th);background:var(--bg);color:var(--txt);" placeholder="พิมพ์ข้อความที่นี่..."></textarea>
       </div>
     </div>
     <div class="modal-actions">
@@ -557,1018 +460,16 @@
 
 <!-- Confirm Payment Modal -->
 <div class="modal-overlay" id="confirmPayModal">
-  <div class="modal confirm-pay-modal" id="confirmPayModalInner" style="max-width:380px;">
+  <div class="modal confirm-pay-modal" id="confirmPayModalInner">
     <div class="modal-header"><h3 id="cpay-modal-title">✅ ยืนยันโอนเงินคืน</h3></div>
     <div class="modal-body" id="cpay-modal-body" style="padding:16px;max-height:70vh;"></div>
     <div class="modal-actions" id="cpay-modal-actions"></div>
   </div>
 </div>
 
+<!-- TOAST -->
 <div class="toast" id="toast"></div>
 
-<script>
-var CONFIG = {
-  LIFF_ID: '2009026931-IQy8q5QZ',
-  API_URL: 'https://script.google.com/macros/s/AKfycbxc1W4MgiGHFnLh8SrfHeqCbKPU033zbfSoTr-TUeGHuTy4qKcPjeZEvgqXC1PyAYiM/exec'
-};
-
-var userId = null;
-var userData = null;
-var currentShopeeId = null;
-var currentOrderId = null;
-var currentFilter = 'all';
-
-// ===== INIT =====
-async function init() {
-  try {
-    await liff.init({ liffId: CONFIG.LIFF_ID });
-    
-    if (!liff.isLoggedIn()) {
-      liff.login();
-      return;
-    }
-    
-    var profile = await liff.getProfile();
-    userId = profile.userId;
-    
-    // Check URL params
-    var params = new URLSearchParams(window.location.search);
-    
-    // Contact Mode - ไม่โหลดข้อมูลอื่น แสดงแค่ฟอร์ม
-    if (params.get('contact') === '1') {
-      document.getElementById('loading').style.display = 'none';
-      document.querySelector('.tabs').style.display = 'none';
-      document.getElementById('contact-only-section').style.display = 'block';
-      return;
-    }
-    
-    // Normal Mode - โหลดข้อมูลปกติ
-    document.getElementById('profile-pic').src = profile.pictureUrl || '';
-    document.getElementById('profile-name').textContent = profile.displayName;
-    
-    if (params.get('tab') === 'orders') {
-      switchTab('orders');
-    }
-    
-    loadUserData();
-    checkAdminStatus();
-
-  } catch (err) {
-    document.getElementById('loading').innerHTML = '<p style="color:red;">Error: ' + err.message + '</p>';
-  }
-}
-
-// ===== API =====
-function apiCall(action, params) {
-  params = params || {};
-  params.action = action;
-  params.userId = userId;
-  
-  var url = CONFIG.API_URL + '?' + new URLSearchParams(params).toString();
-  return fetch(url).then(r => r.json());
-}
-
-// ===== LOAD DATA =====
-function loadUserData() {
-  apiCall('getUserData').then(function(data) {
-    if (data.success) {
-      userData = data;
-      
-      // เช็คสถานะ blocked
-      if (data.user && data.user.blocked) {
-        document.getElementById('loading').style.display = 'none';
-        document.getElementById('blocked-section').style.display = 'block';
-        document.querySelector('.tabs').style.display = 'none';
-        return;
-      }
-      
-      // เช็คสถานะ approved
-      if (data.user && !data.user.approved) {
-        document.getElementById('loading').style.display = 'none';
-        document.getElementById('pending-approval-section').style.display = 'block';
-        document.querySelector('.tabs').style.display = 'none';
-        return;
-      }
-      
-      // Approved - แสดงข้อมูลปกติ
-      renderAll();
-    }
-    document.getElementById('loading').style.display = 'none';
-    document.getElementById('info-section').classList.add('active');
-  }).catch(function(err) {
-    showToast('โหลดข้อมูลไม่สำเร็จ: ' + (err.message || err));
-    console.error('loadUserData error:', err);
-    document.getElementById('loading').style.display = 'none';
-    document.getElementById('info-section').classList.add('active');
-  });
-}
-
-function renderAll() {
-  // Status badge
-  if (userData.user && userData.user.approved) {
-    document.getElementById('profile-status').innerHTML = '• <span style="color:#28a745;">✓ อนุมัติแล้ว</span>';
-  }
-  
-  // Summary
-  document.getElementById('total-orders').textContent = userData.totalOrders || 0;
-  document.getElementById('total-refund').textContent = '฿' + numberFormat(userData.totalRefund || 0);
-  document.getElementById('total-deposit').textContent = '฿' + numberFormat(userData.totalDeposit || 0);
-  
-  renderShopeeIds();
-  renderBank();
-  renderPendingOrders();
-}
-
-// ===== PENDING ORDERS (ไม่มี ShopeeId) =====
-function renderPendingOrders() {
-  apiCall('getOrders', { filter: 'all' }).then(function(data) {
-    var orders = (data.orders || []).filter(function(o) { return !o.shopeeId || o.shopeeId === ''; });
-    var section = document.getElementById('pending-orders-section');
-    var container = document.getElementById('pending-orders-list');
-    
-    if (orders.length === 0) {
-      section.style.display = 'none';
-      return;
-    }
-    
-    section.style.display = 'block';
-    
-    var html = '<div style="background:#fff3cd;border-radius:12px;padding:12px;margin-bottom:10px;font-size:12px;color:#856404;">กดที่รายการเพื่อระบุ Shopee ID</div>';
-    
-    orders.forEach(function(order) {
-      html += '<div class="order-card" style="margin-bottom:8px;" onclick="viewOrder(\'' + order.orderId + '\')">';
-      html += '<div style="display:flex;justify-content:space-between;align-items:center;">';
-      html += '<div><div style="font-weight:600;font-size:13px;color:#FF6B6B;">🆔 ' + order.orderId + '</div>';
-      html += '<div style="font-size:11px;color:#888;">' + formatDateTime(order.orderTime) + '</div></div>';
-      html += '<div style="text-align:right;"><div style="font-weight:600;font-size:16px;">฿' + numberFormat(order.orderTotal || 0) + '</div>';
-      html += '<div style="font-size:11px;color:#dc3545;">⚠️ รอระบุ</div></div>';
-      html += '</div></div>';
-    });
-    
-    container.innerHTML = html;
-  });
-}
-
-// ===== SHOPEE IDs =====
-function renderShopeeIds() {
-  var container = document.getElementById('shopee-list');
-  var ids = userData.shopeeIds || [];
-  
-  if (ids.length === 0) {
-    container.innerHTML = '<div class="empty-state"><div class="icon">🛒</div><p>ยังไม่มี Shopee ID</p><button class="btn-save btn" onclick="showAddShopeeModal()">+ เพิ่ม Shopee ID</button></div>';
-    return;
-  }
-  
-  var gridClass = ids.length === 1 ? 'single' : 'multi';
-  var cardClass = ids.length === 1 ? 'full' : 'compact';
-  
-  var html = '<div class="shopee-grid ' + gridClass + '">';
-  ids.forEach(function(item) {
-    var pct = item.totalOrders > 0 ? Math.round((item.paidOrders / item.totalOrders) * 100) : 0;
-    var circumference = 2 * Math.PI * 18;
-    var offset = circumference - (pct / 100) * circumference;
-    var progressClass = pct === 0 ? 'warning' : '';
-    var pctColor = pct === 0 ? '#ffc107' : '#333';
-    
-    if (cardClass === 'full') {
-      html += '<div class="shopee-card full" onclick="viewShopeeId(\'' + item.shopeeId + '\')">' +
-        '<div class="shopee-icon">🛒</div>' +
-        '<div class="shopee-info">' +
-          '<div class="shopee-name">' + item.shopeeId + '</div>' +
-          '<div class="shopee-stats"><span class="stat-paid">✓ ' + item.paidOrders + '</span><span class="stat-total">/ ' + item.totalOrders + ' orders</span></div>' +
-        '</div>' +
-        '<div class="progress-ring">' +
-          '<svg width="44" height="44"><circle class="bg" cx="22" cy="22" r="18"/><circle class="progress ' + progressClass + '" cx="22" cy="22" r="18" stroke-dasharray="' + circumference + '" stroke-dashoffset="' + offset + '"/></svg>' +
-          '<div class="progress-text" style="color:' + pctColor + '">' + pct + '%</div>' +
-        '</div>' +
-      '</div>';
-    } else {
-      html += '<div class="shopee-card compact" onclick="viewShopeeId(\'' + item.shopeeId + '\')">' +
-        '<div class="shopee-icon">🛒</div>' +
-        '<div class="shopee-name">' + item.shopeeId + '</div>' +
-        '<div class="progress-ring">' +
-          '<svg width="46" height="46"><circle class="bg" cx="23" cy="23" r="18"/><circle class="progress ' + progressClass + '" cx="23" cy="23" r="18" stroke-dasharray="' + circumference + '" stroke-dashoffset="' + offset + '"/></svg>' +
-          '<div class="progress-text" style="color:' + pctColor + '">' + pct + '%</div>' +
-        '</div>' +
-        '<div class="shopee-stats"><span class="stat-paid">✓ ' + item.paidOrders + '</span><span class="stat-total">/ ' + item.totalOrders + '</span></div>' +
-      '</div>';
-    }
-  });
-  html += '</div>';
-  container.innerHTML = html;
-}
-
-function showAddShopeeModal() {
-  document.getElementById('new-shopee-id').value = '';
-  showModal('addShopeeModal');
-}
-
-function addShopeeId() {
-  var shopeeId = document.getElementById('new-shopee-id').value.trim();
-  if (!shopeeId) {
-    showToast('กรุณากรอก Shopee ID');
-    return;
-  }
-  
-  apiCall('addShopeeId', { shopeeId: shopeeId }).then(function(data) {
-    if (data.success) {
-      showToast('✅ เพิ่ม Shopee ID สำเร็จ');
-      hideModal('addShopeeModal');
-      loadUserData();
-    } else {
-      showToast('❌ ' + (data.error || 'เกิดข้อผิดพลาด'));
-    }
-  });
-}
-
-function viewShopeeId(shopeeId) {
-  currentShopeeId = shopeeId;
-  var item = userData.shopeeIds.find(function(s) { return s.shopeeId === shopeeId; });
-  
-  // ดึง orders ที่ match กับ shopeeId นี้
-  apiCall('getOrders', { filter: 'all' }).then(function(data) {
-    var orders = (data.orders || []).filter(function(o) { return o.shopeeId === shopeeId; });
-    var totalAmount = orders.reduce(function(sum, o) { return sum + (parseFloat(o.orderTotal) || 0); }, 0);
-    var paidOrders = orders.filter(function(o) { 
-      var status = (o.status || '').toLowerCase();
-      return status === 'โอนแล้ว' || status === 'completed' || status === 'paid';
-    }).length;
-    
-    var html = '<div style="text-align:center;padding:10px 0 20px;">';
-    html += '<div class="shopee-icon" style="width:60px;height:60px;font-size:28px;margin:0 auto 15px;">🛒</div>';
-    html += '<div style="font-size:20px;font-weight:600;margin-bottom:5px;">' + shopeeId + '</div>';
-    html += '<div style="font-size:14px;color:#666;">✓ ' + paidOrders + ' / ' + orders.length + ' orders</div>';
-    html += '<div style="font-size:18px;font-weight:600;color:#FF6B6B;margin-top:5px;">💰 รวม ฿' + numberFormat(totalAmount) + '</div>';
-    html += '</div>';
-    
-    if (orders.length > 0) {
-      html += '<div style="border-top:1px solid #eee;padding-top:15px;max-height:300px;overflow-y:auto;">';
-      orders.forEach(function(order) {
-        var statusClass = (order.status === 'โอนแล้ว' || order.status === 'completed') ? 'color:#28a745;' : 'color:#ffc107;';
-        html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:#f8f9fa;border-radius:8px;margin-bottom:8px;cursor:pointer;" onclick="hideModal(\'viewShopeeModal\');viewOrder(\'' + order.orderId + '\')">';
-        html += '<div><div style="font-weight:600;font-size:13px;">🆔 ' + order.orderId + '</div>';
-        html += '<div style="font-size:11px;color:#888;">' + formatDateTime(order.orderTime) + '</div></div>';
-        html += '<div style="text-align:right;"><div style="font-weight:600;">฿' + numberFormat(order.orderTotal || 0) + '</div>';
-        html += '<div style="font-size:11px;' + statusClass + '">' + (order.status || 'รอตรวจ') + '</div></div>';
-        html += '</div>';
-      });
-      html += '</div>';
-    } else {
-      html += '<div style="text-align:center;padding:20px;color:#999;">ยังไม่มี orders</div>';
-    }
-    
-    document.getElementById('shopee-modal-body').innerHTML = html;
-    showModal('viewShopeeModal');
-  });
-}
-
-function confirmDeleteShopee() {
-  document.getElementById('confirm-delete-btn').onclick = function() {
-    deleteShopeeId(currentShopeeId);
-  };
-  hideModal('viewShopeeModal');
-  showModal('confirmModal');
-}
-
-function deleteShopeeId(shopeeId) {
-  apiCall('deleteShopeeId', { shopeeId: shopeeId }).then(function(data) {
-    hideModal('confirmModal');
-    if (data.success) {
-      showToast('✅ ลบ Shopee ID สำเร็จ');
-      loadUserData();
-    } else {
-      showToast('❌ ' + (data.error || 'เกิดข้อผิดพลาด'));
-    }
-  });
-}
-
-// ===== BANK =====
-function renderBank() {
-  var container = document.getElementById('bank-display');
-  var user = userData.user;
-  
-  if (!user || !user.bankName) {
-    container.innerHTML = '<div class="empty-state"><div class="icon">🏦</div><p>ยังไม่มีบัญชีรับเงิน</p><button class="btn-save btn" onclick="showBankModal()">+ เพิ่มบัญชี</button></div>';
-    return;
-  }
-  
-  container.innerHTML = '<div class="bank-card" onclick="showBankModal()">' +
-    '<div class="bank-label">ธนาคาร</div>' +
-    '<div class="bank-name">' + user.bankName + '</div>' +
-    '<div class="bank-account">' + user.bankAccount + '</div>' +
-    '<div class="bank-holder">ชื่อบัญชี: ' + user.accountName + '</div>' +
-    (user.phone ? '<div class="bank-phone">📞 ' + user.phone + '</div>' : '') +
-  '</div>';
-}
-
-function showBankModal() {
-  var user = userData.user || {};
-  document.getElementById('input-bank-name').value = user.bankName || '';
-  document.getElementById('input-bank-account').value = user.bankAccount || '';
-  document.getElementById('input-account-name').value = user.accountName || '';
-  document.getElementById('input-phone').value = user.phone || '';
-  showModal('bankModal');
-}
-
-function saveBank() {
-  var params = {
-    bankName: document.getElementById('input-bank-name').value,
-    bankAccount: document.getElementById('input-bank-account').value.trim(),
-    accountName: document.getElementById('input-account-name').value.trim(),
-    phone: document.getElementById('input-phone').value.trim()
-  };
-  
-  apiCall('updateBank', params).then(function(data) {
-    if (data.success) {
-      showToast('✅ บันทึกสำเร็จ');
-      hideModal('bankModal');
-      loadUserData();
-    } else {
-      showToast('❌ ' + (data.error || 'เกิดข้อผิดพลาด'));
-    }
-  });
-}
-
-// ===== ORDERS =====
-function loadOrders(filter) {
-  currentFilter = filter || 'all';
-  var params = {};
-  
-  if (filter === 'user') params.filter = 'user';
-  else if (filter === 'admin') params.filter = 'admin';
-  else if (filter === 'pending') params.status = 'รอตรวจสอบ';
-  else if (filter === 'completed') params.status = 'โอนแล้ว';
-  
-  apiCall('getOrders', params).then(function(data) {
-    if (data.success) {
-      renderOrders(data.orders);
-    }
-  });
-}
-
-function filterOrders(filter, btn) {
-  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  loadOrders(filter);
-}
-
-function renderOrders(orders) {
-  var container = document.getElementById('orders-list');
-  
-  if (!orders || orders.length === 0) {
-    container.innerHTML = '<div class="empty-state"><div class="icon">📭</div><p>ไม่มีรายการ</p></div>';
-    return;
-  }
-  
-  var html = '<div class="orders-grid">';
-  orders.forEach(function(order) {
-    var statusClass = (order.status === 'โอนแล้ว' || order.status === 'completed') ? 'completed' : 'pending';
-    var byClass = order.createdBy === 'ADMIN' ? 'admin' : 'user';
-    var byText = order.createdBy === 'ADMIN' ? '🛒 Admin' : '👤 ตัวเอง';
-    var shopeeText = order.shopeeId || '⚠️ รอระบุ';
-    var shopeeColor = order.shopeeId ? '#666' : '#dc3545';
-    
-    html += '<div class="order-card" onclick="viewOrder(\'' + order.orderId + '\')">';
-    html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">';
-    html += '<span class="order-id">' + order.orderId + '</span>';
-    html += '<span class="order-status ' + statusClass + '">' + (order.status || 'รอ') + '</span>';
-    html += '</div>';
-    html += '<div class="order-amount">฿' + numberFormat(order.orderTotal || 0) + '</div>';
-    html += '<div class="order-shopee" style="color:' + shopeeColor + ';">🏪 ' + shopeeText + '</div>';
-    html += '<div class="order-time">' + formatDateTime(order.orderTime) + '</div>';
-    html += '<div class="order-by ' + byClass + '">' + byText + '</div>';
-    if (parseFloat(order.refundAmount) > 0) {
-      html += '<div class="order-refund">💰 ฿' + numberFormat(order.refundAmount) + '</div>';
-    }
-    html += '</div>';
-  });
-  html += '</div>';
-  
-  container.innerHTML = html;
-}
-
-function viewOrder(orderId) {
-  currentOrderId = orderId;
-  
-  // ต้องรอให้ userData โหลดก่อน
-  function doViewOrder() {
-    apiCall('getOrderDetail', { orderId: orderId }).then(function(data) {
-      if (!data.success) {
-        showToast('ไม่พบข้อมูล Order');
-        return;
-      }
-      
-      var order = data.order;
-      var html = '';
-      
-      // Image - แปลง Google Drive URL เป็น direct link
-      if (order.imageUrl) {
-        var viewUrl = order.imageUrl;
-        if (viewUrl.indexOf('drive.google.com') !== -1) {
-          var fileId = viewUrl.match(/[-\w]{25,}/);
-          if (fileId) {
-            viewUrl = 'https://drive.google.com/file/d/' + fileId[0] + '/view';
-          }
-        }
-        html += '<a href="' + viewUrl + '" target="_blank" style="display:block;padding:12px;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:8px;text-align:center;text-decoration:none;color:white;font-weight:600;margin-bottom:12px;font-size:13px;">📷 ดูรูป Order</a>';
-      }
-      
-      // Row 1: OrderID | OrderTime
-      html += '<div class="form-row">';
-      html += '<div class="form-group"><label>Order ID</label><input type="text" value="' + order.orderId + '" disabled></div>';
-      html += '<div class="form-group"><label>Order Time</label><input type="text" value="' + formatDateTime(order.orderTime) + '" disabled></div>';
-      html += '</div>';
-      
-      // Shopee ID dropdown (full width)
-      var allShopeeIds = (userData && userData.shopeeIds) ? userData.shopeeIds : [];
-      html += '<div class="form-group full"><label>Shopee ID <span style="color:#dc3545;">*</span></label>';
-      html += '<select id="edit-shopee-id" style="background:white;">';
-      html += '<option value="">-- เลือก --</option>';
-      if (allShopeeIds.length > 0) {
-        allShopeeIds.forEach(function(s) {
-          var selected = (s.shopeeId === order.shopeeId) ? 'selected' : '';
-          html += '<option value="' + s.shopeeId + '" ' + selected + '>' + s.shopeeId + '</option>';
-        });
-      }
-      if (order.shopeeId && allShopeeIds.length > 0 && !allShopeeIds.find(function(s) { return s.shopeeId === order.shopeeId; })) {
-        html += '<option value="' + order.shopeeId + '" selected>' + order.shopeeId + ' (Admin)</option>';
-      } else if (order.shopeeId && allShopeeIds.length === 0) {
-        html += '<option value="' + order.shopeeId + '" selected>' + order.shopeeId + '</option>';
-      }
-      html += '</select></div>';
-      
-      // Order Total (full width - important)
-      html += '<div class="form-group full"><label>💰 Order Total</label><input type="number" id="edit-total" value="' + (order.orderTotal || '') + '" style="font-size:18px;font-weight:600;"></div>';
-      
-      // Row: Coins Used | Voucher
-      html += '<div class="form-row">';
-      html += '<div class="form-group"><label>Coins Used</label><input type="number" id="edit-coins" value="' + (order.coinsUsed || '') + '"></div>';
-      html += '<div class="form-group"><label>Voucher</label><input type="number" id="edit-voucher" value="' + (order.voucher || '') + '"></div>';
-      html += '</div>';
-      
-      // Row: Shipping | Shipping Discount
-      html += '<div class="form-row">';
-      html += '<div class="form-group"><label>Shipping</label><input type="number" id="edit-shipping" value="' + (order.shipping || '') + '"></div>';
-      html += '<div class="form-group"><label>Shipping Discount</label><input type="number" id="edit-shipping-discount" value="' + (order.shippingDiscount || '') + '"></div>';
-      html += '</div>';
-      
-      // Row: Subtotal | Status
-      html += '<div class="form-row">';
-      html += '<div class="form-group"><label>Subtotal</label><input type="number" id="edit-subtotal" value="' + (order.subtotal || '') + '"></div>';
-      html += '<div class="form-group"><label>Status</label><input type="text" value="' + (order.status || '-') + '" disabled></div>';
-      html += '</div>';
-      
-      // Row: ยอดรอคืน | ยอดมัดจำ
-      html += '<div class="form-row">';
-      html += '<div class="form-group"><label>ยอดรอคืน</label><input type="text" value="฿' + numberFormat(order.refundAmount || 0) + '" disabled></div>';
-      html += '<div class="form-group"><label>ยอดมัดจำ</label><input type="text" value="฿' + numberFormat(order.depositAmount || 0) + '" disabled></div>';
-      html += '</div>';
-      
-      // History button + Delete button
-      html += '<div style="display:flex;gap:8px;margin-top:8px;">';
-      html += '<button class="btn-secondary" style="flex:1;padding:10px;font-size:13px;" onclick="viewOrderHistory(\'' + orderId + '\')">📜 ประวัติ</button>';
-      html += '<button style="flex:1;padding:10px;font-size:13px;background:#dc3545;color:white;border:none;border-radius:8px;cursor:pointer;" onclick="confirmDeleteOrder(\'' + orderId + '\')">🗑️ ลบ</button>';
-      html += '</div>';
-      html += '<button style="width:100%;margin-top:8px;padding:14px;border:none;border-radius:12px;background:#dc3545;color:white;font-size:15px;font-weight:600;cursor:pointer;" onclick="showDisputeModal(\'' + orderId + '\')">🚨 แจ้งปัญหา</button>';
-      
-      document.getElementById('order-modal-body').innerHTML = html;
-      document.getElementById('order-modal-actions').innerHTML = '<button class="btn-cancel" onclick="hideModal(\'orderModal\')">ปิด</button><button class="btn-save" onclick="saveOrder()">💾 บันทึก</button>';
-      showModal('orderModal');
-    });
-  }
-  
-  // ถ้ายังไม่มี userData ให้โหลดก่อน
-  if (!userData || !userData.shopeeIds) {
-    apiCall('getUserData').then(function(data) {
-      if (data.success) {
-        userData = data;
-      }
-      doViewOrder();
-    }).catch(function() {
-      doViewOrder();
-    });
-  } else {
-    doViewOrder();
-  }
-}
-
-function saveOrder() {
-  var params = {
-    orderId: currentOrderId,
-    shopeeId: document.getElementById('edit-shopee-id').value,
-    subtotal: document.getElementById('edit-subtotal').value,
-    shipping: document.getElementById('edit-shipping').value,
-    shippingDiscount: document.getElementById('edit-shipping-discount').value,
-    voucher: document.getElementById('edit-voucher').value,
-    coinsUsed: document.getElementById('edit-coins').value,
-    orderTotal: document.getElementById('edit-total').value
-  };
-  
-  // Validate
-  var total = parseFloat(params.orderTotal);
-  if (total < 0) {
-    showToast('❌ ตัวเลขต้องไม่ติดลบ');
-    return;
-  }
-  if (total > 10000) {
-    if (!confirm('⚠️ ยอดรวมมากกว่า 10,000 บาท\nต้องการบันทึกหรือไม่?')) {
-      return;
-    }
-  }
-  
-  apiCall('updateOrder', params).then(function(data) {
-    if (data.success) {
-      showToast('✅ บันทึกสำเร็จ');
-      hideModal('orderModal');
-      loadOrders(currentFilter);
-      loadUserData(); // Refresh totals
-    } else {
-      showToast('❌ ' + (data.error || 'เกิดข้อผิดพลาด'));
-    }
-  });
-}
-
-function confirmDeleteOrder(orderId) {
-  document.getElementById('confirm-delete-btn').onclick = function() {
-    deleteOrder(orderId);
-  };
-  hideModal('orderModal');
-  showModal('confirmModal');
-}
-
-function deleteOrder(orderId) {
-  apiCall('deleteOrder', { orderId: orderId }).then(function(data) {
-    hideModal('confirmModal');
-    if (data.success) {
-      showToast('✅ ลบ Order สำเร็จ');
-      loadOrders(currentFilter);
-      loadUserData(); // Refresh totals
-    } else {
-      showToast('❌ ' + (data.error || 'เกิดข้อผิดพลาด'));
-    }
-  });
-}
-
-function viewOrderHistory(orderId) {
-  apiCall('getOrderHistory', { orderId: orderId }).then(function(data) {
-    var history = data.history || [];
-    
-    var html = '<h4 style="margin-bottom:15px;">📜 ประวัติการแก้ไข</h4>';
-    
-    if (history.length === 0) {
-      html += '<p style="color:#999;text-align:center;">ยังไม่มีประวัติการแก้ไข</p>';
-    } else {
-      history.forEach(function(h) {
-        var time = formatDateTime(h.timestamp);
-        html += '<div class="history-item">' +
-          '<div class="history-time">' + time + '</div>' +
-          '<div class="history-change">' + h.field + ': <span class="old">' + h.oldValue + '</span> → <span class="new">' + h.newValue + '</span></div>' +
-        '</div>';
-      });
-    }
-    
-    document.getElementById('order-modal-body').innerHTML = html;
-    document.getElementById('order-modal-actions').innerHTML = '<button class="btn-cancel" style="width:100%;" onclick="viewOrder(\'' + orderId + '\')">← กลับ</button>';
-  });
-}
-
-// ===== UTILS =====
-function switchTab(tab) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-
-  var tabEl = document.querySelector('[data-tab="' + tab + '"]');
-  if (tabEl) tabEl.classList.add('active');
-  document.getElementById(tab + '-section').classList.add('active');
-
-  if (tab === 'orders') loadOrders(currentFilter);
-  if (tab === 'admin') loadAdminData();
-}
-
-function showModal(id) { document.getElementById(id).classList.add('show'); }
-function hideModal(id) { document.getElementById(id).classList.remove('show'); }
-
-// ===== CONTACT ADMIN =====
-function showContactModal() {
-  document.getElementById('contact-message').value = '';
-  showModal('contactModal');
-}
-
-function cancelContact() {
-  hideModal('contactModal');
-}
-
-// Contact Direct (สำหรับ ?contact=1 mode)
-function sendContactDirect() {
-  var message = document.getElementById('contact-message-direct').value.trim();
-  
-  if (!message) {
-    showToast('❌ กรุณาพิมพ์ข้อความ');
-    return;
-  }
-  
-  // Disable button
-  var btn = document.querySelector('#contact-only-section button');
-  btn.disabled = true;
-  btn.textContent = '⏳ กำลังส่ง...';
-  
-  apiCall('contactAdmin', { message: message }).then(function(data) {
-    if (data.success) {
-      showToast('✅ ส่งข้อความสำเร็จ!');
-      setTimeout(function() {
-        if (liff.isInClient()) {
-          liff.closeWindow();
-        }
-      }, 1500);
-    } else {
-      showToast('❌ ' + (data.error || 'เกิดข้อผิดพลาด'));
-      btn.disabled = false;
-      btn.textContent = '📨 ส่งข้อความ';
-    }
-  }).catch(function() {
-    showToast('❌ เกิดข้อผิดพลาด');
-    btn.disabled = false;
-    btn.textContent = '📨 ส่งข้อความ';
-  });
-}
-
-function closeContactForm() {
-  if (liff.isInClient()) {
-    liff.closeWindow();
-  }
-}
-
-function sendContactMessage() {
-  var message = document.getElementById('contact-message').value.trim();
-  
-  if (!message) {
-    showToast('❌ กรุณาพิมพ์ข้อความ');
-    return;
-  }
-  
-  apiCall('contactAdmin', { message: message }).then(function(data) {
-    hideModal('contactModal');
-    if (data.success) {
-      showToast('✅ ส่งข้อความสำเร็จ! แอดมินจะติดต่อกลับค่ะ');
-    } else {
-      showToast('❌ ' + (data.error || 'เกิดข้อผิดพลาด'));
-    }
-  }).catch(function() {
-    hideModal('contactModal');
-    showToast('❌ เกิดข้อผิดพลาด');
-  });
-}
-
-function showToast(msg) {
-  var toast = document.getElementById('toast');
-  toast.textContent = msg;
-  toast.classList.add('show');
-  setTimeout(function() { toast.classList.remove('show'); }, 2500);
-}
-
-function numberFormat(num) {
-  return parseFloat(num || 0).toLocaleString('th-TH');
-}
-
-function formatDateTime(dateStr) {
-  if (!dateStr || dateStr === '-') return '-';
-  try {
-    var d = new Date(dateStr);
-    if (isNaN(d.getTime())) {
-      // ถ้า parse ไม่ได้ ลองแปลง format DD-MM-YYYY HH:mm หรือ DD/MM/YYYY HH:mm
-      var match = String(dateStr).match(/(\d{2})[-\/](\d{2})[-\/](\d{4})\s*(\d{2}):(\d{2})/);
-      if (match) {
-        d = new Date(match[3], match[2] - 1, match[1], match[4], match[5]);
-      } else {
-        return dateStr; // คืนค่าเดิมถ้าแปลงไม่ได้
-      }
-    }
-    var year = d.getFullYear();
-    var month = String(d.getMonth() + 1).padStart(2, '0');
-    var day = String(d.getDate()).padStart(2, '0');
-    var hours = String(d.getHours()).padStart(2, '0');
-    var mins = String(d.getMinutes()).padStart(2, '0');
-    var secs = String(d.getSeconds()).padStart(2, '0');
-    return year + '-' + month + '-' + day + ' ' + hours + ':' + mins + ':' + secs;
-  } catch (e) {
-    return dateStr;
-  }
-}
-
-// ===== DISPUTE =====
-function showDisputeModal(orderId) {
-  document.getElementById('dispute-order-id').value = orderId;
-  document.getElementById('dispute-reason').value = '';
-  document.getElementById('dispute-detail').value = '';
-  hideModal('orderModal');
-  showModal('disputeModal');
-}
-
-function submitDispute() {
-  var params = {
-    orderId: document.getElementById('dispute-order-id').value,
-    reason: document.getElementById('dispute-reason').value,
-    detail: document.getElementById('dispute-detail').value
-  };
-  if (!params.reason) { showToast('กรุณาเลือกเหตุผล'); return; }
-  apiCall('createDispute', params).then(function(data) {
-    if (data.success) {
-      showToast('✅ ส่งแจ้งปัญหาเรียบร้อย');
-      hideModal('disputeModal');
-    } else {
-      showToast('❌ ' + (data.error || 'เกิดข้อผิดพลาด'));
-    }
-  });
-}
-
-// ===== ADMIN =====
-var isAdminUser = false;
-
-function checkAdminStatus() {
-  apiCall('checkAdmin').then(function(data) {
-    if (data.success && data.isAdmin) {
-      isAdminUser = true;
-      document.getElementById('admin-tab').style.display = '';
-    }
-  }).catch(function(err) {
-    console.error('checkAdmin error:', err);
-  });
-}
-
-function loadAdminData() {
-  if (!isAdminUser) return;
-  var activeSubTab = document.querySelector('.admin-sub-tab.active');
-  var tabName = activeSubTab ? activeSubTab.textContent.trim() : '';
-  if (tabName.indexOf('โอนเงิน') !== -1) loadAdminPayments();
-  else loadAdminUsers();
-}
-
-function switchAdminSubTab(sub) {
-  document.querySelectorAll('.admin-sub-tab').forEach(function(t) { t.classList.remove('active'); });
-  document.querySelectorAll('.admin-sub-section').forEach(function(s) { s.classList.remove('active'); });
-  if (sub === 'users') {
-    document.querySelectorAll('.admin-sub-tab')[0].classList.add('active');
-    document.getElementById('admin-users-sub').classList.add('active');
-    loadAdminUsers();
-  } else {
-    document.querySelectorAll('.admin-sub-tab')[1].classList.add('active');
-    document.getElementById('admin-payment-sub').classList.add('active');
-    loadAdminPayments();
-  }
-}
-
-function loadAdminUsers() {
-  apiCall('adminGetUsers').then(function(data) {
-    if (!data.success) return;
-    renderAdminUsers(data.users || []);
-  });
-}
-
-function renderAdminUsers(users) {
-  var container = document.getElementById('admin-users-list');
-  if (!container) return;
-  var total = users.length;
-  var pending = users.filter(function(u) { return !u.approved && !u.blocked; }).length;
-
-  var html = '<div class="summary-row" style="margin-bottom:15px;">' +
-    '<div class="summary-card pending"><div class="summary-label">ทั้งหมด</div><div class="summary-value" style="color:#333;">' + total + '</div></div>' +
-    '<div class="summary-card deposit"><div class="summary-label">รอ Approve</div><div class="summary-value" style="color:#ffc107;">' + pending + '</div></div>' +
-  '</div>';
-
-  users.sort(function(a, b) {
-    var ap = !a.approved && !a.blocked ? 0 : a.blocked ? 2 : 1;
-    var bp = !b.approved && !b.blocked ? 0 : b.blocked ? 2 : 1;
-    return ap - bp;
-  });
-
-  users.forEach(function(user) {
-    var statusText = user.blocked ? '🚫 Blocked' : user.approved ? '✅ Active' : '⏳ Pending';
-    var statusColor = user.blocked ? '#dc3545' : user.approved ? '#28a745' : '#ffc107';
-    html += '<div class="order-card" style="margin-bottom:10px;"><div style="display:flex;align-items:center;gap:12px;">';
-    if (user.profileUrl) html += '<img src="' + user.profileUrl + '" style="width:40px;height:40px;border-radius:50%;" onerror="this.style.display=\'none\'">';
-    html += '<div style="flex:1;"><div style="font-weight:600;font-size:14px;">' + user.displayName + '</div><div style="font-size:12px;color:' + statusColor + ';">' + statusText + '</div></div>';
-    html += '<div style="text-align:right;font-size:12px;color:#666;"><div>฿' + numberFormat(user.pendingRefund || 0) + ' รอคืน</div></div></div>';
-    if (user.bankName) html += '<div style="font-size:11px;color:#888;margin-top:8px;">🏦 ' + user.bankName + ' ' + user.bankAccount + ' (' + user.accountName + ')</div>';
-    html += '<div style="display:flex;gap:8px;margin-top:10px;">';
-    if (!user.approved && !user.blocked) {
-      html += '<button onclick="adminApprove(\'' + user.userId + '\')" style="flex:1;padding:8px;border:none;border-radius:8px;background:#28a745;color:white;font-size:12px;cursor:pointer;">✅ Approve</button>';
-      html += '<button onclick="adminBlock(\'' + user.userId + '\',\'block\')" style="flex:1;padding:8px;border:none;border-radius:8px;background:#dc3545;color:white;font-size:12px;cursor:pointer;">🚫 Block</button>';
-    } else if (user.blocked) {
-      html += '<button onclick="adminBlock(\'' + user.userId + '\',\'unblock\')" style="flex:1;padding:8px;border:none;border-radius:8px;background:#28a745;color:white;font-size:12px;cursor:pointer;">✅ Unblock</button>';
-    }
-    html += '</div></div>';
-  });
-
-  container.innerHTML = html;
-}
-
-function adminApprove(targetUserId) {
-  apiCall('adminApproveUser', { targetUserId: targetUserId }).then(function(data) {
-    if (data.success) { showToast('✅ อนุมัติแล้ว'); loadAdminUsers(); }
-    else showToast('❌ ' + (data.error || 'Error'));
-  });
-}
-
-function adminBlock(targetUserId, action) {
-  apiCall('adminBlockUser', { targetUserId: targetUserId, blockAction: action }).then(function(data) {
-    if (data.success) { showToast('✅ สำเร็จ'); loadAdminUsers(); }
-    else showToast('❌ ' + (data.error || 'Error'));
-  });
-}
-
-// ===== ADMIN PAYMENTS =====
-var adminPaymentData = [];
-var paymentSelections = {};
-
-function loadAdminPayments() {
-  var listEl = document.getElementById('admin-pay-list');
-  listEl.innerHTML = '<div class="loading"><div class="spinner"></div><p>กำลังโหลด...</p></div>';
-  apiCall('adminGetPendingPayments').then(function(data) {
-    if (!data.success) {
-      listEl.innerHTML = '<div class="empty-state"><div class="icon">❌</div><p>' + (data.error || 'โหลดไม่สำเร็จ') + '</p></div>';
-      return;
-    }
-    adminPaymentData = data.users || [];
-    paymentSelections = {};
-    adminPaymentData.forEach(function(u) {
-      paymentSelections[u.userId] = new Set(u.orders.map(function(o) { return o.orderId; }));
-    });
-    renderAdminPayments();
-  }).catch(function(err) {
-    listEl.innerHTML = '<div class="empty-state"><div class="icon">❌</div><p>เกิดข้อผิดพลาด</p></div>';
-  });
-}
-
-function renderAdminPayments() {
-  var totalUsers = adminPaymentData.length;
-  var totalAmount = 0;
-  adminPaymentData.forEach(function(u) {
-    u.orders.forEach(function(o) { totalAmount += parseFloat(o.amount) || 0; });
-  });
-  var summaryEl = document.getElementById('admin-pay-summary');
-  summaryEl.innerHTML =
-    '<div class="aps-card warn"><div class="aps-num">' + totalUsers + '</div><div class="aps-lbl">รอโอน</div></div>' +
-    '<div class="aps-card info"><div class="aps-num">฿' + numberFormat(totalAmount) + '</div><div class="aps-lbl">ยอดรวม</div></div>' +
-    '<div class="aps-card ok"><div class="aps-num">0</div><div class="aps-lbl">โอนแล้ว</div></div>';
-
-  var listEl = document.getElementById('admin-pay-list');
-  if (adminPaymentData.length === 0) {
-    listEl.innerHTML = '<div class="empty-state"><div class="icon">✅</div><p>ไม่มีรายการรอโอน</p></div>';
-    return;
-  }
-  var html = '';
-  adminPaymentData.forEach(function(user) {
-    var selected = paymentSelections[user.userId] || new Set();
-    var selectedTotal = 0;
-    var isDeposit = user.type === 'deposit';
-    user.orders.forEach(function(o) {
-      if (selected.has(o.orderId)) selectedTotal += parseFloat(o.amount) || 0;
-    });
-    html += '<div class="pay-card">';
-    html += '<div class="pay-card-header">';
-    html += '<div class="pay-avatar">';
-    if (user.profileUrl) {
-      html += '<img src="' + user.profileUrl + '" onerror="this.parentElement.textContent=\'' + (user.displayName || '?').charAt(0) + '\'">';
-    } else { html += (user.displayName || '?').charAt(0); }
-    html += '</div>';
-    var nameDisplay = user.displayName + (user.accountName ? ' (' + user.accountName + ')' : '');
-    html += '<div class="pay-user-info"><div class="pay-user-name">' + nameDisplay + '</div>';
-    html += '<div class="pay-user-bank">🏦 ' + (user.bankName || '-') + ' ' + (user.bankAccount || '') + '</div></div>';
-    html += '<div class="pay-total-box"><div class="pay-total-amount ' + (isDeposit ? 'deposit-color' : '') + '">฿' + numberFormat(selectedTotal) + '</div>';
-    html += '<div class="pay-total-label">' + selected.size + ' ' + (isDeposit ? 'มัดจำ' : 'orders') + '</div></div></div>';
-    html += '<div class="pay-card-body">';
-    user.orders.forEach(function(o) {
-      var checked = selected.has(o.orderId);
-      html += '<div class="pay-order-row"><div class="pay-order-left">';
-      html += '<div class="pay-check ' + (checked ? 'checked' : '') + '" onclick="togglePayOrder(\'' + user.userId + '\',\'' + o.orderId + '\')">✓</div>';
-      html += '<div><div class="pay-oid">#' + o.orderId + '</div>';
-      html += '<div class="pay-oid-shop">' + (isDeposit ? '🏷️ มัดจำ' : '🏪 ' + (o.shopeeId || '-')) + '</div></div></div>';
-      html += '<div class="pay-oamt">฿' + numberFormat(o.amount) + '</div></div>';
-    });
-    html += '</div>';
-    html += '<div class="pay-card-footer">';
-    html += '<button class="pay-btn skip-btn" onclick="skipPayUser(\'' + user.userId + '\')">ข้าม</button>';
-    if (isDeposit) {
-      html += '<button class="pay-btn deposit-btn" onclick="showConfirmPayModal(\'' + user.userId + '\')">✅ ยืนยันคืนมัดจำ</button>';
-    } else {
-      html += '<button class="pay-btn confirm-btn" onclick="showConfirmPayModal(\'' + user.userId + '\')">✅ ยืนยันโอนคืน</button>';
-    }
-    html += '</div></div>';
-  });
-  listEl.innerHTML = html;
-}
-
-function togglePayOrder(userId, orderId) {
-  var set = paymentSelections[userId];
-  if (!set) return;
-  if (set.has(orderId)) set.delete(orderId); else set.add(orderId);
-  renderAdminPayments();
-}
-
-function skipPayUser(userId) {
-  adminPaymentData = adminPaymentData.filter(function(u) { return u.userId !== userId; });
-  delete paymentSelections[userId];
-  renderAdminPayments();
-  showToast('⏭️ ข้ามรายการแล้ว');
-}
-
-var confirmPayUserId = null;
-
-function showConfirmPayModal(userId) {
-  confirmPayUserId = userId;
-  var user = adminPaymentData.find(function(u) { return u.userId === userId; });
-  if (!user) return;
-  var selected = paymentSelections[userId] || new Set();
-  if (selected.size === 0) { showToast('❌ กรุณาเลือกอย่างน้อย 1 รายการ'); return; }
-  var selectedOrders = user.orders.filter(function(o) { return selected.has(o.orderId); });
-  var totalAmount = selectedOrders.reduce(function(sum, o) { return sum + (parseFloat(o.amount) || 0); }, 0);
-  var isDeposit = user.type === 'deposit';
-
-  var modalInner = document.getElementById('confirmPayModalInner');
-  modalInner.className = 'modal confirm-pay-modal' + (isDeposit ? ' deposit-mode' : '');
-  document.getElementById('cpay-modal-title').textContent = isDeposit ? '✅ ยืนยันคืนเงินมัดจำ' : '✅ ยืนยันโอนเงินคืน';
-
-  var html = '<div class="cpay-bank-card">';
-  html += '<div class="cpay-bank-label">โอนเข้าบัญชี</div>';
-  html += '<div class="cpay-bank-name">' + (user.bankName || '-') + '</div>';
-  html += '<div class="cpay-bank-account">' + (user.bankAccount || '-') + '</div>';
-  html += '<div class="cpay-bank-holder">👤 ' + (user.accountName || user.displayName) + '</div>';
-  if (user.phone) html += '<div class="cpay-bank-user">📞 ' + user.phone + '</div>';
-  html += '</div>';
-  html += '<div class="cpay-orders"><div class="cpay-orders-label">📋 รายการที่เลือก (' + selectedOrders.length + ')</div>';
-  selectedOrders.forEach(function(o) {
-    html += '<div class="cpay-order-item"><span class="oid">#' + o.orderId + '</span><span class="amt">฿' + numberFormat(o.amount) + '</span></div>';
-  });
-  html += '</div>';
-  html += '<div class="cpay-total-box ' + (isDeposit ? 'deposit-style' : '') + '"><span class="cpay-total-label">💵 ยอดโอนรวม</span>';
-  html += '<span class="cpay-total-amount ' + (isDeposit ? 'deposit-color' : '') + '">฿' + numberFormat(totalAmount) + '</span></div>';
-  html += '<div class="cpay-note">⚠️ กดยืนยันแล้วระบบจะ:<br>1. อัปเดตสถานะ → "โอนแล้ว"<br>2. ส่ง Flex แจ้งลูกค้าทาง LINE<br>3. บันทึก Log</div>';
-  document.getElementById('cpay-modal-body').innerHTML = html;
-
-  var actHtml = '<button class="btn-cancel" onclick="hideModal(\'confirmPayModal\')">← กลับ</button>';
-  actHtml += isDeposit
-    ? '<button class="btn-confirm-blue" onclick="executePayment()">💸 ยืนยันโอน</button>'
-    : '<button class="btn-confirm-green" onclick="executePayment()">💸 ยืนยันโอน</button>';
-  document.getElementById('cpay-modal-actions').innerHTML = actHtml;
-  showModal('confirmPayModal');
-}
-
-function executePayment() {
-  if (!confirmPayUserId) return;
-  var user = adminPaymentData.find(function(u) { return u.userId === confirmPayUserId; });
-  if (!user) return;
-  var selected = paymentSelections[confirmPayUserId] || new Set();
-  var selectedOrders = user.orders.filter(function(o) { return selected.has(o.orderId); });
-  var totalAmount = selectedOrders.reduce(function(sum, o) { return sum + (parseFloat(o.amount) || 0); }, 0);
-  var isDeposit = user.type === 'deposit';
-
-  var btns = document.querySelectorAll('#cpay-modal-actions button');
-  btns.forEach(function(b) { b.disabled = true; });
-  btns[btns.length - 1].textContent = '⏳ กำลังดำเนินการ...';
-
-  apiCall('adminConfirmPayment', {
-    targetUserId: confirmPayUserId,
-    orderIds: Array.from(selected).join(','),
-    totalAmount: totalAmount,
-    type: isDeposit ? 'deposit' : 'refund'
-  }).then(function(data) {
-    hideModal('confirmPayModal');
-    if (data.success) {
-      showPaymentSuccess(user, selectedOrders, totalAmount, isDeposit);
-      adminPaymentData = adminPaymentData.filter(function(u) { return u.userId !== confirmPayUserId; });
-      delete paymentSelections[confirmPayUserId];
-    } else { showToast('❌ ' + (data.error || 'เกิดข้อผิดพลาด')); }
-  }).catch(function(err) {
-    hideModal('confirmPayModal');
-    showToast('❌ เกิดข้อผิดพลาด: ' + (err.message || err));
-  });
-}
-
-function showPaymentSuccess(user, orders, totalAmount, isDeposit) {
-  var listEl = document.getElementById('admin-pay-list');
-  var title = isDeposit ? '💰 คืนเงินมัดจำเรียบร้อย' : '💰 โอนเงินคืนเรียบร้อย';
-  var colorClass = isDeposit ? 'blue' : '';
-  var html = '<div class="pay-success"><div class="s-icon">✅</div><div class="s-title">โอนเงินสำเร็จ!</div>';
-  html += '<div class="s-sub">ส่งแจ้งเตือนให้ <strong>' + user.displayName + '</strong> แล้ว<br>ยอด ฿' + numberFormat(totalAmount) + ' • ' + orders.length + ' รายการ</div>';
-  html += '<div class="s-preview"><div class="s-preview-label">📱 Flex Message ที่ส่งให้ลูกค้า</div>';
-  html += '<div class="s-preview-bubble"><div class="sp-hdr ' + colorClass + '"><div class="sp-shop">🏪 JAN&ME</div><div class="sp-title">' + title + '</div></div>';
-  html += '<div style="font-size:12px;font-weight:600;margin-bottom:2px;">👤 ' + user.displayName + '</div>';
-  html += '<div style="font-size:11px;color:#888;margin-bottom:8px;">🏦 ' + (user.bankName || '-') + ' ' + (user.bankAccount || '') + '</div>';
-  orders.forEach(function(o) {
-    html += '<div class="sp-row"><span style="color:#FF6B6B;">#' + o.orderId + '</span><span>฿' + numberFormat(o.amount) + '</span></div>';
-  });
-  html += '<div class="sp-total"><span>💵 ยอดโอนรวม</span><span class="' + (isDeposit ? 'blue' : 'green') + '">฿' + numberFormat(totalAmount) + '</span></div>';
-  html += '</div></div>';
-  html += '<button class="btn-back-list" onclick="backToPaymentList()">👈 กลับหน้ารายการ</button></div>';
-  listEl.innerHTML = html;
-  document.getElementById('admin-pay-summary').innerHTML = '';
-}
-
-function backToPaymentList() { renderAdminPayments(); }
-
-// Start
-init();
-</script>
-
+<script src="app.js"></script>
 </body>
 </html>
