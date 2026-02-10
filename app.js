@@ -686,8 +686,8 @@ function renderAdminUsers(users) {
   '</div>';
 
   users.sort(function(a, b) {
-    var ap = !a.approved && !a.blocked ? 0 : a.blocked ? 2 : 1;
-    var bp = !b.approved && !b.blocked ? 0 : b.blocked ? 2 : 1;
+    var ap = a.isAdmin ? 0 : (!a.approved && !a.blocked) ? 1 : a.blocked ? 3 : 2;
+    var bp = b.isAdmin ? 0 : (!b.approved && !b.blocked) ? 1 : b.blocked ? 3 : 2;
     return ap - bp;
   });
 
@@ -703,16 +703,7 @@ function renderAdminUsers(users) {
     var adminBadge = user.isAdmin ? ' <span style="display:inline-block;padding:1px 6px;border-radius:var(--r-full);background:var(--amber-soft);color:var(--amber);font-size:9px;font-weight:700;vertical-align:middle;">👑 ADMIN</span>' : '';
     html += '<div style="flex:1;"><div style="font-weight:700;font-size:14px;">' + user.displayName + adminBadge + '</div><div style="font-size:12px;color:' + statusColor + ';font-weight:600;">' + statusText + '</div></div>';
 
-    // Toggle switch for approved/blocked users
-    if (isActive || isBlocked) {
-      var checked = isActive ? 'checked' : '';
-      var toggleLabel = isActive ? 'Active' : 'Blocked';
-      var labelColor = isActive ? 'color:var(--green);' : 'color:var(--red);';
-      html += '<div class="toggle-wrap">';
-      html += '<span class="toggle-label" style="' + labelColor + '">' + toggleLabel + '</span>';
-      html += '<label class="toggle"><input type="checkbox" ' + checked + ' onchange="adminToggleBlock(\'' + user.userId + '\', this.checked)"><span class="slider"></span></label>';
-      html += '</div>';
-    } else {
+    if (isPending) {
       html += '<div style="text-align:right;font-size:12px;color:var(--txt3);"><div>฿' + numberFormat(user.pendingRefund || 0) + ' รอคืน</div></div>';
     }
 
@@ -721,17 +712,26 @@ function renderAdminUsers(users) {
     if (isActive || isBlocked) html += '<div style="font-size:11px;color:var(--txt3);margin-top:4px;">฿' + numberFormat(user.pendingRefund || 0) + ' รอคืน</div>';
 
     // Action buttons
-    html += '<div style="display:flex;gap:8px;margin-top:10px;">';
+    html += '<div style="display:flex;gap:8px;margin-top:10px;align-items:center;">';
     if (isPending) {
       html += '<button onclick="adminApprove(\'' + user.userId + '\')" style="flex:1;padding:8px;border:none;border-radius:var(--r-xs);background:var(--green);color:white;font-size:12px;cursor:pointer;font-weight:700;font-family:var(--f-th);">✅ Approve</button>';
       html += '<button onclick="adminBlock(\'' + user.userId + '\',\'block\')" style="flex:1;padding:8px;border:none;border-radius:var(--r-xs);background:var(--red);color:white;font-size:12px;cursor:pointer;font-weight:700;font-family:var(--f-th);">🚫 Block</button>';
     }
+    if (isActive || isBlocked) {
+      var checked = isActive ? 'checked' : '';
+      var toggleLabel = isActive ? '✅ Active' : '🚫 Blocked';
+      var labelColor = isActive ? 'color:var(--green);' : 'color:var(--red);';
+      html += '<div class="toggle-wrap">';
+      html += '<span class="toggle-label" style="' + labelColor + '">' + toggleLabel + '</span>';
+      html += '<label class="toggle"><input type="checkbox" ' + checked + ' onchange="adminToggleBlock(\'' + user.userId + '\', this.checked)"><span class="slider"></span></label>';
+      html += '</div>';
+    }
     if (isActive) {
       var adminChecked = user.isAdmin ? 'checked' : '';
-      var adminLabel = user.isAdmin ? 'Admin' : 'User';
+      var adminLabel = user.isAdmin ? '👑 Admin' : '👤 User';
       var adminLabelColor = user.isAdmin ? 'color:var(--amber);' : 'color:var(--txt3);';
       html += '<div class="toggle-wrap">';
-      html += '<span class="toggle-label" style="' + adminLabelColor + '">👑 ' + adminLabel + '</span>';
+      html += '<span class="toggle-label" style="' + adminLabelColor + '">' + adminLabel + '</span>';
       html += '<label class="toggle toggle-amber"><input type="checkbox" ' + adminChecked + ' onchange="adminToggleAdmin(\'' + user.userId + '\', this.checked)"><span class="slider"></span></label>';
       html += '</div>';
     }
