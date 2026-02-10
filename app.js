@@ -107,6 +107,8 @@ function renderAll() {
   document.getElementById('total-orders').textContent = userData.totalOrders || 0;
   document.getElementById('total-refund').textContent = '฿' + numberFormat(userData.totalRefund || 0);
   document.getElementById('total-deposit').textContent = '฿' + numberFormat(userData.totalDeposit || 0);
+  document.getElementById('expected-refund').textContent = '฿' + numberFormat(userData.expectedRefund || 0);
+  document.getElementById('pending-deposit').textContent = '฿' + numberFormat(userData.pendingDeposit || 0);
 
   renderShopeeIds();
   renderBank();
@@ -1426,90 +1428,125 @@ function loadAdminDepositReturns() {
   });
 }
 
+function getBaseSubId_(id) {
+  var m = id.match(/^(DR_\d{8}_\d{6})(?:_\d+)?$/);
+  return m ? m[1] : id;
+}
+
 function renderAdminDepositReturns(items) {
   var container = document.getElementById('admin-deposit-list');
-  var pendingCount = items.filter(function(i) { return i.status === 'รอตรวจ'; }).length;
 
+  // Group by base submissionId
+  var groups = {};
+  var groupOrder = [];
+  items.forEach(function(item) {
+    var base = getBaseSubId_(item.submissionId);
+    if (!groups[base]) {
+      groups[base] = { items: [], base: base };
+      groupOrder.push(base);
+    }
+    groups[base].items.push(item);
+  });
+
+  var pendingGroups = groupOrder.filter(function(g) { return groups[g].items[0].status === 'รอตรวจ'; }).length;
   var html = '<div class="summary-row" style="margin-bottom:15px;">';
-  html += '<div class="summary-card pending"><div class="summary-label">ทั้งหมด</div><div class="summary-value" style="color:var(--txt);">' + items.length + '</div></div>';
-  html += '<div class="summary-card deposit"><div class="summary-label">รอตรวจ</div><div class="summary-value" style="color:var(--amber);">' + pendingCount + '</div></div>';
+  html += '<div class="summary-card pending"><div class="summary-label">ทั้งหมด</div><div class="summary-value" style="color:var(--txt);">' + groupOrder.length + '</div></div>';
+  html += '<div class="summary-card deposit"><div class="summary-label">รอตรวจ</div><div class="summary-value" style="color:var(--amber);">' + pendingGroups + '</div></div>';
   html += '</div>';
 
-  if (items.length === 0) {
+  if (groupOrder.length === 0) {
     html += '<div class="empty-state"><div class="icon">📦</div><p>ไม่มีรายการส่งคืนมัดจำ</p></div>';
     container.innerHTML = html;
     return;
   }
 
-  items.forEach(function(item) {
-    var isPending = item.status === 'รอตรวจ';
-    var isApproved = item.status === 'อนุมัติ';
-    var isRejected = item.status === 'ปฏิเสธ';
+  groupOrder.forEach(function(base) {
+    var group = groups[base].items;
+    var first = group[0];
+    var isPending = first.status === 'รอตรวจ';
+    var isApproved = first.status === 'อนุมัติ';
+    var isRejected = first.status === 'ปฏิเสธ';
     var statusColor = isPending ? 'var(--amber)' : isApproved ? 'var(--green)' : 'var(--red)';
     var statusIcon = isPending ? '⏳' : isApproved ? '✅' : '❌';
+    var totalDep = 0;
+    var allSubIds = [];
+    group.forEach(function(g) { totalDep += parseFloat(g.depositAmount) || 0; allSubIds.push(g.submissionId); });
+    var itemCount = Math.round(totalDep / 100);
+    var allSubIdsStr = allSubIds.join(',');
 
-    html += '<div class="order-card" style="margin-bottom:10px;">';
+    html += '<div class="adr-card">';
 
     // Header
-    html += '<div style="display:flex;align-items:center;gap:10px;">';
-    if (item.profileUrl) html += '<img src="' + item.profileUrl + '" style="width:36px;height:36px;border-radius:50%;border:2px solid var(--border);" onerror="this.style.display=\'none\'">';
-    html += '<div style="flex:1"><div style="font-weight:700;font-size:13px;">' + (item.displayName || 'Unknown') + '</div>';
-    html += '<div style="font-family:var(--f-mono);font-size:11px;color:var(--accent);">' + item.orderId + '</div></div>';
-    html += '<div style="text-align:right"><div style="font-size:16px;font-weight:800;font-family:var(--f-en);">฿' + numberFormat(item.depositAmount || 0) + '</div>';
-    html += '<div style="font-size:10px;font-weight:700;color:' + statusColor + '">' + statusIcon + ' ' + item.status + '</div></div>';
+    html += '<div class="adr-header">';
+    if (first.profileUrl) html += '<img src="' + first.profileUrl + '" class="adr-avatar" onerror="this.style.display=\'none\'">';
+    html += '<div class="adr-user"><div class="adr-name">' + (first.displayName || 'Unknown') + '</div>';
+    html += '<div class="adr-time">⏰ ' + (first.submittedAt || '') + '</div></div>';
+    html += '<div class="adr-right"><div class="adr-amount">฿' + numberFormat(totalDep) + '<span class="adr-count">' + itemCount + '</span></div>';
+    html += '<div class="adr-status" style="color:' + statusColor + '">' + statusIcon + ' ' + first.status + '</div></div>';
     html += '</div>';
 
-    // Info
-    if (item.shopeeId) html += '<div style="font-size:11px;color:var(--txt3);margin-top:6px;">🏪 ' + item.shopeeId + '</div>';
-    html += '<div style="font-size:10px;color:var(--txt3);margin-top:4px;">⏰ ' + (item.submittedAt || '') + '</div>';
+    // Body
+    html += '<div class="adr-body">';
 
-    // Photos
-    html += '<div style="display:flex;gap:4px;margin-top:8px;flex-wrap:wrap">';
-    html += '<span class="hc-label photo">📷 ' + item.productPhotos.length + ' รูป</span>';
-    if (item.trackingPhotos.length > 0) html += '<span class="hc-label tracking">🚚 ' + item.trackingPhotos.length + ' รูป</span>';
-    html += '</div>';
-
-    // Photo links
-    if (item.productPhotos.length > 0) {
-      html += '<div style="display:flex;gap:4px;margin-top:6px;overflow-x:auto">';
-      item.productPhotos.forEach(function(url, idx) {
-        if (url) {
-          var viewUrl = url;
-          var fid = url.match(/[-\\w]{25,}/);
-          if (fid) viewUrl = 'https://drive.google.com/file/d/' + fid[0] + '/view';
-          html += '<a href="' + viewUrl + '" target="_blank" style="display:inline-block;padding:4px 8px;background:var(--purple-soft);border-radius:var(--r-full);font-size:9px;color:var(--purple);font-weight:700;text-decoration:none;">📷 ' + (idx + 1) + '</a>';
-        }
-      });
+    // Orders list
+    html += '<div class="adr-orders">';
+    group.forEach(function(g) {
+      html += '<div class="adr-order-row">';
+      html += '<div><div class="adr-oid">' + g.orderId + '</div>';
+      if (g.shopeeId) html += '<div class="adr-shop">🏪 ' + g.shopeeId + '</div>';
       html += '</div>';
+      html += '<div class="adr-dep">฿' + numberFormat(g.depositAmount || 0) + '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+
+    // Photo buttons (bigger, from first item since photos are shared)
+    var photos = first.productPhotos || [];
+    var tracks = first.trackingPhotos || [];
+    html += '<div class="adr-photos">';
+    photos.forEach(function(url, idx) {
+      if (url) {
+        var fid = url.match(/[-\w]{25,}/);
+        var viewUrl = fid ? 'https://drive.google.com/file/d/' + fid[0] + '/view' : url;
+        html += '<a href="' + viewUrl + '" target="_blank" class="adr-photo-btn product">📷 รูปสินค้า ' + (idx + 1) + '</a>';
+      }
+    });
+    tracks.forEach(function(url, idx) {
+      if (url) {
+        var fid = url.match(/[-\w]{25,}/);
+        var viewUrl = fid ? 'https://drive.google.com/file/d/' + fid[0] + '/view' : url;
+        html += '<a href="' + viewUrl + '" target="_blank" class="adr-photo-btn tracking">🚚 Tracking ' + (idx + 1) + '</a>';
+      }
+    });
+    html += '</div>';
+
+    // Note
+    if (first.note) {
+      html += '<div class="adr-note">💬 ' + first.note + '</div>';
     }
 
-    if (item.note) {
-      html += '<div style="margin-top:6px;padding:6px 10px;background:var(--bg);border-radius:var(--r-xs);font-size:11px;color:var(--txt2);">💬 ' + item.note + '</div>';
-    }
-
-    // Admin actions (pending only)
+    // Actions
     if (isPending) {
-      html += '<div style="display:flex;gap:8px;margin-top:10px;">';
-      html += '<button onclick="adminReviewDeposit(\'' + item.submissionId + '\',\'approve\')" style="flex:1;padding:8px;border:none;border-radius:var(--r-xs);background:var(--green);color:white;font-size:12px;cursor:pointer;font-weight:700;font-family:var(--f-th);">✅ อนุมัติ</button>';
-      html += '<button onclick="promptRejectDeposit(\'' + item.submissionId + '\')" style="flex:1;padding:8px;border:none;border-radius:var(--r-xs);background:var(--red);color:white;font-size:12px;cursor:pointer;font-weight:700;font-family:var(--f-th);">❌ ปฏิเสธ</button>';
+      html += '<div class="adr-actions">';
+      html += '<button class="btn-approve" onclick="adminReviewDeposit(\'' + allSubIdsStr + '\',\'approve\')">✅ อนุมัติ</button>';
+      html += '<button class="btn-reject" onclick="promptRejectDeposit(\'' + allSubIdsStr + '\')">❌ ปฏิเสธ</button>';
       html += '</div>';
     }
-
-    if (isRejected && item.adminNote) {
-      html += '<div style="margin-top:6px;padding:6px 10px;background:var(--red-soft);border-radius:var(--r-xs);font-size:11px;color:var(--red);">💬 เหตุผล: ' + item.adminNote + '</div>';
+    if (isRejected && first.adminNote) {
+      html += '<div class="adr-result" style="background:var(--red-soft);color:var(--red);">💬 เหตุผล: ' + first.adminNote + '</div>';
     }
     if (isApproved) {
-      html += '<div style="margin-top:6px;padding:6px 10px;background:var(--green-soft);border-radius:var(--r-xs);font-size:11px;color:var(--green);">✅ อนุมัติโดย ' + (item.reviewedBy || '') + ' เมื่อ ' + (item.reviewedAt || '') + '</div>';
+      html += '<div class="adr-result" style="background:var(--green-soft);color:var(--green);">✅ อนุมัติโดย ' + (first.reviewedBy || '') + ' เมื่อ ' + (first.reviewedAt || '') + '</div>';
     }
 
-    html += '</div>';
+    html += '</div></div>';
   });
 
   container.innerHTML = html;
 }
 
-function adminReviewDeposit(submissionId, action) {
-  apiCall('adminReviewDeposit', { submissionId: submissionId, reviewAction: action }).then(function(data) {
+function adminReviewDeposit(submissionIds, action) {
+  apiCall('adminReviewDeposit', { submissionId: submissionIds, reviewAction: action }).then(function(data) {
     if (data.success) {
       showToast(action === 'approve' ? '✅ อนุมัติแล้ว' : '❌ ปฏิเสธแล้ว');
       loadAdminDepositReturns();
@@ -1519,10 +1556,10 @@ function adminReviewDeposit(submissionId, action) {
   });
 }
 
-function promptRejectDeposit(submissionId) {
+function promptRejectDeposit(submissionIds) {
   var reason = prompt('เหตุผลที่ปฏิเสธ:');
   if (reason === null) return;
-  apiCall('adminReviewDeposit', { submissionId: submissionId, reviewAction: 'reject', adminNote: reason }).then(function(data) {
+  apiCall('adminReviewDeposit', { submissionId: submissionIds, reviewAction: 'reject', adminNote: reason }).then(function(data) {
     if (data.success) {
       showToast('❌ ปฏิเสธแล้ว');
       loadAdminDepositReturns();
