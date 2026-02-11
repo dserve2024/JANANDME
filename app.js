@@ -195,14 +195,11 @@ function renderShopeeIds() {
 
   var html = '<div class="shopee-grid" style="grid-template-columns:1fr 1fr;">';
   ids.forEach(function(item) {
-    var pct = item.totalOrders > 0 ? Math.round((item.paidOrders / item.totalOrders) * 100) : 0;
-    var pctColor = pct === 0 ? 'var(--amber)' : 'var(--green)';
-
     html += '<div class="shopee-card" onclick="viewShopeeId(\'' + item.shopeeId + '\')" style="padding:10px;gap:8px;">' +
       '<div class="shopee-icon" style="width:32px;height:32px;font-size:14px;border-radius:8px;">🛒</div>' +
       '<div class="shopee-info" style="flex:1;min-width:0;">' +
         '<div class="shopee-name" style="font-size:12px;">' + item.shopeeId + '</div>' +
-        '<div class="shopee-stats" style="font-size:10px;"><span class="stat-paid">✓ ' + item.paidOrders + '</span><span class="stat-total">/ ' + item.totalOrders + '</span> <span style="color:' + pctColor + ';font-weight:700;">' + pct + '%</span></div>' +
+        '<div class="shopee-stats" style="font-size:10px;"><span class="stat-paid">✓ ' + item.paidOrders + '</span><span class="stat-total">/ ' + item.totalOrders + '</span></div>' +
       '</div>' +
     '</div>';
   });
@@ -313,15 +310,15 @@ function renderBank() {
     return;
   }
 
-  container.innerHTML = '<div class="bank-card" onclick="showBankModal()" style="padding:14px 16px;display:flex;align-items:center;gap:12px;">' +
-    '<div style="flex:1;min-width:0;">' +
+  container.innerHTML = '<div class="bank-card" onclick="showBankModal()" style="padding:14px 16px;display:flex;align-items:stretch;gap:0;">' +
+    '<div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;">' +
       '<div class="bank-label">BANK ACCOUNT</div>' +
-      '<div class="bank-name" style="font-size:13px;margin:2px 0 4px;">' + user.bankName + '</div>' +
-      '<div class="bank-holder" style="margin-top:0;font-size:11px;">' + user.accountName + '</div>' +
-      (user.phone ? '<div class="bank-phone" style="margin-top:2px;">📞 ' + user.phone + '</div>' : '') +
+      (user.phone ? '<div class="bank-phone" style="margin-top:6px;font-size:12px;opacity:.7;">📞 ' + user.phone + '</div>' : '') +
     '</div>' +
-    '<div style="text-align:right;flex-shrink:0;">' +
-      '<div class="bank-account" style="font-size:20px;letter-spacing:1.5px;margin:0;">' + user.bankAccount + '</div>' +
+    '<div style="text-align:right;flex-shrink:0;display:flex;flex-direction:column;justify-content:center;border-left:1px solid rgba(255,255,255,.1);padding-left:14px;">' +
+      '<div style="font-size:12px;opacity:.5;font-weight:600;">' + user.bankName + '</div>' +
+      '<div class="bank-account" style="font-size:22px;letter-spacing:2px;margin:2px 0 4px;opacity:1;">' + user.bankAccount + '</div>' +
+      '<div style="font-size:11px;opacity:.6;text-transform:uppercase;letter-spacing:.5px;">' + user.accountName + '</div>' +
     '</div>' +
   '</div>';
 }

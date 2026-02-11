@@ -14,12 +14,15 @@
 
 <!-- HEADER -->
 <div class="header">
-  <div class="header-inner">
-    <div class="header-logo">🏪</div>
-    <div>
-      <h1>JAN&ME</h1>
-      <div class="subtitle">ORDER MANAGEMENT</div>
+  <div class="header-inner" style="justify-content:space-between;">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div class="header-logo">🏪</div>
+      <div>
+        <h1>JAN&ME</h1>
+        <div class="subtitle">ORDER MANAGEMENT</div>
+      </div>
     </div>
+    <button onclick="showContactModal()" style="background:var(--red);color:white;border:none;border-radius:var(--r-full);padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--f-th);white-space:nowrap;">📞 แอดมิน</button>
   </div>
 </div>
 
@@ -159,10 +162,7 @@
       </div>
       <div id="bank-display"></div>
 
-      <!-- Contact Admin Button -->
-      <div style="text-align:center;">
-        <button onclick="showContactModal()" class="contact-btn">📞 ติดต่อแอดมิน</button>
-      </div>
+      <!-- Contact Admin moved to header -->
     </div>
   </div>
 
