@@ -267,12 +267,12 @@ function viewShopeeId(shopeeId) {
     if (orders.length > 0) {
       html += '<div style="border-top:1px solid var(--border);padding-top:15px;max-height:300px;overflow-y:auto;">';
       orders.forEach(function(order) {
-        var statusColor = (order.status === 'Transferred' || order.status === 'Completed') ? 'color:var(--green);' : 'color:var(--amber);';
+        var statusColor = order.status === 'Transferring' ? 'color:var(--blue);' : (order.status === 'Transferred' || order.status === 'Completed') ? 'color:var(--green);' : 'color:var(--amber);';
         html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--bg);border-radius:var(--r-xs);margin-bottom:8px;cursor:pointer;" onclick="hideModal(\'viewShopeeModal\');viewOrder(\'' + order.orderId + '\')">';
         html += '<div><div style="font-weight:700;font-size:13px;font-family:var(--f-mono);">🆔 ' + order.orderId + '</div>';
         html += '<div style="font-size:11px;color:var(--txt3);">' + formatDateTime(order.orderTime) + '</div></div>';
         html += '<div style="text-align:right;"><div style="font-weight:700;">฿' + numberFormat(order.orderTotal || 0) + '</div>';
-        html += '<div style="font-size:11px;' + statusColor + '">' + (order.status || 'Pending') + '</div></div>';
+        html += '<div style="font-size:11px;' + statusColor + '">' + getStatusDisplay(order.status) + '</div></div>';
         html += '</div>';
       });
       html += '</div>';
@@ -363,6 +363,42 @@ function saveBank() {
 }
 
 // ===== ORDERS =====
+
+// Status display helpers
+function getStatusDisplay(status) {
+  var map = {
+    'Transferring': 'รอค้างชำระ',
+    'Transferred': 'โอนแล้ว',
+    'Completed': 'สำเร็จ',
+    'Pending': 'รอตรวจ',
+    'Canceled': 'ยกเลิก',
+    'Incorrect': 'ไม่ถูกต้อง',
+    'Ambiguous': 'ไม่ชัดเจน'
+  };
+  return map[status] || status || 'Pending';
+}
+
+function getStatusClass(status) {
+  if (status === 'Transferring') return 'transferring';
+  if (status === 'Transferred' || status === 'Completed') return 'completed';
+  return 'pending';
+}
+
+function getStatusPriority(status) {
+  var priorities = {
+    'Transferring': 0,
+    'Pending': 1,
+    'Completed': 2,
+    'Shipped': 3,
+    'New': 3,
+    'Transferred': 4,
+    'Incorrect': 5,
+    'Ambiguous': 5,
+    'Canceled': 6
+  };
+  return priorities[status] !== undefined ? priorities[status] : 3;
+}
+
 function loadOrders(filter) {
   currentFilter = filter || 'all';
   var params = {};
@@ -370,6 +406,7 @@ function loadOrders(filter) {
   if (filter === 'user') params.filter = 'user';
   else if (filter === 'admin') params.filter = 'admin';
   else if (filter === 'pending') params.status = 'Pending';
+  else if (filter === 'transferring') params.status = 'Transferring';
   else if (filter === 'completed') params.status = 'Transferred';
 
   apiCall('getOrders', params).then(function(data) {
@@ -393,9 +430,15 @@ function renderOrders(orders) {
     return;
   }
 
+  // Sort by status priority: Transferring > Pending > Completed > Transferred > ...
+  orders.sort(function(a, b) {
+    return getStatusPriority(a.status) - getStatusPriority(b.status);
+  });
+
   var html = '<div class="orders-grid">';
   orders.forEach(function(order) {
-    var statusClass = (order.status === 'Transferred' || order.status === 'Completed') ? 'completed' : 'pending';
+    var statusClass = getStatusClass(order.status);
+    var statusText = getStatusDisplay(order.status);
     var byClass = order.createdBy === 'ADMIN' ? 'admin' : 'user';
     var byText = order.createdBy === 'ADMIN' ? '🛒 Admin' : '👤 ตัวเอง';
     var shopeeText = order.shopeeId || '⚠️ รอระบุ';
@@ -404,7 +447,7 @@ function renderOrders(orders) {
     html += '<div class="order-card" onclick="viewOrder(\'' + order.orderId + '\')">';
     html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:3px;">';
     html += '<span class="order-id">' + order.orderId + '</span>';
-    html += '<span class="order-status ' + statusClass + '">' + (order.status || 'Pending') + '</span>';
+    html += '<span class="order-status ' + statusClass + '">' + statusText + '</span>';
     html += '</div>';
     html += '<div class="order-amount">฿' + numberFormat(order.orderTotal || 0) + '</div>';
     html += '<div class="order-shopee" style="color:' + shopeeColor + ';">🏪 ' + shopeeText + '</div>';
@@ -412,6 +455,9 @@ function renderOrders(orders) {
     html += '<div class="order-by ' + byClass + '">' + byText + '</div>';
     if (parseFloat(order.refundAmount) > 0) {
       html += '<div class="order-refund">💰 ฿' + numberFormat(order.refundAmount) + '</div>';
+    }
+    if (order.status === 'Transferring') {
+      html += '<div style="margin-top:6px;padding:6px 8px;background:var(--blue-soft);border-radius:var(--r-xs);font-size:10px;font-weight:700;color:var(--blue);text-align:center;cursor:pointer;" onclick="event.stopPropagation();switchTab(\'admin\');switchAdminSubTab(\'payment\');">💳 ไปหน้าจ่ายเงิน</div>';
     }
     html += '</div>';
   });
@@ -480,8 +526,15 @@ function viewOrder(orderId) {
 
       html += '<div class="form-row">';
       html += '<div class="form-group"><label>Subtotal</label><input type="number" id="edit-subtotal" value="' + (order.subtotal || '') + '"></div>';
-      html += '<div class="form-group"><label>Status</label><input type="text" value="' + (order.status || '-') + '" disabled></div>';
+      html += '<div class="form-group"><label>Status</label><input type="text" value="' + getStatusDisplay(order.status) + '" disabled style="color:' + (order.status === 'Transferring' ? 'var(--blue)' : '') + ';font-weight:700;"></div>';
       html += '</div>';
+
+      if (order.status === 'Transferring') {
+        html += '<div style="padding:12px;background:var(--blue-soft);border-radius:var(--r-sm);margin:8px 0;text-align:center;cursor:pointer;" onclick="hideModal(\'orderModal\');switchTab(\'admin\');switchAdminSubTab(\'payment\');">';
+        html += '<div style="font-size:14px;font-weight:700;color:var(--blue);">💳 ไปหน้าจ่ายเงิน</div>';
+        html += '<div style="font-size:11px;color:var(--txt3);margin-top:2px;">กดเพื่อไปจัดการชำระเงินใน Admin</div>';
+        html += '</div>';
+      }
 
       html += '<div class="form-row">';
       html += '<div class="form-group"><label>ยอดรอคืน</label><input type="text" value="฿' + numberFormat(order.refundAmount || 0) + '" disabled></div>';

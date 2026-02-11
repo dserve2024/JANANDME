@@ -179,6 +179,7 @@
         <button class="filter-btn" onclick="filterOrders('user', this)">👤 ตัวเอง</button>
         <button class="filter-btn" onclick="filterOrders('admin', this)">🛒 Admin</button>
         <button class="filter-btn" onclick="filterOrders('pending', this)">รอตรวจ</button>
+        <button class="filter-btn" onclick="filterOrders('transferring', this)">💳 รอค้างชำระ</button>
         <button class="filter-btn" onclick="filterOrders('completed', this)">โอนแล้ว</button>
       </div>
       <div id="orders-list"></div>
@@ -315,6 +316,7 @@
             <tr><th>สถานะ</th><th>ความหมาย</th><th>แก้ไขได้?</th></tr>
             <tr><td>Pending</td><td>ส่งรูปแล้ว รอแอดมินตรวจ</td><td><span class="tag yes">ได้</span></td></tr>
             <tr><td>Completed</td><td>ตรวจสอบผ่าน รอโอนเงินคืน</td><td><span class="tag no">ไม่ได้</span></td></tr>
+            <tr><td>Transferring</td><td>รอค้างชำระ (กดไปหน้า Admin ได้)</td><td><span class="tag no">ไม่ได้</span></td></tr>
             <tr><td>Transferred</td><td>โอนเงินคืนเรียบร้อย</td><td><span class="tag no">ไม่ได้</span></td></tr>
             <tr><td>Canceled</td><td>Order ถูกยกเลิก</td><td><span class="tag no">ไม่ได้</span></td></tr>
           </table>

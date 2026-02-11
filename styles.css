@@ -136,6 +136,7 @@ body { font-family: var(--f-th); background: var(--bg); color: var(--txt); min-h
 .order-id { font-family:var(--f-mono); font-weight:700; color:var(--accent); font-size:10px; line-height:1.3; letter-spacing:-.2px; word-break:break-all; }
 .order-status { display:inline-block; padding:2px 7px; border-radius:var(--r-full); font-size:9px; font-weight:700; }
 .order-status.pending { background:var(--amber-soft); color:var(--amber); }
+.order-status.transferring { background:var(--blue-soft); color:var(--blue); }
 .order-status.completed { background:var(--green-soft); color:var(--green); }
 .order-amount { font-family:var(--f-en); font-size:18px; font-weight:800; margin:6px 0; letter-spacing:-.5px; }
 .order-time { font-size:10px; color:var(--txt3); }
