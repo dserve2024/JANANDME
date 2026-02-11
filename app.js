@@ -1,6 +1,9 @@
 var CONFIG = {
   LIFF_ID: '2009026931-IQy8q5QZ',
-  API_URL: 'https://script.google.com/macros/s/AKfycbxc1W4MgiGHFnLh8SrfHeqCbKPU033zbfSoTr-TUeGHuTy4qKcPjeZEvgqXC1PyAYiM/exec'
+  API_URL: 'https://script.google.com/macros/s/AKfycbxc1W4MgiGHFnLh8SrfHeqCbKPU033zbfSoTr-TUeGHuTy4qKcPjeZEvgqXC1PyAYiM/exec',
+  EDGE_API_URL: 'https://ucarbttnncedmwtrlxyw.supabase.co/functions/v1/api',
+  SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVjYXJidHRubmNlZG13dHJseHl3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NzgyNjQsImV4cCI6MjA4NjM1NDI2NH0.HvM6cVr00gedlANYA1csfpv_DBu7l2OEUls2gy2r1tM',
+  USE_EDGE: true  // Phase 2: เปิดใช้ Edge Function สำหรับ read APIs
 };
 
 var userId = null;
@@ -47,13 +50,42 @@ async function init() {
 }
 
 // ===== API =====
+// Read actions ที่ใช้ Edge Function ได้ (Phase 2)
+var EDGE_READ_ACTIONS = [
+  'getUserData', 'getOrders', 'getOrderDetail', 'getOrderHistory',
+  'getDepositOrders', 'getDepositHistory', 'getDisputes',
+  'checkAdmin', 'adminGetUsers', 'adminGetOrders',
+  'adminGetPendingPayments', 'adminGetDepositReturns'
+];
+
 function apiCall(action, params) {
   params = params || {};
   params.action = action;
   params.userId = userId;
 
-  var url = CONFIG.API_URL + '?' + new URLSearchParams(params).toString();
-  return fetch(url).then(function(r) { return r.json(); });
+  // ใช้ Edge Function สำหรับ read actions (ถ้าเปิด USE_EDGE)
+  var useEdge = CONFIG.USE_EDGE && EDGE_READ_ACTIONS.indexOf(action) !== -1;
+  var baseUrl = useEdge ? CONFIG.EDGE_API_URL : CONFIG.API_URL;
+  var url = baseUrl + '?' + new URLSearchParams(params).toString();
+
+  var fetchOptions = {};
+  if (useEdge) {
+    fetchOptions.headers = {
+      'Authorization': 'Bearer ' + CONFIG.SUPABASE_ANON_KEY
+    };
+  }
+
+  return fetch(url, fetchOptions)
+    .then(function(r) { return r.json(); })
+    .catch(function(err) {
+      // Fallback to GAS if Edge fails
+      if (useEdge) {
+        console.warn('Edge API failed, falling back to GAS:', err.message);
+        var gasUrl = CONFIG.API_URL + '?' + new URLSearchParams(params).toString();
+        return fetch(gasUrl).then(function(r) { return r.json(); });
+      }
+      throw err;
+    });
 }
 
 function apiPost(data) {
