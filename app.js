@@ -193,23 +193,16 @@ function renderShopeeIds() {
     return;
   }
 
-  var html = '<div class="shopee-grid" style="grid-template-columns:1fr;">';
+  var html = '<div class="shopee-grid" style="grid-template-columns:1fr 1fr;">';
   ids.forEach(function(item) {
     var pct = item.totalOrders > 0 ? Math.round((item.paidOrders / item.totalOrders) * 100) : 0;
-    var circumference = 2 * Math.PI * 16;
-    var offset = circumference - (pct / 100) * circumference;
-    var progressClass = pct === 0 ? 'warning' : '';
     var pctColor = pct === 0 ? 'var(--amber)' : 'var(--green)';
 
-    html += '<div class="shopee-card" onclick="viewShopeeId(\'' + item.shopeeId + '\')">' +
-      '<div class="shopee-icon">🛒</div>' +
-      '<div class="shopee-info">' +
-        '<div class="shopee-name">' + item.shopeeId + '</div>' +
-        '<div class="shopee-stats"><span class="stat-paid">✓ ' + item.paidOrders + '</span><span class="stat-total">/ ' + item.totalOrders + ' orders</span></div>' +
-      '</div>' +
-      '<div class="progress-ring">' +
-        '<svg width="40" height="40"><circle class="bg" cx="20" cy="20" r="16"/><circle class="progress ' + progressClass + '" cx="20" cy="20" r="16" stroke-dasharray="' + circumference + '" stroke-dashoffset="' + offset + '"/></svg>' +
-        '<div class="progress-text" style="color:' + pctColor + '">' + pct + '%</div>' +
+    html += '<div class="shopee-card" onclick="viewShopeeId(\'' + item.shopeeId + '\')" style="padding:10px;gap:8px;">' +
+      '<div class="shopee-icon" style="width:32px;height:32px;font-size:14px;border-radius:8px;">🛒</div>' +
+      '<div class="shopee-info" style="flex:1;min-width:0;">' +
+        '<div class="shopee-name" style="font-size:12px;">' + item.shopeeId + '</div>' +
+        '<div class="shopee-stats" style="font-size:10px;"><span class="stat-paid">✓ ' + item.paidOrders + '</span><span class="stat-total">/ ' + item.totalOrders + '</span> <span style="color:' + pctColor + ';font-weight:700;">' + pct + '%</span></div>' +
       '</div>' +
     '</div>';
   });
@@ -320,12 +313,16 @@ function renderBank() {
     return;
   }
 
-  container.innerHTML = '<div class="bank-card" onclick="showBankModal()">' +
-    '<div class="bank-label">BANK ACCOUNT</div>' +
-    '<div class="bank-name">' + user.bankName + '</div>' +
-    '<div class="bank-account">' + user.bankAccount + '</div>' +
-    '<div class="bank-holder">ชื่อบัญชี: ' + user.accountName + '</div>' +
-    (user.phone ? '<div class="bank-phone">📞 ' + user.phone + '</div>' : '') +
+  container.innerHTML = '<div class="bank-card" onclick="showBankModal()" style="padding:14px 16px;display:flex;align-items:center;gap:12px;">' +
+    '<div style="flex:1;min-width:0;">' +
+      '<div class="bank-label">BANK ACCOUNT</div>' +
+      '<div class="bank-name" style="font-size:13px;margin:2px 0 4px;">' + user.bankName + '</div>' +
+      '<div class="bank-holder" style="margin-top:0;font-size:11px;">' + user.accountName + '</div>' +
+      (user.phone ? '<div class="bank-phone" style="margin-top:2px;">📞 ' + user.phone + '</div>' : '') +
+    '</div>' +
+    '<div style="text-align:right;flex-shrink:0;">' +
+      '<div class="bank-account" style="font-size:20px;letter-spacing:1.5px;margin:0;">' + user.bankAccount + '</div>' +
+    '</div>' +
   '</div>';
 }
 
