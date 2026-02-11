@@ -56,7 +56,8 @@ var EDGE_ACTIONS = [
   'getUserData', 'getOrders', 'getOrderDetail', 'getOrderHistory',
   'getDepositOrders', 'getDepositHistory', 'getDisputes',
   'checkAdmin', 'adminGetUsers', 'adminGetOrders',
-  'adminGetPendingPayments', 'adminGetDepositReturns',
+  'adminGetDepositReturns',
+  // NOTE: adminGetPendingPayments ใช้ GAS เพราะ deposit_returns ยังไม่ sync ลง Supabase
   // Write actions (Phase 3)
   'updateBank', 'addShopeeId', 'deleteShopeeId',
   'updateOrder', 'deleteOrder', 'contactAdmin', 'createDispute',
