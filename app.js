@@ -404,7 +404,7 @@ function renderOrders(orders) {
     html += '<div class="order-card" onclick="viewOrder(\'' + order.orderId + '\')">';
     html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:3px;">';
     html += '<span class="order-id">' + order.orderId + '</span>';
-    html += '<span class="order-status ' + statusClass + '">' + (order.status || 'รอ') + '</span>';
+    html += '<span class="order-status ' + statusClass + '">' + (order.status || 'Pending') + '</span>';
     html += '</div>';
     html += '<div class="order-amount">฿' + numberFormat(order.orderTotal || 0) + '</div>';
     html += '<div class="order-shopee" style="color:' + shopeeColor + ';">🏪 ' + shopeeText + '</div>';
