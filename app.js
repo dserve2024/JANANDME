@@ -50,12 +50,18 @@ async function init() {
 }
 
 // ===== API =====
-// Read actions ที่ใช้ Edge Function ได้ (Phase 2)
-var EDGE_READ_ACTIONS = [
+// Actions ที่ใช้ Edge Function ได้ (Phase 3: read + write)
+var EDGE_ACTIONS = [
+  // Read actions (Phase 2)
   'getUserData', 'getOrders', 'getOrderDetail', 'getOrderHistory',
   'getDepositOrders', 'getDepositHistory', 'getDisputes',
   'checkAdmin', 'adminGetUsers', 'adminGetOrders',
-  'adminGetPendingPayments', 'adminGetDepositReturns'
+  'adminGetPendingPayments', 'adminGetDepositReturns',
+  // Write actions (Phase 3)
+  'updateBank', 'addShopeeId', 'deleteShopeeId',
+  'updateOrder', 'deleteOrder', 'contactAdmin', 'createDispute',
+  'adminApproveUser', 'adminBlockUser', 'adminConfirmPayment',
+  'adminReviewDeposit', 'adminMarkPayment', 'adminSetAdmin'
 ];
 
 function apiCall(action, params) {
@@ -63,8 +69,8 @@ function apiCall(action, params) {
   params.action = action;
   params.userId = userId;
 
-  // ใช้ Edge Function สำหรับ read actions (ถ้าเปิด USE_EDGE)
-  var useEdge = CONFIG.USE_EDGE && EDGE_READ_ACTIONS.indexOf(action) !== -1;
+  // ใช้ Edge Function สำหรับทุก action ที่อยู่ใน EDGE_ACTIONS (ถ้าเปิด USE_EDGE)
+  var useEdge = CONFIG.USE_EDGE && EDGE_ACTIONS.indexOf(action) !== -1;
   var baseUrl = useEdge ? CONFIG.EDGE_API_URL : CONFIG.API_URL;
   var url = baseUrl + '?' + new URLSearchParams(params).toString();
 
