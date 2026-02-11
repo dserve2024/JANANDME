@@ -254,7 +254,7 @@ function viewShopeeId(shopeeId) {
     var totalAmount = orders.reduce(function(sum, o) { return sum + (parseFloat(o.orderTotal) || 0); }, 0);
     var paidOrders = orders.filter(function(o) {
       var status = (o.status || '').toLowerCase();
-      return status === 'โอนแล้ว' || status === 'completed' || status === 'paid';
+      return status === 'transferred' || status === 'completed';
     }).length;
 
     var html = '<div style="text-align:center;padding:10px 0 20px;">';
@@ -267,12 +267,12 @@ function viewShopeeId(shopeeId) {
     if (orders.length > 0) {
       html += '<div style="border-top:1px solid var(--border);padding-top:15px;max-height:300px;overflow-y:auto;">';
       orders.forEach(function(order) {
-        var statusColor = (order.status === 'โอนแล้ว' || order.status === 'completed') ? 'color:var(--green);' : 'color:var(--amber);';
+        var statusColor = (order.status === 'Transferred' || order.status === 'Completed') ? 'color:var(--green);' : 'color:var(--amber);';
         html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--bg);border-radius:var(--r-xs);margin-bottom:8px;cursor:pointer;" onclick="hideModal(\'viewShopeeModal\');viewOrder(\'' + order.orderId + '\')">';
         html += '<div><div style="font-weight:700;font-size:13px;font-family:var(--f-mono);">🆔 ' + order.orderId + '</div>';
         html += '<div style="font-size:11px;color:var(--txt3);">' + formatDateTime(order.orderTime) + '</div></div>';
         html += '<div style="text-align:right;"><div style="font-weight:700;">฿' + numberFormat(order.orderTotal || 0) + '</div>';
-        html += '<div style="font-size:11px;' + statusColor + '">' + (order.status || 'รอตรวจ') + '</div></div>';
+        html += '<div style="font-size:11px;' + statusColor + '">' + (order.status || 'Pending') + '</div></div>';
         html += '</div>';
       });
       html += '</div>';
@@ -369,8 +369,8 @@ function loadOrders(filter) {
 
   if (filter === 'user') params.filter = 'user';
   else if (filter === 'admin') params.filter = 'admin';
-  else if (filter === 'pending') params.status = 'รอตรวจสอบ';
-  else if (filter === 'completed') params.status = 'โอนแล้ว';
+  else if (filter === 'pending') params.status = 'Pending';
+  else if (filter === 'completed') params.status = 'Transferred';
 
   apiCall('getOrders', params).then(function(data) {
     if (data.success) {
@@ -395,7 +395,7 @@ function renderOrders(orders) {
 
   var html = '<div class="orders-grid">';
   orders.forEach(function(order) {
-    var statusClass = (order.status === 'โอนแล้ว' || order.status === 'completed') ? 'completed' : 'pending';
+    var statusClass = (order.status === 'Transferred' || order.status === 'Completed') ? 'completed' : 'pending';
     var byClass = order.createdBy === 'ADMIN' ? 'admin' : 'user';
     var byText = order.createdBy === 'ADMIN' ? '🛒 Admin' : '👤 ตัวเอง';
     var shopeeText = order.shopeeId || '⚠️ รอระบุ';
@@ -1063,7 +1063,7 @@ function showConfirmPayModal(userId) {
   html += '</div>';
   html += '<div class="cpay-total-box"><span class="cpay-total-label">💵 ยอดโอนรวม</span>';
   html += '<span class="cpay-total-amount">฿' + numberFormat(totalAmount) + '</span></div>';
-  html += '<div class="cpay-note">⚠️ กดยืนยันแล้วระบบจะ:<br>1. อัปเดตสถานะ → "โอนแล้ว"<br>2. ส่ง Flex แจ้งลูกค้าทาง LINE<br>3. บันทึก Log</div>';
+  html += '<div class="cpay-note">⚠️ กดยืนยันแล้วระบบจะ:<br>1. อัปเดตสถานะ → "Transferred"<br>2. ส่ง Flex แจ้งลูกค้าทาง LINE<br>3. บันทึก Log</div>';
   document.getElementById('cpay-modal-body').innerHTML = html;
 
   var actHtml = '<button class="btn-cancel" onclick="hideModal(\'confirmPayModal\')">← กลับ</button>';
@@ -1514,9 +1514,9 @@ function renderDepositHistory(items) {
   }
   var html = '';
   items.forEach(function(item) {
-    var iconClass = item.status === 'อนุมัติ' ? 'sent' : item.status === 'ปฏิเสธ' ? 'rejected' : 'review';
-    var statusIcon = item.status === 'อนุมัติ' ? '✅' : item.status === 'ปฏิเสธ' ? '❌' : '⏳';
-    var statusText = item.status || 'รอตรวจ';
+    var iconClass = item.status === 'Approved' ? 'sent' : item.status === 'Rejected' ? 'rejected' : 'review';
+    var statusIcon = item.status === 'Approved' ? '✅' : item.status === 'Rejected' ? '❌' : '⏳';
+    var statusText = item.status || 'Pending';
 
     html += '<div class="history-card">';
     html += '<div class="hc-top">';
@@ -1532,7 +1532,7 @@ function renderDepositHistory(items) {
     html += '<span style="margin-left:auto;font-size:11px;font-weight:700;color:var(--purple);">฿' + numberFormat(item.depositAmount || 0) + '</span>';
     html += '</div>';
 
-    if (item.status === 'ปฏิเสธ' && item.adminNote) {
+    if (item.status === 'Rejected' && item.adminNote) {
       html += '<div style="margin-top:8px;padding:8px 10px;background:var(--red-soft);border-radius:var(--r-xs);font-size:11px;color:var(--red);">💬 แอดมิน: ' + item.adminNote + '</div>';
     }
 
@@ -1573,10 +1573,10 @@ function renderAdminDepositReturns(items) {
     groups[base].items.push(item);
   });
 
-  var pendingGroups = groupOrder.filter(function(g) { return groups[g].items[0].status === 'รอตรวจ'; }).length;
+  var pendingGroups = groupOrder.filter(function(g) { return groups[g].items[0].status === 'Pending'; }).length;
   var html = '<div class="summary-row" style="margin-bottom:15px;">';
   html += '<div class="summary-card pending"><div class="summary-label">ทั้งหมด</div><div class="summary-value" style="color:var(--txt);">' + groupOrder.length + '</div></div>';
-  html += '<div class="summary-card deposit"><div class="summary-label">รอตรวจ</div><div class="summary-value" style="color:var(--amber);">' + pendingGroups + '</div></div>';
+  html += '<div class="summary-card deposit"><div class="summary-label">Pending</div><div class="summary-value" style="color:var(--amber);">' + pendingGroups + '</div></div>';
   html += '</div>';
 
   if (groupOrder.length === 0) {
@@ -1588,9 +1588,9 @@ function renderAdminDepositReturns(items) {
   groupOrder.forEach(function(base) {
     var group = groups[base].items;
     var first = group[0];
-    var isPending = first.status === 'รอตรวจ';
-    var isApproved = first.status === 'อนุมัติ';
-    var isRejected = first.status === 'ปฏิเสธ';
+    var isPending = first.status === 'Pending';
+    var isApproved = first.status === 'Approved';
+    var isRejected = first.status === 'Rejected';
     var statusColor = isPending ? 'var(--amber)' : isApproved ? 'var(--green)' : 'var(--red)';
     var statusIcon = isPending ? '⏳' : isApproved ? '✅' : '❌';
     var totalDep = 0;
@@ -1612,7 +1612,7 @@ function renderAdminDepositReturns(items) {
     html += '<div class="adr-orders">';
     group.forEach(function(g) {
       var os = (g.orderStatus || '').toLowerCase();
-      var isCompleted = os === 'completed' || os === 'สำเร็จแล้ว';
+      var isCompleted = os === 'completed';
       html += '<div class="adr-order-row">';
       html += '<div><div class="adr-oid">' + g.orderId + '</div>';
       if (g.shopeeId) html += '<div class="adr-shop">🏪 ' + g.shopeeId + '</div>';
@@ -1648,8 +1648,8 @@ function renderAdminDepositReturns(items) {
 
     if (isPending) {
       html += '<div class="adr-actions">';
-      html += '<button class="btn-approve" onclick="adminReviewDeposit(\'' + allSubIdsStr + '\',\'approve\')">✅ อนุมัติ</button>';
-      html += '<button class="btn-reject" onclick="promptRejectDeposit(\'' + allSubIdsStr + '\')">❌ ปฏิเสธ</button>';
+      html += '<button class="btn-approve" onclick="adminReviewDeposit(\'' + allSubIdsStr + '\',\'approve\')">✅ Approve</button>';
+      html += '<button class="btn-reject" onclick="promptRejectDeposit(\'' + allSubIdsStr + '\')">❌ Reject</button>';
       html += '</div>';
     }
     if (isRejected && first.adminNote) {
