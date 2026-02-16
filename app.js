@@ -830,7 +830,8 @@ function loadAdminData() {
   if (!isAdminUser) return;
   var activeSubTab = document.querySelector('#admin-section .admin-sub-tab.active');
   var tabName = activeSubTab ? activeSubTab.textContent.trim() : '';
-  if (tabName.indexOf('มัดจำ') !== -1) loadAdminDepositReturns();
+  if (tabName.indexOf('ผลงาน') !== -1) loadAdminDashboard();
+  else if (tabName.indexOf('มัดจำ') !== -1) loadAdminDepositReturns();
   else if (tabName.indexOf('โอนเงิน') !== -1) loadAdminPayments();
   else loadAdminUsers();
 }
@@ -852,6 +853,10 @@ function switchAdminSubTab(sub) {
     tabs[2].classList.add('active');
     document.getElementById('admin-deposit-sub').classList.add('active');
     loadAdminDepositReturns();
+  } else if (sub === 'dashboard') {
+    tabs[3].classList.add('active');
+    document.getElementById('admin-dashboard-sub').classList.add('active');
+    loadAdminDashboard();
   }
 }
 
@@ -1744,6 +1749,135 @@ function promptRejectDeposit(submissionIds) {
     hideLoading();
     showToast('❌ เกิดข้อผิดพลาด');
   });
+}
+
+// ===== ADMIN DASHBOARD (ผลงาน) =====
+function loadAdminDashboard() {
+  var container = document.getElementById('admin-dashboard-content');
+  container.innerHTML = '<div class="loading"><div class="spinner"></div><p>กำลังโหลด...</p></div>';
+  apiCall('adminGetDashboard').then(function(data) {
+    if (!data.success) {
+      container.innerHTML = '<div class="empty-state"><div class="icon">❌</div><p>' + (data.error || 'โหลดไม่สำเร็จ') + '</p></div>';
+      return;
+    }
+    renderAdminDashboard(data);
+  }).catch(function() {
+    container.innerHTML = '<div class="empty-state"><div class="icon">❌</div><p>เกิดข้อผิดพลาด</p></div>';
+  });
+}
+
+function renderAdminDashboard(data) {
+  var r = data.revenue || {};
+  var o = data.outstanding || {};
+  var ord = data.orders || {};
+  var u = data.users || {};
+  var top = data.topShoppers || [];
+  var container = document.getElementById('admin-dashboard-content');
+
+  var html = '';
+
+  // === Section 1: Revenue ===
+  html += '<div class="dash-section">';
+  html += '<div class="dash-title">💰 รายได้</div>';
+  html += '<div class="dash-grid">';
+  html += dashCard('ยอดขายรวม', r.totalSales, 'green', '💰');
+  html += dashCard('กำไรจริง', r.netProfit, 'accent', '📈');
+  html += dashCard('โอนคืนแล้ว', r.totalRefundPaid, 'blue', '💸');
+  html += dashCard('มัดจำคืนแล้ว', r.totalDepositPaid, 'blue', '🔄');
+  html += '</div></div>';
+
+  // === Section 2: Outstanding ===
+  html += '<div class="dash-section">';
+  html += '<div class="dash-title">⏳ ยอดค้างจ่าย</div>';
+  html += '<div class="dash-grid three">';
+  html += dashCard('รอโอนคืน', o.pendingRefund, 'amber', '💸');
+  html += dashCard('รอคืนมัดจำ', o.pendingDeposit, 'amber', '📦');
+  html += dashCard('รวมค้างจ่าย', o.totalOutstanding, 'red', '🔴');
+  html += '</div></div>';
+
+  // === Section 3: Order Status Breakdown ===
+  html += '<div class="dash-section">';
+  html += '<div class="dash-title">📋 คำสั่งซื้อ</div>';
+  html += '<div class="dash-stats-row">';
+  html += '<div class="dash-stat-main"><span class="dash-stat-num">' + ord.total + '</span><span class="dash-stat-lbl">ทั้งหมด</span></div>';
+  html += '<div class="dash-stat-main"><span class="dash-stat-num">฿' + numberFormat(ord.avgOrderValue) + '</span><span class="dash-stat-lbl">เฉลี่ย/ออเดอร์</span></div>';
+  html += '</div>';
+
+  var statuses = [
+    { label: 'Completed', count: ord.completed, color: 'var(--green)' },
+    { label: 'Transferred', count: ord.transferred, color: 'var(--blue)' },
+    { label: 'Transferring', count: ord.transferring, color: 'var(--purple)' },
+    { label: 'Pending', count: ord.pending, color: 'var(--amber)' },
+    { label: 'Canceled', count: ord.canceled, color: 'var(--red)' },
+    { label: 'Incorrect', count: ord.incorrect, color: 'var(--txt3)' },
+    { label: 'Ambiguous', count: ord.ambiguous, color: 'var(--txt3)' }
+  ];
+  if (ord.investigating > 0) {
+    statuses.push({ label: 'Investigating', count: ord.investigating, color: 'var(--amber)' });
+  }
+
+  html += '<div class="dash-bars">';
+  statuses.forEach(function(s) {
+    if (s.count === 0) return;
+    var pct = ord.total > 0 ? Math.round(s.count / ord.total * 100) : 0;
+    html += '<div class="dash-bar-row">';
+    html += '<div class="dash-bar-label">' + s.label + '</div>';
+    html += '<div class="dash-bar-track"><div class="dash-bar-fill" style="width:' + pct + '%;background:' + s.color + '"></div></div>';
+    html += '<div class="dash-bar-val">' + s.count + ' <span class="dash-bar-pct">(' + pct + '%)</span></div>';
+    html += '</div>';
+  });
+  html += '</div></div>';
+
+  // === Section 4: Users ===
+  html += '<div class="dash-section">';
+  html += '<div class="dash-title">👥 สมาชิก</div>';
+  html += '<div class="dash-grid">';
+  html += dashCardSmall('ทั้งหมด', u.total, 'var(--txt)');
+  html += dashCardSmall('Active', u.active, 'var(--green)');
+  html += dashCardSmall('รอ Approve', u.pendingApproval, 'var(--amber)');
+  html += dashCardSmall('Blocked', u.blocked, 'var(--red)');
+  html += '</div></div>';
+
+  // === Section 5: Top Shoppers ===
+  if (top.length > 0) {
+    html += '<div class="dash-section">';
+    html += '<div class="dash-title">🏆 ลูกค้าดีเด่น (Top 5)</div>';
+    html += '<div class="dash-rank-list">';
+    top.forEach(function(s, idx) {
+      var medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : '　';
+      html += '<div class="dash-rank-item">';
+      html += '<div class="dash-rank-pos">' + medal + '</div>';
+      if (s.profileUrl) {
+        html += '<img src="' + s.profileUrl + '" class="dash-rank-avatar" onerror="this.style.display=\'none\'">';
+      } else {
+        html += '<div class="dash-rank-avatar-placeholder">👤</div>';
+      }
+      html += '<div class="dash-rank-info">';
+      html += '<div class="dash-rank-name">' + (s.displayName || 'Unknown') + '</div>';
+      html += '<div class="dash-rank-meta">' + s.orderCount + ' orders</div>';
+      html += '</div>';
+      html += '<div class="dash-rank-amount">฿' + numberFormat(s.totalSpent) + '</div>';
+      html += '</div>';
+    });
+    html += '</div></div>';
+  }
+
+  container.innerHTML = html;
+}
+
+function dashCard(label, value, colorClass, icon) {
+  return '<div class="dash-card ' + colorClass + '">' +
+    '<div class="dash-card-icon">' + icon + '</div>' +
+    '<div class="dash-card-value">฿' + numberFormat(value || 0) + '</div>' +
+    '<div class="dash-card-label">' + label + '</div>' +
+    '</div>';
+}
+
+function dashCardSmall(label, value, color) {
+  return '<div class="dash-card-sm">' +
+    '<div class="dash-card-sm-val" style="color:' + color + '">' + (value || 0) + '</div>' +
+    '<div class="dash-card-sm-lbl">' + label + '</div>' +
+    '</div>';
 }
 
 // Start

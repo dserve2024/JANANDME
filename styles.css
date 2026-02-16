@@ -480,3 +480,60 @@ body { font-family: var(--f-th); background: var(--bg); color: var(--txt); min-h
 .stagger > *:nth-child(5) { animation-delay:.24s; }
 .stagger > *:nth-child(6) { animation-delay:.30s; }
 @keyframes cardIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+
+/* ===== ADMIN DASHBOARD (ผลงาน) ===== */
+.dash-section { margin-bottom:20px; }
+.dash-title { font-size:14px; font-weight:700; margin-bottom:10px; color:var(--txt); display:flex; align-items:center; gap:6px; }
+
+/* Revenue / Outstanding cards — 2×2 grid */
+.dash-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.dash-grid.three { grid-template-columns:1fr 1fr 1fr; }
+
+.dash-card { background:var(--surface); border-radius:var(--r-md); padding:14px 12px; box-shadow:var(--sh-card); position:relative; overflow:hidden; text-align:center; }
+.dash-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
+.dash-card.green::before { background:var(--green); }
+.dash-card.accent::before { background:var(--accent); }
+.dash-card.blue::before { background:var(--blue); }
+.dash-card.amber::before { background:var(--amber); }
+.dash-card.red::before { background:var(--red); }
+.dash-card-icon { font-size:18px; margin-bottom:4px; }
+.dash-card-value { font-family:var(--f-en); font-size:17px; font-weight:800; letter-spacing:-.5px; }
+.dash-card.green .dash-card-value { color:var(--green); }
+.dash-card.accent .dash-card-value { color:var(--accent); }
+.dash-card.blue .dash-card-value { color:var(--blue); }
+.dash-card.amber .dash-card-value { color:var(--amber); }
+.dash-card.red .dash-card-value { color:var(--red); }
+.dash-card-label { font-size:10px; color:var(--txt3); font-weight:600; margin-top:2px; }
+
+/* Order stats row */
+.dash-stats-row { display:flex; gap:10px; margin-bottom:12px; }
+.dash-stat-main { flex:1; background:var(--surface); border-radius:var(--r-md); padding:14px 10px; box-shadow:var(--sh-card); text-align:center; }
+.dash-stat-num { display:block; font-family:var(--f-en); font-size:22px; font-weight:800; color:var(--txt); letter-spacing:-.5px; }
+.dash-stat-lbl { display:block; font-size:10px; color:var(--txt3); font-weight:600; margin-top:2px; }
+
+/* Status bars */
+.dash-bars { background:var(--surface); border-radius:var(--r-md); padding:12px 14px; box-shadow:var(--sh-card); }
+.dash-bar-row { display:flex; align-items:center; gap:8px; padding:5px 0; }
+.dash-bar-row + .dash-bar-row { border-top:1px solid var(--border); }
+.dash-bar-label { width:90px; font-size:11px; font-weight:600; color:var(--txt2); flex-shrink:0; }
+.dash-bar-track { flex:1; height:8px; background:var(--bg); border-radius:var(--r-full); overflow:hidden; }
+.dash-bar-fill { height:100%; border-radius:var(--r-full); min-width:2px; transition:width .5s var(--ease-out); }
+.dash-bar-val { width:70px; text-align:right; font-family:var(--f-en); font-size:12px; font-weight:700; color:var(--txt); flex-shrink:0; }
+.dash-bar-pct { font-size:10px; color:var(--txt3); font-weight:500; }
+
+/* User cards (small) */
+.dash-card-sm { background:var(--surface); border-radius:var(--r-sm); padding:12px 8px; box-shadow:var(--sh-card); text-align:center; }
+.dash-card-sm-val { font-family:var(--f-en); font-size:20px; font-weight:800; }
+.dash-card-sm-lbl { font-size:10px; color:var(--txt3); font-weight:600; margin-top:1px; }
+
+/* Top shoppers ranking */
+.dash-rank-list { background:var(--surface); border-radius:var(--r-md); box-shadow:var(--sh-card); overflow:hidden; }
+.dash-rank-item { display:flex; align-items:center; gap:10px; padding:12px 14px; }
+.dash-rank-item + .dash-rank-item { border-top:1px solid var(--border); }
+.dash-rank-pos { font-size:18px; width:24px; text-align:center; flex-shrink:0; }
+.dash-rank-avatar { width:36px; height:36px; border-radius:50%; object-fit:cover; flex-shrink:0; border:2px solid var(--border); }
+.dash-rank-avatar-placeholder { width:36px; height:36px; border-radius:50%; background:var(--bg); display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; }
+.dash-rank-info { flex:1; min-width:0; }
+.dash-rank-name { font-size:13px; font-weight:700; color:var(--txt); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.dash-rank-meta { font-size:11px; color:var(--txt3); }
+.dash-rank-amount { font-family:var(--f-en); font-size:14px; font-weight:800; color:var(--accent); flex-shrink:0; }
