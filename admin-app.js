@@ -6,76 +6,23 @@ var isAdminUser = false;
 
 // ===== ADMIN INIT =====
 async function initAdmin() {
-  var banner = document.getElementById('debug-banner');
   var loadingEl = document.getElementById('loading');
-  function dbg(msg) {
-    if (banner) banner.textContent = msg;
-  }
   try {
-    dbg('Step 1: LIFF init...');
     await liff.init({ liffId: CONFIG.LIFF_ID });
 
-    dbg('Step 2: isLoggedIn = ' + liff.isLoggedIn());
     if (!liff.isLoggedIn()) {
-      dbg('Step 2b: calling liff.login()...');
       liff.login();
       return;
     }
 
-    dbg('Step 3: getProfile...');
     var profile = await liff.getProfile();
     userId = profile.userId;
-    dbg('Step 4: userId = ' + userId.substring(0, 10) + '...');
 
     isAdminUser = true;
     if (loadingEl) loadingEl.style.display = 'none';
-
-    dbg('Step 5: switching to payment tab...');
-    // แสดง payment tab UI แต่ไม่เรียก loadAdminPayments() ซ้ำ
-    var tabs = document.querySelectorAll('.tabs .tab');
-    tabs.forEach(function(t) { t.classList.remove('active'); });
-    var sections = document.querySelectorAll('.content .section');
-    sections.forEach(function(s) { s.style.display = 'none'; });
-    document.querySelector('[data-tab="payment"]').classList.add('active');
-    document.getElementById('admin-payment-sub').style.display = 'block';
-
-    dbg('Step 6: calling API...');
-    var payData = await apiCall('adminGetPendingPayments');
-    dbg('Step 6 result: success=' + payData.success + ' users=' + (payData.users || []).length);
-
-    if (payData.success) {
-      var rawUsers = (payData.users || []).filter(function(u) { return u.bankName && u.bankAccount; });
-      var mergeMap = {};
-      var mergeOrder = [];
-      rawUsers.forEach(function(u) {
-        if (!mergeMap[u.userId]) {
-          mergeMap[u.userId] = {
-            userId: u.userId, displayName: u.displayName, profileUrl: u.profileUrl,
-            bankName: u.bankName, bankAccount: u.bankAccount,
-            accountName: u.accountName, phone: u.phone, orders: []
-          };
-          mergeOrder.push(u.userId);
-        }
-        u.orders.forEach(function(o) {
-          mergeMap[u.userId].orders.push({
-            orderId: o.orderId, shopeeId: o.shopeeId, amount: o.amount, type: u.type || 'refund'
-          });
-        });
-      });
-      adminPaymentData = mergeOrder.map(function(uid) { return mergeMap[uid]; });
-      paymentSelections = {};
-      adminPaymentData.forEach(function(u) {
-        paymentSelections[u.userId] = new Set(u.orders.map(function(o) { return o.orderId; }));
-      });
-      renderAdminPayments();
-      dbg('Step 7: DONE — rendered ' + adminPaymentData.length + ' users');
-    } else {
-      dbg('Step 7: API failed — ' + (payData.error || 'unknown'));
-      document.getElementById('admin-pay-list').innerHTML = '<div class="empty-state"><div class="icon">❌</div><p>' + (payData.error || 'โหลดไม่สำเร็จ') + '</p></div>';
-    }
+    switchAdminSubTab('payment');
 
   } catch (err) {
-    dbg('ERROR: ' + err.message);
     if (loadingEl) {
       loadingEl.innerHTML = '<p style="color:var(--red);">Error: ' + err.message + '</p>';
     }
