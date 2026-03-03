@@ -61,7 +61,7 @@ var EDGE_ACTIONS = [
   'updateBank', 'addShopeeId', 'deleteShopeeId',
   'updateOrder', 'deleteOrder', 'contactAdmin', 'createDispute',
   'adminApproveUser', 'adminBlockUser', 'adminConfirmPayment',
-  'adminReviewDeposit', 'adminMarkPayment', 'adminSetAdmin', 'adminSendMessage'
+  'adminReviewDeposit', 'adminMarkPayment', 'adminSetAdmin'
 ];
 
 function apiCall(action, params) {
