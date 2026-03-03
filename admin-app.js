@@ -3,6 +3,7 @@
 // ใช้ shared utilities จาก app.js: CONFIG, userId, apiCall, numberFormat, showToast, showModal, hideModal, showLoading, hideLoading
 
 var isAdminUser = false;
+var _dashData = null;
 
 // ===== ADMIN INIT =====
 async function initAdmin() {
@@ -583,6 +584,7 @@ function loadAdminDashboard() {
 }
 
 function renderAdminDashboard(data) {
+  _dashData = data;
   var r = data.revenue || {};
   var o = data.outstanding || {};
   var ord = data.orders || {};
@@ -592,11 +594,16 @@ function renderAdminDashboard(data) {
 
   var html = '';
 
+  html += '<div style="text-align:right;margin-bottom:12px">';
+  html += '<button class="dash-share-btn" onclick="shareDashboardFlex()">📤 แชร์สรุป</button>';
+  html += '</div>';
+
   html += '<div class="dash-section">';
   html += '<div class="dash-title">💰 รายได้</div>';
   html += '<div class="dash-grid">';
   html += dashCard('ยอดขายรวม', r.totalSales, 'green', '💰');
   html += dashCard('กำไรจริง', r.netProfit, 'accent', '📈');
+  html += dashCard('ค่าธรรมเนียม (22%)', r.platformFee, 'red', '🏷️');
   html += dashCard('โอนคืนแล้ว', r.totalRefundPaid, 'blue', '💸');
   html += dashCard('มัดจำคืนแล้ว', r.totalDepositPaid, 'blue', '🔄');
   html += '</div></div>';
@@ -689,6 +696,123 @@ function dashCardSmall(label, value, color) {
     '<div class="dash-card-sm-val" style="color:' + color + '">' + (value || 0) + '</div>' +
     '<div class="dash-card-sm-lbl">' + label + '</div>' +
     '</div>';
+}
+
+// ===== SHARE DASHBOARD FLEX =====
+function shareDashboardFlex() {
+  if (!liff.isApiAvailable('shareTargetPicker')) {
+    showToast('กรุณาเปิดใน LINE app เพื่อแชร์');
+    return;
+  }
+  if (!_dashData) {
+    showToast('ยังไม่มีข้อมูล');
+    return;
+  }
+  var flexMsg = buildDashboardFlex_(_dashData);
+  liff.shareTargetPicker([flexMsg]).then(function(res) {
+    if (res) showToast('✅ แชร์สำเร็จ');
+  }).catch(function() {
+    showToast('❌ แชร์ไม่สำเร็จ');
+  });
+}
+
+function buildDashboardFlex_(data) {
+  var r = data.revenue || {};
+  var o = data.outstanding || {};
+  var ord = data.orders || {};
+  var u = data.users || {};
+
+  function fmt(n) {
+    return Number(n || 0).toLocaleString();
+  }
+
+  function flexRow(label, value, bold, valueColor) {
+    return {
+      type: 'box', layout: 'horizontal', margin: 'sm',
+      contents: [
+        { type: 'text', text: label, size: 'sm', color: bold ? '#1a1a1a' : '#8c8c8c', weight: bold ? 'bold' : 'regular', flex: 5, wrap: true },
+        { type: 'text', text: String(value), size: 'sm', color: valueColor || '#1a1a1a', weight: bold ? 'bold' : 'regular', align: 'end', flex: 4, wrap: true }
+      ]
+    };
+  }
+
+  // Thai date
+  var now = new Date();
+  var thaiMonths = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+  var dd = now.getDate();
+  var mm = now.getMonth();
+  var yyyy = now.getFullYear() + 543;
+  var dateStr = dd + ' ' + thaiMonths[mm] + ' ' + yyyy;
+
+  var bodyContents = [];
+
+  // === รายได้ ===
+  bodyContents.push({ type: 'text', text: '💰 รายได้', size: 'sm', weight: 'bold', color: '#1a1a1a', margin: 'none' });
+  bodyContents.push(flexRow('ยอดขายรวม', '฿' + fmt(r.totalSales)));
+  bodyContents.push(flexRow('ค่าธรรมเนียม (22%)', '-฿' + fmt(r.platformFee), false, '#E53935'));
+  bodyContents.push(flexRow('โอนคืนแล้ว', '-฿' + fmt(r.totalRefundPaid), false, '#E53935'));
+  bodyContents.push(flexRow('มัดจำคืนแล้ว', '-฿' + fmt(r.totalDepositPaid), false, '#E53935'));
+  bodyContents.push({ type: 'separator', margin: 'md' });
+  bodyContents.push(flexRow('📈 กำไรจริง', '฿' + fmt(r.netProfit), true, '#27AE60'));
+
+  bodyContents.push({ type: 'separator', margin: 'lg' });
+
+  // === ค้างจ่าย ===
+  bodyContents.push({ type: 'text', text: '⏳ ค้างจ่าย', size: 'sm', weight: 'bold', color: '#1a1a1a', margin: 'md' });
+  bodyContents.push(flexRow('รอโอนคืน', '฿' + fmt(o.pendingRefund)));
+  bodyContents.push(flexRow('รอคืนมัดจำ', '฿' + fmt(o.pendingDeposit)));
+  bodyContents.push({ type: 'separator', margin: 'md' });
+  bodyContents.push(flexRow('🔴 รวมค้างจ่าย', '฿' + fmt(o.totalOutstanding), true, '#E53935'));
+
+  bodyContents.push({ type: 'separator', margin: 'lg' });
+
+  // === คำสั่งซื้อ ===
+  bodyContents.push({ type: 'text', text: '📋 คำสั่งซื้อ ' + ord.total + ' รายการ', size: 'sm', weight: 'bold', color: '#1a1a1a', margin: 'md' });
+  var statusLine = '✅ ' + ord.completed + '  🔄 ' + ord.transferring + '  💜 ' + ord.transferred;
+  bodyContents.push({ type: 'text', text: statusLine, size: 'xs', color: '#555555', margin: 'sm', wrap: true });
+  var statusLine2 = '⏳ ' + ord.pending + '  ❌ ' + ord.canceled + '  ❓ ' + ord.incorrect;
+  bodyContents.push({ type: 'text', text: statusLine2, size: 'xs', color: '#555555', margin: 'xs', wrap: true });
+  bodyContents.push({ type: 'text', text: 'เฉลี่ย ฿' + fmt(ord.avgOrderValue) + '/ออเดอร์', size: 'xs', color: '#8c8c8c', margin: 'sm' });
+
+  bodyContents.push({ type: 'separator', margin: 'lg' });
+
+  // === สมาชิก ===
+  bodyContents.push({ type: 'text', text: '👥 สมาชิก ' + u.total + ' คน', size: 'sm', weight: 'bold', color: '#1a1a1a', margin: 'md' });
+  bodyContents.push({ type: 'text', text: 'Active ' + u.active + ' • รอ Approve ' + u.pendingApproval + ' • Blocked ' + u.blocked, size: 'xs', color: '#555555', margin: 'sm', wrap: true });
+
+  var bubble = {
+    type: 'bubble',
+    size: 'mega',
+    hero: {
+      type: 'box', layout: 'vertical',
+      contents: [
+        { type: 'text', text: '📊', size: 'xxl', align: 'center' },
+        { type: 'text', text: 'สรุปผลงาน JAN&ME', color: '#ffffff', size: 'lg', weight: 'bold', align: 'center', margin: 'sm' },
+        { type: 'text', text: dateStr, color: '#B2C5FF', size: 'xs', align: 'center', margin: 'sm' }
+      ],
+      background: {
+        type: 'linearGradient',
+        angle: '135deg',
+        startColor: '#6C5CE7',
+        endColor: '#74B9FF',
+        centerColor: '#0984E3'
+      },
+      paddingAll: '24px',
+      paddingBottom: '20px',
+      alignItems: 'center',
+      justifyContent: 'center'
+    },
+    body: {
+      type: 'box', layout: 'vertical', spacing: 'sm', paddingAll: '18px',
+      contents: bodyContents
+    }
+  };
+
+  return {
+    type: 'flex',
+    altText: '📊 สรุปผลงาน JAN&ME - ' + dateStr,
+    contents: bubble
+  };
 }
 
 // ===== SIMULATE USER =====

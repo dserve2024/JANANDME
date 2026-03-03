@@ -538,6 +538,9 @@ body { font-family: var(--f-th); background: var(--bg); color: var(--txt); min-h
 .dash-rank-meta { font-size:11px; color:var(--txt3); }
 .dash-rank-amount { font-family:var(--f-en); font-size:14px; font-weight:800; color:var(--accent); flex-shrink:0; }
 
+/* Share button */
+.dash-share-btn { background:var(--accent); color:#fff; border:none; padding:8px 16px; border-radius:var(--r-md); font-size:13px; font-family:var(--f-th); font-weight:600; cursor:pointer; box-shadow:var(--sh-card); }
+
 /* ===== SIMULATE USER ===== */
 .sim-selector { margin-bottom:16px; }
 .sim-select { width:100%; padding:10px 12px; border:1px solid var(--border-s); border-radius:var(--r-sm); font-size:14px; font-family:var(--f-th); background:var(--surface); color:var(--txt); }
