@@ -902,17 +902,32 @@ function renderSimulateView(data) {
   html += '<div style="font-size:9px;color:var(--txt3);font-family:monospace;margin-top:4px;word-break:break-all;">' + (user.userId || '') + '</div>';
   html += '</div>';
 
-  // Financial summary (เหมือน user เห็น)
-  html += '<div class="sim-finance">';
-  html += '<div class="sim-finance-title">💰 สรุปการเงิน</div>';
-  html += '<div class="summary-row">';
-  html += '<div class="summary-card pending"><div class="summary-label">ยอดรอคืน</div><div class="summary-value" style="color:var(--green);">฿' + numberFormat(data.totalRefund || 0) + '</div></div>';
-  html += '<div class="summary-card deposit"><div class="summary-label">คาดว่าจะคืน</div><div class="summary-value" style="color:var(--blue);">฿' + numberFormat(data.expectedRefund || 0) + '</div></div>';
+  // Financial summary (เหมือน user เห็น — 3-group layout)
+  var totalRefund = data.totalRefund || 0;
+  var totalDeposit = data.totalDeposit || 0;
+  var combined = totalRefund + totalDeposit;
+  var refPaid = data.totalRefundPaid || 0;
+  var depReturned = data.totalDepositReturned || 0;
+  var totalReceived = refPaid + depReturned;
+
+  // Group 1: Hero Card - รวมยอดรอรับ
+  html += '<div class="fin-hero">';
+  html += '<div class="fin-hero-top"><span class="fin-hero-icon">💰</span><span class="fin-hero-label">รวมยอดรอรับ</span></div>';
+  html += '<div class="fin-hero-value">฿' + numberFormat(combined) + '</div>';
+  html += '<div class="fin-hero-detail">ยอดรอคืน ฿' + numberFormat(totalRefund) + ' + มัดจำ ฿' + numberFormat(totalDeposit) + '</div>';
   html += '</div>';
-  html += '<div class="summary-row">';
-  html += '<div class="summary-card pending"><div class="summary-label">ยอดค้างมัดจำ</div><div class="summary-value" style="color:var(--amber);">฿' + numberFormat(data.pendingDeposit || 0) + '</div></div>';
-  html += '<div class="summary-card deposit"><div class="summary-label">มัดจำคืนแล้ว</div><div class="summary-value" style="color:var(--txt3);">฿' + numberFormat(data.totalDeposit || 0) + '</div></div>';
+
+  // Group 2: Forecast
+  html += '<div class="fin-grid">';
+  html += '<div class="fin-box expect"><div class="fin-top"><span class="fin-icon">📋</span><span class="fin-label">คาดว่าจะได้รับ</span></div><div class="fin-value">฿' + numberFormat(data.expectedRefund || 0) + '</div></div>';
+  html += '<div class="fin-box expect"><div class="fin-top"><span class="fin-icon">📦</span><span class="fin-label">คาดมัดจำ</span></div><div class="fin-value">฿' + numberFormat(data.pendingDeposit || 0) + '</div></div>';
   html += '</div>';
+
+  // Group 3: History - ได้รับแล้ว
+  html += '<div class="fin-history">';
+  html += '<div class="fin-history-top"><span class="fin-history-icon">✅</span><span class="fin-history-label">ได้รับแล้วทั้งหมด</span></div>';
+  html += '<div class="fin-history-value">฿' + numberFormat(totalReceived) + '</div>';
+  html += '<div class="fin-history-detail">คืนเงิน ฿' + numberFormat(refPaid) + ' + มัดจำ ฿' + numberFormat(depReturned) + '</div>';
   html += '</div>';
 
   // Shopee IDs
