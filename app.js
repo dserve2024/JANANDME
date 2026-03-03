@@ -1209,5 +1209,7 @@ function renderDepositHistory(items) {
   container.innerHTML = html;
 }
 
-// Start
-init();
+// Start — ไม่เรียก init() ถ้าอยู่ใน admin page (admin-app.js จะเรียก initAdmin() เอง)
+if (!window.location.pathname.startsWith('/admin')) {
+  init();
+}
