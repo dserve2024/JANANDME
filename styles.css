@@ -598,3 +598,9 @@ body { font-family: var(--f-th); background: var(--bg); color: var(--txt); min-h
 .aod-check { margin-bottom:8px; }
 .aod-check label { display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; cursor:pointer; }
 .aod-check input[type="checkbox"] { width:18px; height:18px; accent-color:var(--green); }
+.aod-check.half { flex:1; margin-bottom:0; }
+.aod-poke-btn { display:block; width:100%; padding:10px; background:var(--blue); color:white; border:none; border-radius:var(--r-sm); font-size:12px; font-weight:700; font-family:var(--f-th); cursor:pointer; text-align:center; margin-bottom:8px; }
+.aod-poke-btn:active { transform:scale(.96); }
+.aod-calc-hint { font-size:10px; color:var(--txt3); margin-top:2px; line-height:1.4; word-break:break-all; }
+.aod-field.third { flex:1; min-width:0; }
+.aod-pct-badge { font-size:10px; color:var(--accent); font-weight:600; }

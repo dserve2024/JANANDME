@@ -1117,58 +1117,85 @@ function renderAdminOrderDetail(order) {
 
   var html = '';
 
-  // Image link
+  // Image link + Poke button
   if (order.imageUrl) {
     var viewUrl = order.imageUrl;
     if (viewUrl.indexOf('drive.google.com') !== -1) {
       var fileId = viewUrl.match(/[-\w]{25,}/);
       if (fileId) viewUrl = 'https://drive.google.com/file/d/' + fileId[0] + '/view';
     }
-    html += '<a href="' + viewUrl + '" target="_blank" style="display:block;padding:10px;background:var(--txt);border-radius:var(--r-sm);text-align:center;text-decoration:none;color:white;font-weight:700;margin-bottom:12px;font-size:12px;">📷 ดูรูป Order</a>';
+    html += '<a href="' + viewUrl + '" target="_blank" style="display:block;padding:10px;background:var(--txt);border-radius:var(--r-sm);text-align:center;text-decoration:none;color:white;font-weight:700;margin-bottom:8px;font-size:12px;">📷 ดูรูป Order</a>';
   }
+  html += '<button class="aod-poke-btn" onclick="pokeOrderUser(\'' + (order.userId || '') + '\',\'' + order.orderId + '\')">📩 ขอรูป Order</button>';
 
-  // Order info (read-only)
-  html += '<div class="aod-row"><span class="aod-label">Order ID</span><span class="aod-value" style="font-family:monospace;">' + order.orderId + '</span></div>';
-  html += '<div class="aod-row"><span class="aod-label">Order Time</span><span class="aod-value">' + formatDateTime(order.orderTime) + '</span></div>';
-  html += '<div class="aod-row"><span class="aod-label">Created By</span><span class="aod-value">' + (order.createdBy || '-') + '</span></div>';
-  html += '<div class="aod-row"><span class="aod-label">Last Edited</span><span class="aod-value">' + (order.lastEditedBy || '-') + '</span></div>';
+  // Order info (read-only) — 2 columns
+  html += '<div class="aod-field-row">';
+  html += '<div class="aod-row half"><span class="aod-label">Order ID</span><span class="aod-value" style="font-family:monospace;font-size:10px;">' + order.orderId + '</span></div>';
+  html += '<div class="aod-row half"><span class="aod-label">Order Time</span><span class="aod-value">' + formatDateTime(order.orderTime) + '</span></div>';
+  html += '</div>';
+  html += '<div class="aod-field-row">';
+  html += '<div class="aod-row half"><span class="aod-label">Created By</span><span class="aod-value">' + (order.createdBy || '-') + '</span></div>';
+  html += '<div class="aod-row half"><span class="aod-label">Last Edited</span><span class="aod-value">' + (order.lastEditedBy || '-') + '</span></div>';
+  html += '</div>';
 
   html += '<div class="aod-divider"></div>';
 
-  // Editable fields
-  html += '<div class="aod-field"><label>Status</label><select id="aod-status">';
+  // Status + Shopee ID — 2 columns
+  html += '<div class="aod-field-row">';
+  html += '<div class="aod-field half"><label>Status</label><select id="aod-status">';
   statuses.forEach(function(s) {
     var sel = (order.status === s) ? ' selected' : '';
     html += '<option value="' + s + '"' + sel + '>' + s + '</option>';
   });
   html += '</select></div>';
-
-  html += '<div class="aod-field"><label>Shopee ID</label><input type="text" id="aod-shopeeId" value="' + (order.shopeeId || '') + '"></div>';
+  html += '<div class="aod-field half"><label>Shopee ID</label><input type="text" id="aod-shopeeId" value="' + (order.shopeeId || '') + '"></div>';
+  html += '</div>';
 
   html += '<div class="aod-divider"></div>';
   html += '<div style="font-weight:700;font-size:12px;margin-bottom:8px;">💰 Financial</div>';
 
+  // Row 1: Subtotal | Shipping | Ship Discount — 3 columns
   html += '<div class="aod-field-row">';
-  html += '<div class="aod-field half"><label>Subtotal</label><input type="number" id="aod-subtotal" value="' + (order.subtotal || 0) + '"></div>';
-  html += '<div class="aod-field half"><label>Shipping</label><input type="number" id="aod-shipping" value="' + (order.shipping || 0) + '"></div>';
+  html += '<div class="aod-field third"><label>Subtotal</label><input type="number" id="aod-subtotal" value="' + (order.subtotal || 0) + '" oninput="recalcRefundHint()"></div>';
+  html += '<div class="aod-field third"><label>Shipping</label><input type="number" id="aod-shipping" value="' + (order.shipping || 0) + '" oninput="recalcRefundHint()"></div>';
+  html += '<div class="aod-field third"><label>Ship Dis.</label><input type="number" id="aod-shippingDiscount" value="' + (order.shippingDiscount || 0) + '" oninput="recalcRefundHint()"></div>';
   html += '</div>';
-  html += '<div class="aod-field-row">';
-  html += '<div class="aod-field half"><label>Ship Discount</label><input type="number" id="aod-shippingDiscount" value="' + (order.shippingDiscount || 0) + '"></div>';
-  html += '<div class="aod-field half"><label>Voucher</label><input type="number" id="aod-voucher" value="' + (order.voucher || 0) + '"></div>';
-  html += '</div>';
-  html += '<div class="aod-field"><label>Order Total</label><input type="number" id="aod-orderTotal" value="' + (order.orderTotal || 0) + '"></div>';
 
-  // Refund/Deposit info (read-only display)
-  html += '<div class="aod-row" style="margin-top:8px;"><span class="aod-label">Refund Amount</span><span class="aod-value" style="color:var(--green);font-weight:700;">฿' + numberFormat(order.refundAmount || 0) + '</span></div>';
-  html += '<div class="aod-row"><span class="aod-label">Deposit Amount</span><span class="aod-value" style="color:var(--blue);font-weight:700;">฿' + numberFormat(order.depositAmount || 0) + '</span></div>';
+  // Row 2: Voucher (xx%) | Order Total — 2 columns
+  var voucherPct = (order.subtotal > 0) ? Math.round((order.voucher || 0) / order.subtotal * 100) : 0;
+  html += '<div class="aod-field-row">';
+  html += '<div class="aod-field half"><label>Voucher <span id="aod-voucher-pct" class="aod-pct-badge">(' + voucherPct + '%)</span></label><input type="number" id="aod-voucher" value="' + (order.voucher || 0) + '" oninput="recalcRefundHint()"></div>';
+  html += '<div class="aod-field half"><label>Order Total</label><input type="number" id="aod-orderTotal" value="' + (order.orderTotal || 0) + '"></div>';
+  html += '</div>';
 
   html += '<div class="aod-divider"></div>';
-  html += '<div style="font-weight:700;font-size:12px;margin-bottom:8px;">✅ Paid Flags</div>';
+  html += '<div style="font-weight:700;font-size:12px;margin-bottom:8px;">💳 Refund & Deposit</div>';
 
+  // Pre-fill refund if empty
+  var refundVal = parseFloat(order.refundAmount) || 0;
+  var depositVal = parseFloat(order.depositAmount) || 0;
+  if (refundVal === 0) {
+    refundVal = (parseFloat(order.subtotal) || 0) + (parseFloat(order.shipping) || 0) - (parseFloat(order.shippingDiscount) || 0) - (parseFloat(order.voucher) || 0) - depositVal;
+    if (refundVal < 0) refundVal = 0;
+  }
+
+  // Refund | Deposit — 2 columns (editable)
+  html += '<div class="aod-field-row">';
+  html += '<div class="aod-field half"><label>Refund Amount</label><input type="number" id="aod-refundAmount" value="' + refundVal + '" oninput="recalcRefundHint()" style="border-color:var(--green);"></div>';
+  html += '<div class="aod-field half"><label>Deposit Amount</label><input type="number" id="aod-depositAmount" value="' + depositVal + '" oninput="recalcRefundHint()" style="border-color:var(--blue);"></div>';
+  html += '</div>';
+
+  // Calculation hint
+  var calcResult = (parseFloat(order.subtotal) || 0) + (parseFloat(order.shipping) || 0) - (parseFloat(order.shippingDiscount) || 0) - (parseFloat(order.voucher) || 0) - depositVal;
+  html += '<div id="aod-refund-hint" class="aod-calc-hint">= ' + numberFormat(order.subtotal || 0) + ' + ' + numberFormat(order.shipping || 0) + ' - ' + numberFormat(order.shippingDiscount || 0) + ' - ' + numberFormat(order.voucher || 0) + ' - ' + numberFormat(depositVal) + ' = ฿' + numberFormat(calcResult) + '</div>';
+
+  // Paid checkboxes — 2 columns
+  html += '<div class="aod-field-row" style="margin-top:8px;">';
   var prChecked = order.paidRefund ? ' checked' : '';
   var pdChecked = order.paidDeposit ? ' checked' : '';
-  html += '<div class="aod-check"><label><input type="checkbox" id="aod-paidRefund"' + prChecked + '> จ่ายคืนแล้ว</label></div>';
-  html += '<div class="aod-check"><label><input type="checkbox" id="aod-paidDeposit"' + pdChecked + '> จ่ายมัดจำคืน</label></div>';
+  html += '<div class="aod-check half"><label><input type="checkbox" id="aod-paidRefund"' + prChecked + '> จ่ายคืนแล้ว</label></div>';
+  html += '<div class="aod-check half"><label><input type="checkbox" id="aod-paidDeposit"' + pdChecked + '> จ่ายมัดจำคืน</label></div>';
+  html += '</div>';
 
   bodyEl.innerHTML = html;
 
@@ -1177,6 +1204,43 @@ function renderAdminOrderDetail(order) {
   actHtml += '<button class="btn-danger" onclick="confirmDeleteAdminOrder()" style="background:var(--red);color:white;border:none;border-radius:var(--r-xs);padding:10px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--f-th);">🗑️ ลบ</button>';
   actHtml += '<button class="btn-confirm-green" onclick="saveAdminOrder()">💾 บันทึก</button>';
   actEl.innerHTML = actHtml;
+}
+
+// Poke — ส่งข้อความขอรูปไปหา user
+function pokeOrderUser(userId, orderId) {
+  if (!userId) { showToast('ไม่พบข้อมูลผู้ใช้'); return; }
+  if (!confirm('📩 ส่งข้อความขอรูป Order ' + orderId + ' ไปหาลูกค้า?')) return;
+
+  var msg = 'สวัสดีค่ะ ☺️\n'
+    + 'รบกวนส่งรูปหลักฐาน Order: ' + orderId + '\n'
+    + 'มาให้ทีมงานตรวจสอบด้วยนะคะ 📸\n\n'
+    + '(ส่งรูปผ่านแชทนี้ได้เลยค่ะ)';
+
+  apiCall('adminSendMessage', { targetUserId: userId, message: msg })
+    .then(function(data) {
+      if (data.success) showToast('✅ ส่งข้อความแล้ว');
+      else showToast('❌ ' + (data.error || 'ส่งไม่สำเร็จ'));
+    })
+    .catch(function() { showToast('❌ เกิดข้อผิดพลาด'); });
+}
+
+// Auto-recalculate refund hint + voucher %
+function recalcRefundHint() {
+  var sub = parseFloat(document.getElementById('aod-subtotal').value) || 0;
+  var ship = parseFloat(document.getElementById('aod-shipping').value) || 0;
+  var shipDis = parseFloat(document.getElementById('aod-shippingDiscount').value) || 0;
+  var voucher = parseFloat(document.getElementById('aod-voucher').value) || 0;
+  var deposit = parseFloat(document.getElementById('aod-depositAmount').value) || 0;
+  var calc = sub + ship - shipDis - voucher - deposit;
+
+  var hintEl = document.getElementById('aod-refund-hint');
+  if (hintEl) hintEl.textContent = '= ' + numberFormat(sub) + ' + ' + numberFormat(ship) + ' - ' + numberFormat(shipDis) + ' - ' + numberFormat(voucher) + ' - ' + numberFormat(deposit) + ' = ฿' + numberFormat(calc);
+
+  var pctEl = document.getElementById('aod-voucher-pct');
+  if (pctEl) {
+    var pct = sub > 0 ? Math.round(voucher / sub * 100) : 0;
+    pctEl.textContent = '(' + pct + '%)';
+  }
 }
 
 function saveAdminOrder() {
@@ -1191,6 +1255,8 @@ function saveAdminOrder() {
     shippingDiscount: document.getElementById('aod-shippingDiscount').value,
     voucher: document.getElementById('aod-voucher').value,
     orderTotal: document.getElementById('aod-orderTotal').value,
+    refundAmount: document.getElementById('aod-refundAmount').value,
+    depositAmount: document.getElementById('aod-depositAmount').value,
     paidRefund: document.getElementById('aod-paidRefund').checked,
     paidDeposit: document.getElementById('aod-paidDeposit').checked
   };
