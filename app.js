@@ -61,7 +61,7 @@ var EDGE_ACTIONS = [
   'updateBank', 'addShopeeId', 'deleteShopeeId',
   'updateOrder', 'deleteOrder', 'contactAdmin', 'createDispute',
   'adminApproveUser', 'adminBlockUser', 'adminConfirmPayment',
-  'adminReviewDeposit', 'adminMarkPayment', 'adminSetAdmin'
+  'adminReviewDeposit', 'adminMarkPayment', 'adminSetAdmin', 'adminSendMessage'
 ];
 
 function apiCall(action, params) {
@@ -894,7 +894,7 @@ function renderAdminUsers(users) {
     html += '<div class="order-card" style="margin-bottom:10px;"><div style="display:flex;align-items:center;gap:12px;">';
     if (user.profileUrl) html += '<img src="' + user.profileUrl + '" style="width:40px;height:40px;border-radius:50%;border:2px solid var(--border);" onerror="this.style.display=\'none\'">';
     var adminBadge = user.isAdmin ? ' <span style="display:inline-block;padding:1px 6px;border-radius:var(--r-full);background:var(--amber-soft);color:var(--amber);font-size:9px;font-weight:700;vertical-align:middle;">👑 ADMIN</span>' : '';
-    html += '<div style="flex:1;"><div style="font-weight:700;font-size:14px;">' + user.displayName + adminBadge + '</div><div style="font-size:12px;color:' + statusColor + ';font-weight:600;">' + statusText + '</div></div>';
+    html += '<div style="flex:1;"><div style="font-weight:700;font-size:14px;">' + user.displayName + adminBadge + '</div><div style="font-size:10px;color:var(--txt3);font-family:monospace;word-break:break-all;">' + user.userId + '</div><div style="font-size:12px;color:' + statusColor + ';font-weight:600;">' + statusText + '</div></div>';
 
     if (isPending) {
       html += '<div style="text-align:right;font-size:12px;color:var(--txt3);"><div>฿' + numberFormat(user.pendingRefund || 0) + ' รอคืน</div></div>';
@@ -927,6 +927,7 @@ function renderAdminUsers(users) {
       html += '<span class="toggle-label" style="' + adminLabelColor + '">' + adminLabel + '</span>';
       html += '<label class="toggle toggle-amber"><input type="checkbox" ' + adminChecked + ' onchange="adminToggleAdmin(\'' + user.userId + '\', this.checked)"><span class="slider"></span></label>';
       html += '</div>';
+      html += '<button onclick="adminSendMessage(\'' + user.userId + '\',\'' + (user.displayName || '').replace(/'/g, "\\'") + '\')" style="padding:6px 10px;border:none;border-radius:var(--r-xs);background:var(--primary);color:white;font-size:11px;cursor:pointer;font-weight:700;font-family:var(--f-th);white-space:nowrap;">💬 ส่งข้อความ</button>';
     }
     html += '</div>';
     html += '</div>';
@@ -967,6 +968,15 @@ function adminSetAdmin(targetUserId, action) {
     } else {
       showToast('❌ ' + (data.error || 'Error'));
     }
+  });
+}
+
+function adminSendMessage(targetUserId, displayName) {
+  var message = prompt('ส่งข้อความถึง ' + displayName + ':');
+  if (!message || !message.trim()) return;
+  apiCall('adminSendMessage', { targetUserId: targetUserId, message: message.trim() }).then(function(data) {
+    if (data.success) showToast('✅ ส่งข้อความแล้ว');
+    else showToast('❌ ' + (data.error || 'Error'));
   });
 }
 
