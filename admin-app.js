@@ -25,11 +25,30 @@ async function initAdmin() {
     var profile = await liff.getProfile();
     userId = profile.userId;
 
-    // Check admin permission — เรียก GAS ตรง (bypass Edge Function)
+    // Check admin permission — ใช้ Edge Function + timeout 15 วินาที
     setStatus('กำลังตรวจสอบสิทธิ์ admin...');
-    var checkUrl = CONFIG.API_URL + '?action=checkAdmin&userId=' + encodeURIComponent(userId);
-    var resp = await fetch(checkUrl);
-    var data = await resp.json();
+    var data;
+    try {
+      var controller = new AbortController();
+      var tid = setTimeout(function() { controller.abort(); }, 15000);
+      var checkUrl = CONFIG.EDGE_API_URL + '?action=checkAdmin&userId=' + encodeURIComponent(userId);
+      var resp = await fetch(checkUrl, {
+        signal: controller.signal,
+        headers: { 'Authorization': 'Bearer ' + CONFIG.SUPABASE_ANON_KEY }
+      });
+      clearTimeout(tid);
+      setStatus('Response: ' + resp.status + ' — parsing...');
+      data = await resp.json();
+    } catch (fetchErr) {
+      setStatus('Edge failed (' + fetchErr.message + ') — ลอง GAS ตรง...');
+      var gasUrl = CONFIG.API_URL + '?action=checkAdmin&userId=' + encodeURIComponent(userId);
+      var gasResp = await fetch(gasUrl);
+      data = await gasResp.json();
+    }
+
+    setStatus('Result: ' + JSON.stringify(data).substring(0, 100));
+    await new Promise(function(r) { setTimeout(r, 1500); });
+
     if (!data.success || !data.isAdmin) {
       setStatus('ไม่ใช่ admin — กำลัง redirect...');
       window.location.href = '/';
