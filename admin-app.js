@@ -23,12 +23,14 @@ async function initAdmin() {
     if (loadingEl) loadingEl.style.display = 'none';
 
     // Deep link: ?chat=Uxxxx&name=xxx → เปิด chat ของ user คนนั้นทันที
-    var params = new URLSearchParams(window.location.search);
-    var chatTarget = params.get('chat');
-    if (chatTarget) {
-      var chatName = params.get('name') || 'User';
-      openAdminChat(chatTarget, decodeURIComponent(chatName));
-    }
+    checkAndOpenChatFromUrl_();
+
+    // LIFF cache fix: เมื่อกลับมาจาก background ให้ re-check URL params
+    document.addEventListener('visibilitychange', function() {
+      if (document.visibilityState === 'visible') {
+        checkAndOpenChatFromUrl_();
+      }
+    });
 
     switchAdminSubTab('payment');
 
@@ -193,6 +195,19 @@ function adminSendMessage(targetUserId, displayName) {
 // ===== ADMIN CHAT =====
 var adminChatUserId = null;
 var adminChatPollingId = null;
+var lastChatTarget_ = null;
+
+function checkAndOpenChatFromUrl_() {
+  var params = new URLSearchParams(window.location.search);
+  var chatTarget = params.get('chat');
+  if (chatTarget && chatTarget !== lastChatTarget_) {
+    lastChatTarget_ = chatTarget;
+    var chatName = params.get('name') || 'User';
+    // ปิด chat เก่าก่อน (ถ้ามี)
+    if (adminChatPollingId) { clearInterval(adminChatPollingId); adminChatPollingId = null; }
+    openAdminChat(chatTarget, decodeURIComponent(chatName));
+  }
+}
 
 function openAdminChat(targetUserId, displayName) {
   adminChatUserId = targetUserId;
