@@ -700,10 +700,6 @@ function dashCardSmall(label, value, color) {
 
 // ===== SHARE DASHBOARD FLEX =====
 function shareDashboardFlex() {
-  if (!liff.isApiAvailable('shareTargetPicker')) {
-    showToast('กรุณาเปิดใน LINE app เพื่อแชร์');
-    return;
-  }
   if (!_dashData) {
     showToast('ยังไม่มีข้อมูล');
     return;
@@ -711,8 +707,13 @@ function shareDashboardFlex() {
   var flexMsg = buildDashboardFlex_(_dashData);
   liff.shareTargetPicker([flexMsg]).then(function(res) {
     if (res) showToast('✅ แชร์สำเร็จ');
-  }).catch(function() {
-    showToast('❌ แชร์ไม่สำเร็จ');
+  }).catch(function(err) {
+    var msg = (err && err.message) || '';
+    if (msg.indexOf('not available') > -1 || msg.indexOf('client') > -1) {
+      showToast('กรุณาเปิดใน LINE app เพื่อแชร์');
+    } else {
+      showToast('❌ แชร์ไม่สำเร็จ: ' + msg);
+    }
   });
 }
 
