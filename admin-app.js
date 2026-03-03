@@ -6,31 +6,36 @@ var isAdminUser = false;
 
 // ===== ADMIN INIT =====
 async function initAdmin() {
+  var banner = document.getElementById('debug-banner');
   var loadingEl = document.getElementById('loading');
-  function setStatus(msg) {
-    var p = loadingEl ? loadingEl.querySelector('p') : null;
-    if (p) p.textContent = msg;
+  function dbg(msg) {
+    if (banner) banner.textContent = msg;
   }
   try {
-    setStatus('กำลัง init LIFF...');
+    dbg('Step 1: LIFF init...');
     await liff.init({ liffId: CONFIG.LIFF_ID });
 
+    dbg('Step 2: isLoggedIn = ' + liff.isLoggedIn());
     if (!liff.isLoggedIn()) {
-      setStatus('กำลัง login...');
+      dbg('Step 2b: calling liff.login()...');
       liff.login();
       return;
     }
 
-    setStatus('กำลังโหลดโปรไฟล์...');
+    dbg('Step 3: getProfile...');
     var profile = await liff.getProfile();
     userId = profile.userId;
+    dbg('Step 4: userId = ' + userId.substring(0, 10) + '...');
 
-    // Skip admin check — ใครมี URL ก็เข้าได้ (URL ไม่เปิดเผยอยู่แล้ว)
     isAdminUser = true;
-    loadingEl.style.display = 'none';
+    if (loadingEl) loadingEl.style.display = 'none';
+
+    dbg('Step 5: switchAdminSubTab(payment)...');
     switchAdminSubTab('payment');
+    dbg('Step 6: DONE');
 
   } catch (err) {
+    dbg('ERROR: ' + err.message);
     if (loadingEl) {
       loadingEl.innerHTML = '<p style="color:var(--red);">Error: ' + err.message + '</p>';
     }
