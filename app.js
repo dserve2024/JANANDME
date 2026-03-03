@@ -142,10 +142,26 @@ function renderAll() {
   }
 
   document.getElementById('total-orders').textContent = userData.totalOrders || 0;
-  document.getElementById('total-refund').textContent = '฿' + numberFormat(userData.totalRefund || 0);
-  document.getElementById('total-deposit').textContent = '฿' + numberFormat(userData.totalDeposit || 0);
+
+  // Group 1: Hero - รวมยอดรอรับ
+  var totalRefund = userData.totalRefund || 0;
+  var totalDeposit = userData.totalDeposit || 0;
+  var combined = totalRefund + totalDeposit;
+  document.getElementById('total-combined').textContent = '฿' + numberFormat(combined);
+  document.getElementById('total-combined-detail').textContent =
+    'ยอดรอคืน ฿' + numberFormat(totalRefund) + ' + มัดจำ ฿' + numberFormat(totalDeposit);
+
+  // Group 2: Forecast
   document.getElementById('expected-refund').textContent = '฿' + numberFormat(userData.expectedRefund || 0);
   document.getElementById('pending-deposit').textContent = '฿' + numberFormat(userData.pendingDeposit || 0);
+
+  // Group 3: History - ได้รับแล้ว
+  var refPaid = userData.totalRefundPaid || 0;
+  var depReturned = userData.totalDepositReturned || 0;
+  var totalReceived = refPaid + depReturned;
+  document.getElementById('total-received').textContent = '฿' + numberFormat(totalReceived);
+  document.getElementById('total-received-detail').textContent =
+    'คืนเงิน ฿' + numberFormat(refPaid) + ' + มัดจำ ฿' + numberFormat(depReturned);
 
   renderShopeeIds();
   renderBank();
