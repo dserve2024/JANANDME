@@ -984,6 +984,8 @@ function renderSimulateView(data) {
 var adminOrderFilter = 'all';
 var adminOrderPage = 1;
 var adminStatusCounts = null;
+var adminNameCounts = null;
+var adminUserFilter = '';
 
 function loadAdminOrders(status, page) {
   adminOrderFilter = status || adminOrderFilter || 'all';
@@ -997,6 +999,7 @@ function loadAdminOrders(status, page) {
 
   var params = { page: adminOrderPage };
   if (adminOrderFilter !== 'all') params.status = adminOrderFilter;
+  if (adminUserFilter) params.filterUser = adminUserFilter;
 
   apiCall('adminGetOrders', params).then(function(data) {
     if (!data.success) {
@@ -1005,8 +1008,11 @@ function loadAdminOrders(status, page) {
     }
     if (data.statusCounts) {
       adminStatusCounts = data.statusCounts;
-      renderAdminOrdersFilter();
     }
+    if (data.nameCounts) {
+      adminNameCounts = data.nameCounts;
+    }
+    renderAdminOrdersFilter();
     renderAdminOrdersList(data);
   }).catch(function() {
     listEl.innerHTML = '<div class="empty-state"><div class="icon">❌</div><p>เกิดข้อผิดพลาด</p></div>';
@@ -1019,6 +1025,27 @@ function renderAdminOrdersFilter() {
   var totalAll = 0;
   for (var k in counts) { totalAll += counts[k]; }
 
+  // Name filter dropdown
+  var html = '';
+  var nc = adminNameCounts || {};
+  var nameKeys = Object.keys(nc);
+  if (nameKeys.length > 0) {
+    // sort by displayName
+    nameKeys.sort(function(a, b) {
+      var na = (nc[a].displayName || '').toLowerCase();
+      var nb = (nc[b].displayName || '').toLowerCase();
+      return na < nb ? -1 : (na > nb ? 1 : 0);
+    });
+    html += '<select class="ao-name-filter" onchange="adminFilterByUser(this.value)">';
+    html += '<option value="">👤 ทั้งหมด</option>';
+    nameKeys.forEach(function(uid) {
+      var sel = adminUserFilter === uid ? ' selected' : '';
+      html += '<option value="' + uid + '"' + sel + '>' + (nc[uid].displayName || uid) + ' (' + nc[uid].count + ')</option>';
+    });
+    html += '</select>';
+  }
+
+  // Status filter buttons
   var statuses = [
     { key: 'all', label: 'ทั้งหมด', count: totalAll },
     { key: 'Completed', label: 'Completed' },
@@ -1034,7 +1061,7 @@ function renderAdminOrdersFilter() {
     { key: 'Unpaid', label: 'Unpaid' }
   ];
 
-  var html = '<div class="admin-order-filters">';
+  html += '<div class="admin-order-filters">';
   statuses.forEach(function(s) {
     var c = s.count !== undefined ? s.count : (counts[s.key] || 0);
     var active = adminOrderFilter === s.key ? ' active' : '';
@@ -1046,6 +1073,11 @@ function renderAdminOrdersFilter() {
 
 function adminFilterOrders(status) {
   loadAdminOrders(status, 1);
+}
+
+function adminFilterByUser(userId) {
+  adminUserFilter = userId;
+  loadAdminOrders(null, 1);
 }
 
 function renderAdminOrdersList(data) {
@@ -1065,8 +1097,33 @@ function renderAdminOrdersList(data) {
     var paidR = order.paidRefund ? '✅' : '';
     var paidD = order.paidDeposit ? '✅' : '';
     var displayName = order.displayName || '-';
+    var st = (order.status || '').toLowerCase();
 
-    html += '<div class="order-card ao-card" onclick="showAdminOrderDetail(\'' + order.orderId + '\')">';
+    // Card background color
+    var cardBg = '';
+    if (st === 'canceled' || st === 'cancelled') {
+      cardBg = 'background:var(--red-soft);';
+    } else if (st === 'investigating') {
+      cardBg = 'background:var(--amber-soft);';
+    } else if (st === 'transferred' && order.paidRefund && order.paidDeposit) {
+      cardBg = 'background:#D5F5E3;';
+    }
+
+    // Voucher % circle
+    var pct = 0;
+    var pctHtml = '';
+    var ot = parseFloat(order.orderTotal) || 0;
+    var vc = parseFloat(order.voucher) || 0;
+    if (ot > 0 && vc > 0) {
+      pct = Math.round((vc / ot) * 100);
+      var pctColor = '#C9302C'; // red < 20%
+      if (pct > 25) pctColor = '#0D6B3E';
+      else if (pct > 22) pctColor = '#2ECC71';
+      else if (pct > 20) pctColor = '#E67E22';
+      pctHtml = '<div class="ao-pct-circle" style="border-color:' + pctColor + ';color:' + pctColor + ';">' + pct + '%</div>';
+    }
+
+    html += '<div class="order-card ao-card" style="' + cardBg + '" onclick="showAdminOrderDetail(\'' + order.orderId + '\')">';
     html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:2px;">';
     html += '<span class="order-id" style="font-size:10px;">' + order.orderId + '</span>';
     html += '<span class="order-status ' + statusClass + '" style="font-size:9px;">' + order.status + '</span>';
@@ -1080,6 +1137,7 @@ function renderAdminOrdersList(data) {
     if (order.refundAmount > 0) badges += '<span style="font-size:8px;color:var(--green);">💰' + numberFormat(order.refundAmount) + paidR + '</span> ';
     if (order.depositAmount > 0) badges += '<span style="font-size:8px;color:var(--blue);">📦' + numberFormat(order.depositAmount) + paidD + '</span>';
     if (badges) html += '<div style="margin-top:2px;">' + badges + '</div>';
+    html += pctHtml;
     html += '</div>';
   });
   html += '</div>';
