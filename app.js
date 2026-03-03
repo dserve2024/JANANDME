@@ -30,7 +30,6 @@ async function init() {
     if (params.get('contact') === '1') {
       document.getElementById('loading').style.display = 'none';
       document.querySelector('.tabs').style.display = 'none';
-      document.getElementById('contact-only-section').style.display = 'block';
       openChat();
       return;
     }
@@ -711,18 +710,50 @@ function renderChatMessages(messages) {
   messages.forEach(function(m) {
     var isMe = m.sender_type === 'user';
     var time = new Date(m.created_at).toLocaleTimeString('th-TH', {hour:'2-digit',minute:'2-digit'});
+    var imgHtml = '';
+    if (m.image_url) {
+      imgHtml = '<a href="' + escapeHtml(m.image_url) + '" target="_blank">' +
+        '<img src="' + escapeHtml(m.image_url) + '" class="chat-img"></a>';
+    }
     html += '<div class="chat-bubble ' + (isMe ? 'me' : 'them') + '">' +
-      '<div>' + escapeHtml(m.message) + '</div>' +
+      imgHtml +
+      (m.message ? '<div>' + escapeHtml(m.message) + '</div>' : '') +
       '<div class="chat-time">' + time + '</div></div>';
   });
   el.innerHTML = html;
   el.scrollTop = el.scrollHeight;
 }
 
+var chatImageBase64 = null;
+
+function previewChatImage(input) {
+  if (!input.files || !input.files[0]) return;
+  var file = input.files[0];
+  if (file.size > 5 * 1024 * 1024) {
+    showToast('ไฟล์ใหญ่เกิน 5MB');
+    input.value = '';
+    return;
+  }
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    chatImageBase64 = e.target.result.split(',')[1];
+    document.getElementById('chat-preview-img').src = e.target.result;
+    document.getElementById('chat-image-preview').style.display = 'flex';
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearChatImage() {
+  chatImageBase64 = null;
+  document.getElementById('chat-image-preview').style.display = 'none';
+  document.getElementById('chat-image-input').value = '';
+}
+
 function sendChatMsg() {
   var input = document.getElementById('chat-input');
   var msg = input.value.trim();
-  if (!msg) return;
+  var hasImage = !!chatImageBase64;
+  if (!msg && !hasImage) return;
   input.value = '';
 
   // Optimistic: show bubble immediately
@@ -730,20 +761,42 @@ function sendChatMsg() {
   var emptyEl = el.querySelector('.chat-empty');
   if (emptyEl) emptyEl.remove();
   var now = new Date().toLocaleTimeString('th-TH', {hour:'2-digit',minute:'2-digit'});
-  el.innerHTML += '<div class="chat-bubble me"><div>' + escapeHtml(msg) + '</div><div class="chat-time">' + now + '</div></div>';
+  var previewHtml = '';
+  if (hasImage) {
+    var previewSrc = document.getElementById('chat-preview-img').src;
+    previewHtml = '<img src="' + previewSrc + '" class="chat-img">';
+  }
+  el.innerHTML += '<div class="chat-bubble me">' + previewHtml +
+    (msg ? '<div>' + escapeHtml(msg) + '</div>' : '') +
+    '<div class="chat-time">' + now + '</div></div>';
   el.scrollTop = el.scrollHeight;
 
   var name = '';
   try { name = document.getElementById('profile-name').textContent || ''; } catch(e) {}
 
-  apiCall('sendChatMessage', {
-    userId: userId, senderType: 'user', senderName: name, message: msg
-  }).then(function(data) {
-    if (!data.success) showToast('❌ ส่งไม่สำเร็จ');
-  });
+  if (hasImage) {
+    var imageData = chatImageBase64;
+    clearChatImage();
+    apiPost({ source: 'liff_chat_image', image: imageData }).then(function(uploadResult) {
+      if (!uploadResult || !uploadResult.success) {
+        showToast('อัปโหลดรูปไม่สำเร็จ');
+        return;
+      }
+      apiCall('sendChatMessage', {
+        userId: userId, senderType: 'user', senderName: name,
+        message: msg, imageUrl: uploadResult.imageUrl
+      }).then(function(data) {
+        if (!data.success) showToast('ส่งไม่สำเร็จ');
+      });
+    });
+  } else {
+    apiCall('sendChatMessage', {
+      userId: userId, senderType: 'user', senderName: name, message: msg
+    }).then(function(data) {
+      if (!data.success) showToast('ส่งไม่สำเร็จ');
+    });
+  }
 }
-
-function closeContactForm() { if (liff.isInClient()) liff.closeWindow(); }
 
 function showToast(msg) {
   var toast = document.getElementById('toast');

@@ -48,29 +48,6 @@
     <p>กำลังโหลด...</p>
   </div>
 
-  <!-- CONTACT ONLY SECTION -->
-  <div id="contact-only-section" class="section" style="display:none;">
-    <div style="padding:30px 20px;">
-      <div style="text-align:center;margin-bottom:25px;">
-        <div style="font-size:50px;margin-bottom:10px;">📞</div>
-        <h2 style="color:var(--txt);margin-bottom:5px;">ติดต่อแอดมิน</h2>
-        <p style="color:var(--txt3);font-size:13px;">พิมพ์ข้อความด้านล่าง แอดมินจะติดต่อกลับค่ะ</p>
-      </div>
-      <div class="form-group">
-        <textarea id="contact-message-direct" rows="5" style="width:100%;padding:15px;border:1.5px solid var(--border-s);border-radius:var(--r-sm);font-size:15px;resize:none;font-family:var(--f-th);background:var(--bg);color:var(--txt);" placeholder="พิมพ์ข้อความที่ต้องการสอบถาม..."></textarea>
-      </div>
-      <div id="contact-image-preview-direct" style="margin-top:8px;"></div>
-      <button type="button" onclick="document.getElementById('contactImageInputDirect').click()" style="width:100%;padding:12px;background:var(--surface);color:var(--txt2);border:1.5px dashed var(--border-s);border-radius:var(--r-sm);font-size:14px;cursor:pointer;margin-top:10px;font-family:var(--f-th);">📷 แนบรูปภาพ</button>
-      <input type="file" id="contactImageInputDirect" accept="image/*" style="display:none" onchange="handleContactImage(this.files,'contact-image-preview-direct')">
-      <button onclick="sendContactDirect()" style="width:100%;padding:15px;background:var(--accent);color:white;border:none;border-radius:var(--r-sm);font-size:16px;font-weight:700;cursor:pointer;margin-top:10px;font-family:var(--f-th);">
-        📨 ส่งข้อความ
-      </button>
-      <button onclick="closeContactForm()" style="width:100%;padding:12px;background:var(--bg);color:var(--txt3);border:1.5px solid var(--border-s);border-radius:var(--r-sm);font-size:14px;cursor:pointer;margin-top:10px;font-family:var(--f-th);">
-        ยกเลิก
-      </button>
-    </div>
-  </div>
-
   <!-- PENDING APPROVAL SECTION -->
   <div id="pending-approval-section" class="section" style="display:none;">
     <div style="text-align:center;padding:60px 20px;">
@@ -470,7 +447,13 @@
       <button onclick="closeChat()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--txt3);">✕</button>
     </div>
     <div id="chat-messages" class="chat-thread"></div>
+    <div id="chat-image-preview" class="chat-image-preview" style="display:none;">
+      <img id="chat-preview-img" src="">
+      <button onclick="clearChatImage()" class="chat-preview-close">✕</button>
+    </div>
     <div class="chat-input-area">
+      <input type="file" id="chat-image-input" accept="image/*" style="display:none" onchange="previewChatImage(this)">
+      <button onclick="document.getElementById('chat-image-input').click()" class="chat-img-btn" title="แนบรูป">📷</button>
       <input type="text" id="chat-input" placeholder="พิมพ์ข้อความ..." onkeydown="if(event.key==='Enter')sendChatMsg()">
       <button onclick="sendChatMsg()" class="chat-send-btn">📨</button>
     </div>

@@ -622,3 +622,8 @@ body { font-family: var(--f-th); background: var(--bg); color: var(--txt); min-h
 .chat-input-area input:focus { border-color:var(--accent); }
 .chat-send-btn { background:var(--accent); color:white; border:none; border-radius:50%; width:40px; height:40px; font-size:18px; cursor:pointer; flex-shrink:0; transition:transform .1s; }
 .chat-send-btn:active { transform:scale(.9); }
+.chat-img { max-width:100%; border-radius:8px; margin-bottom:4px; cursor:pointer; }
+.chat-img-btn { background:none; border:none; font-size:20px; cursor:pointer; flex-shrink:0; padding:0 4px; }
+.chat-image-preview { display:flex; align-items:center; gap:8px; padding:8px 12px; border-top:1px solid var(--border); background:var(--surface); }
+.chat-image-preview img { height:60px; border-radius:8px; object-fit:cover; }
+.chat-preview-close { background:none; border:none; font-size:18px; cursor:pointer; color:var(--txt3); }

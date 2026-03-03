@@ -226,8 +226,14 @@ function renderAdminChatMessages(messages) {
   messages.forEach(function(m) {
     var isMe = m.sender_type === 'admin';
     var time = new Date(m.created_at).toLocaleTimeString('th-TH', {hour:'2-digit',minute:'2-digit'});
+    var imgHtml = '';
+    if (m.image_url) {
+      imgHtml = '<a href="' + escapeHtml(m.image_url) + '" target="_blank">' +
+        '<img src="' + escapeHtml(m.image_url) + '" class="chat-img"></a>';
+    }
     html += '<div class="chat-bubble ' + (isMe ? 'me' : 'them') + '">' +
-      '<div>' + escapeHtml(m.message) + '</div>' +
+      imgHtml +
+      (m.message ? '<div>' + escapeHtml(m.message) + '</div>' : '') +
       '<div class="chat-time">' + time + '</div></div>';
   });
   el.innerHTML = html;
