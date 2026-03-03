@@ -8,6 +8,7 @@ var CONFIG = {
 
 var userId = null;
 var userData = null;
+var currentDisplayName = '';
 var currentShopeeId = null;
 var currentOrderId = null;
 var currentFilter = 'all';
@@ -24,6 +25,7 @@ async function init() {
 
     var profile = await liff.getProfile();
     userId = profile.userId;
+    currentDisplayName = profile.displayName || '';
 
     var params = new URLSearchParams(window.location.search);
 
@@ -729,16 +731,25 @@ var chatImageBase64 = null;
 function previewChatImage(input) {
   if (!input.files || !input.files[0]) return;
   var file = input.files[0];
-  if (file.size > 5 * 1024 * 1024) {
-    showToast('ไฟล์ใหญ่เกิน 5MB');
-    input.value = '';
-    return;
-  }
   var reader = new FileReader();
   reader.onload = function(e) {
-    chatImageBase64 = e.target.result.split(',')[1];
-    document.getElementById('chat-preview-img').src = e.target.result;
-    document.getElementById('chat-image-preview').style.display = 'flex';
+    var img = new Image();
+    img.onload = function() {
+      var maxDim = 1200;
+      var w = img.width, h = img.height;
+      if (w > maxDim || h > maxDim) {
+        if (w > h) { h = Math.round(h * maxDim / w); w = maxDim; }
+        else { w = Math.round(w * maxDim / h); h = maxDim; }
+      }
+      var canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      var compressed = canvas.toDataURL('image/jpeg', 0.7);
+      chatImageBase64 = compressed.split(',')[1];
+      document.getElementById('chat-preview-img').src = compressed;
+      document.getElementById('chat-image-preview').style.display = 'flex';
+    };
+    img.src = e.target.result;
   };
   reader.readAsDataURL(file);
 }
@@ -771,8 +782,7 @@ function sendChatMsg() {
     '<div class="chat-time">' + now + '</div></div>';
   el.scrollTop = el.scrollHeight;
 
-  var name = '';
-  try { name = document.getElementById('profile-name').textContent || ''; } catch(e) {}
+  var name = currentDisplayName;
 
   if (hasImage) {
     var imageData = chatImageBase64;
