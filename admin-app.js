@@ -25,9 +25,11 @@ async function initAdmin() {
     var profile = await liff.getProfile();
     userId = profile.userId;
 
-    // Check admin permission
+    // Check admin permission — เรียก GAS ตรง (bypass Edge Function)
     setStatus('กำลังตรวจสอบสิทธิ์ admin...');
-    var data = await apiCall('checkAdmin');
+    var checkUrl = CONFIG.API_URL + '?action=checkAdmin&userId=' + encodeURIComponent(userId);
+    var resp = await fetch(checkUrl);
+    var data = await resp.json();
     if (!data.success || !data.isAdmin) {
       setStatus('ไม่ใช่ admin — กำลัง redirect...');
       window.location.href = '/';
