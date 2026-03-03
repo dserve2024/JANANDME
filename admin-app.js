@@ -839,6 +839,7 @@ function renderSimulateView(data) {
 // ===== ADMIN ORDERS =====
 var adminOrderFilter = 'all';
 var adminOrderPage = 1;
+var adminStatusCounts = null;
 
 function loadAdminOrders(status, page) {
   adminOrderFilter = status || adminOrderFilter || 'all';
@@ -858,6 +859,10 @@ function loadAdminOrders(status, page) {
       listEl.innerHTML = '<div class="empty-state"><div class="icon">❌</div><p>' + (data.error || 'โหลดไม่สำเร็จ') + '</p></div>';
       return;
     }
+    if (data.statusCounts) {
+      adminStatusCounts = data.statusCounts;
+      renderAdminOrdersFilter();
+    }
     renderAdminOrdersList(data);
   }).catch(function() {
     listEl.innerHTML = '<div class="empty-state"><div class="icon">❌</div><p>เกิดข้อผิดพลาด</p></div>';
@@ -866,8 +871,12 @@ function loadAdminOrders(status, page) {
 
 function renderAdminOrdersFilter() {
   var filterEl = document.getElementById('admin-orders-filter');
+  var counts = adminStatusCounts || {};
+  var totalAll = 0;
+  for (var k in counts) { totalAll += counts[k]; }
+
   var statuses = [
-    { key: 'all', label: 'ทั้งหมด' },
+    { key: 'all', label: 'ทั้งหมด', count: totalAll },
     { key: 'Completed', label: 'Completed' },
     { key: 'Pending', label: 'Pending' },
     { key: 'Transferring', label: 'Transferring' },
@@ -883,8 +892,10 @@ function renderAdminOrdersFilter() {
 
   var html = '<div class="admin-order-filters">';
   statuses.forEach(function(s) {
+    var c = s.count !== undefined ? s.count : (counts[s.key] || 0);
+    if (s.key !== 'all' && c === 0) return;
     var active = adminOrderFilter === s.key ? ' active' : '';
-    html += '<button class="aof-btn' + active + '" onclick="adminFilterOrders(\'' + s.key + '\')">' + s.label + '</button>';
+    html += '<button class="aof-btn' + active + '" onclick="adminFilterOrders(\'' + s.key + '\')">' + s.label + ' (' + c + ')</button>';
   });
   html += '</div>';
   filterEl.innerHTML = html;
