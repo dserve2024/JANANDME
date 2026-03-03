@@ -37,7 +37,7 @@ async function initAdmin() {
     var sections = document.querySelectorAll('.content .section');
     sections.forEach(function(s) { s.style.display = 'none'; });
     document.querySelector('[data-tab="payment"]').classList.add('active');
-    document.getElementById('admin-payment-sub').style.display = '';
+    document.getElementById('admin-payment-sub').style.display = 'block';
 
     dbg('Step 6: calling API...');
     var payData = await apiCall('adminGetPendingPayments');
@@ -92,19 +92,19 @@ function switchAdminSubTab(sub) {
 
   if (sub === 'users') {
     document.querySelector('[data-tab="users"]').classList.add('active');
-    document.getElementById('admin-users-sub').style.display = '';
+    document.getElementById('admin-users-sub').style.display = 'block';
     loadAdminUsers();
   } else if (sub === 'payment') {
     document.querySelector('[data-tab="payment"]').classList.add('active');
-    document.getElementById('admin-payment-sub').style.display = '';
+    document.getElementById('admin-payment-sub').style.display = 'block';
     loadAdminPayments();
   } else if (sub === 'deposit') {
     document.querySelector('[data-tab="deposit"]').classList.add('active');
-    document.getElementById('admin-deposit-sub').style.display = '';
+    document.getElementById('admin-deposit-sub').style.display = 'block';
     loadAdminDepositReturns();
   } else if (sub === 'dashboard') {
     document.querySelector('[data-tab="dashboard"]').classList.add('active');
-    document.getElementById('admin-dashboard-sub').style.display = '';
+    document.getElementById('admin-dashboard-sub').style.display = 'block';
     loadAdminDashboard();
   }
 }
