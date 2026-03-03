@@ -9,7 +9,7 @@ var _dashData = null;
 async function initAdmin() {
   var loadingEl = document.getElementById('loading');
   try {
-    await liff.init({ liffId: CONFIG.LIFF_ID });
+    await liff.init({ liffId: '2009026931-tifU2b4l' });
 
     if (!liff.isLoggedIn()) {
       liff.login();

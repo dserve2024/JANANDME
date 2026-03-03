@@ -1,5 +1,5 @@
 var CONFIG = {
-  LIFF_ID: '2009026931-tifU2b4l',
+  LIFF_ID: '2009026931-IQy8q5QZ',
   API_URL: 'https://script.google.com/macros/s/AKfycbxc1W4MgiGHFnLh8SrfHeqCbKPU033zbfSoTr-TUeGHuTy4qKcPjeZEvgqXC1PyAYiM/exec',
   EDGE_API_URL: 'https://ucarbttnncedmwtrlxyw.supabase.co/functions/v1/api',
   SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVjYXJidHRubmNlZG13dHJseHl3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NzgyNjQsImV4cCI6MjA4NjM1NDI2NH0.HvM6cVr00gedlANYA1csfpv_DBu7l2OEUls2gy2r1tM',
