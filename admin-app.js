@@ -905,22 +905,26 @@ function renderSimulateView(data) {
   // Financial summary (เหมือน user เห็น — 3-group layout)
   var totalRefund = data.totalRefund || 0;
   var totalDeposit = data.totalDeposit || 0;
-  var combined = totalRefund + totalDeposit;
+  var expectedRefund = data.expectedRefund || 0;
+  var pendingDep = data.pendingDeposit || 0;
+  var allRefund = totalRefund + expectedRefund;
+  var allDeposit = totalDeposit + pendingDep;
+  var combined = allRefund + allDeposit;
   var refPaid = data.totalRefundPaid || 0;
   var depReturned = data.totalDepositReturned || 0;
   var totalReceived = refPaid + depReturned;
 
-  // Group 1: Hero Card - รวมยอดรอรับ
+  // Group 1: Hero Card - รวมยอดรอรับ (รวม expected ด้วย)
   html += '<div class="fin-hero">';
   html += '<div class="fin-hero-top"><span class="fin-hero-icon">💰</span><span class="fin-hero-label">รวมยอดรอรับ</span></div>';
   html += '<div class="fin-hero-value">฿' + numberFormat(combined) + '</div>';
-  html += '<div class="fin-hero-detail">ยอดรอคืน ฿' + numberFormat(totalRefund) + ' + มัดจำ ฿' + numberFormat(totalDeposit) + '</div>';
+  html += '<div class="fin-hero-detail">ยอดคืน ฿' + numberFormat(allRefund) + ' + มัดจำ ฿' + numberFormat(allDeposit) + '</div>';
   html += '</div>';
 
   // Group 2: Forecast
   html += '<div class="fin-grid">';
-  html += '<div class="fin-box expect"><div class="fin-top"><span class="fin-icon">📋</span><span class="fin-label">คาดว่าจะได้รับ</span></div><div class="fin-value">฿' + numberFormat(data.expectedRefund || 0) + '</div></div>';
-  html += '<div class="fin-box expect"><div class="fin-top"><span class="fin-icon">📦</span><span class="fin-label">คาดมัดจำ</span></div><div class="fin-value">฿' + numberFormat(data.pendingDeposit || 0) + '</div></div>';
+  html += '<div class="fin-box expect"><div class="fin-top"><span class="fin-icon">📋</span><span class="fin-label">คาดว่าจะได้รับ</span></div><div class="fin-value">฿' + numberFormat(expectedRefund) + '</div></div>';
+  html += '<div class="fin-box expect"><div class="fin-top"><span class="fin-icon">📦</span><span class="fin-label">คาดมัดจำ</span></div><div class="fin-value">฿' + numberFormat(pendingDep) + '</div></div>';
   html += '</div>';
 
   // Group 3: History - ได้รับแล้ว

@@ -143,17 +143,21 @@ function renderAll() {
 
   document.getElementById('total-orders').textContent = userData.totalOrders || 0;
 
-  // Group 1: Hero - รวมยอดรอรับ
+  // Group 1: Hero - รวมยอดรอรับ (รวม expected ด้วย)
   var totalRefund = userData.totalRefund || 0;
   var totalDeposit = userData.totalDeposit || 0;
-  var combined = totalRefund + totalDeposit;
+  var expectedRefund = userData.expectedRefund || 0;
+  var pendingDep = userData.pendingDeposit || 0;
+  var allRefund = totalRefund + expectedRefund;
+  var allDeposit = totalDeposit + pendingDep;
+  var combined = allRefund + allDeposit;
   document.getElementById('total-combined').textContent = '฿' + numberFormat(combined);
   document.getElementById('total-combined-detail').textContent =
-    'ยอดรอคืน ฿' + numberFormat(totalRefund) + ' + มัดจำ ฿' + numberFormat(totalDeposit);
+    'ยอดคืน ฿' + numberFormat(allRefund) + ' + มัดจำ ฿' + numberFormat(allDeposit);
 
   // Group 2: Forecast
-  document.getElementById('expected-refund').textContent = '฿' + numberFormat(userData.expectedRefund || 0);
-  document.getElementById('pending-deposit').textContent = '฿' + numberFormat(userData.pendingDeposit || 0);
+  document.getElementById('expected-refund').textContent = '฿' + numberFormat(expectedRefund);
+  document.getElementById('pending-deposit').textContent = '฿' + numberFormat(pendingDep);
 
   // Group 3: History - ได้รับแล้ว
   var refPaid = userData.totalRefundPaid || 0;
