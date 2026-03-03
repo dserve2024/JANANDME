@@ -586,6 +586,7 @@ body { font-family: var(--f-th); background: var(--bg); color: var(--txt); min-h
 
 /* ===== ADMIN ORDER DETAIL ===== */
 .aod-row { display:flex; justify-content:space-between; align-items:center; padding:6px 0; font-size:12px; }
+.aod-row.half { flex:1; }
 .aod-label { color:var(--txt3); font-weight:500; }
 .aod-value { font-weight:600; color:var(--txt); }
 .aod-divider { height:1px; background:var(--border); margin:10px 0; }

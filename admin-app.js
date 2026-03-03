@@ -1130,7 +1130,7 @@ function renderAdminOrderDetail(order) {
 
   // Order info (read-only) — 2 columns
   html += '<div class="aod-field-row">';
-  html += '<div class="aod-row half"><span class="aod-label">Order ID</span><span class="aod-value" style="font-family:monospace;font-size:10px;">' + order.orderId + '</span></div>';
+  html += '<div class="aod-row half"><span class="aod-label">Order ID</span><span class="aod-value">' + order.orderId + '</span></div>';
   html += '<div class="aod-row half"><span class="aod-label">Order Time</span><span class="aod-value">' + formatDateTime(order.orderTime) + '</span></div>';
   html += '</div>';
   html += '<div class="aod-field-row">';
@@ -1175,7 +1175,7 @@ function renderAdminOrderDetail(order) {
   var refundVal = parseFloat(order.refundAmount) || 0;
   var depositVal = parseFloat(order.depositAmount) || 0;
   if (refundVal === 0) {
-    refundVal = (parseFloat(order.subtotal) || 0) + (parseFloat(order.shipping) || 0) - (parseFloat(order.shippingDiscount) || 0) - (parseFloat(order.voucher) || 0) - depositVal;
+    refundVal = (parseFloat(order.subtotal) || 0) - (parseFloat(order.voucher) || 0) - depositVal;
     if (refundVal < 0) refundVal = 0;
   }
 
@@ -1186,8 +1186,8 @@ function renderAdminOrderDetail(order) {
   html += '</div>';
 
   // Calculation hint
-  var calcResult = (parseFloat(order.subtotal) || 0) + (parseFloat(order.shipping) || 0) - (parseFloat(order.shippingDiscount) || 0) - (parseFloat(order.voucher) || 0) - depositVal;
-  html += '<div id="aod-refund-hint" class="aod-calc-hint">= ' + numberFormat(order.subtotal || 0) + ' + ' + numberFormat(order.shipping || 0) + ' - ' + numberFormat(order.shippingDiscount || 0) + ' - ' + numberFormat(order.voucher || 0) + ' - ' + numberFormat(depositVal) + ' = ฿' + numberFormat(calcResult) + '</div>';
+  var calcResult = (parseFloat(order.subtotal) || 0) - (parseFloat(order.voucher) || 0) - depositVal;
+  html += '<div id="aod-refund-hint" class="aod-calc-hint">= ' + numberFormat(order.subtotal || 0) + ' - ' + numberFormat(order.voucher || 0) + ' - ' + numberFormat(depositVal) + ' = ฿' + numberFormat(calcResult) + '</div>';
 
   // Paid checkboxes — 2 columns
   html += '<div class="aod-field-row" style="margin-top:8px;">';
@@ -1231,10 +1231,10 @@ function recalcRefundHint() {
   var shipDis = parseFloat(document.getElementById('aod-shippingDiscount').value) || 0;
   var voucher = parseFloat(document.getElementById('aod-voucher').value) || 0;
   var deposit = parseFloat(document.getElementById('aod-depositAmount').value) || 0;
-  var calc = sub + ship - shipDis - voucher - deposit;
+  var calc = sub - voucher - deposit;
 
   var hintEl = document.getElementById('aod-refund-hint');
-  if (hintEl) hintEl.textContent = '= ' + numberFormat(sub) + ' + ' + numberFormat(ship) + ' - ' + numberFormat(shipDis) + ' - ' + numberFormat(voucher) + ' - ' + numberFormat(deposit) + ' = ฿' + numberFormat(calc);
+  if (hintEl) hintEl.textContent = '= ' + numberFormat(sub) + ' - ' + numberFormat(voucher) + ' - ' + numberFormat(deposit) + ' = ฿' + numberFormat(calc);
 
   var pctEl = document.getElementById('aod-voucher-pct');
   if (pctEl) {
