@@ -30,9 +30,17 @@ async function initAdmin() {
     isAdminUser = true;
     if (loadingEl) loadingEl.style.display = 'none';
 
-    dbg('Step 5: switchAdminSubTab(payment)...');
+    dbg('Step 5: test apiCall...');
+    try {
+      var testData = await apiCall('adminGetPendingPayments');
+      dbg('Step 5 OK: ' + JSON.stringify(testData).substring(0, 80));
+    } catch (apiErr) {
+      dbg('Step 5 FAIL: ' + apiErr.message);
+    }
+
+    dbg('Step 6: switching tab...');
     switchAdminSubTab('payment');
-    dbg('Step 6: DONE');
+    dbg('Step 7: DONE');
 
   } catch (err) {
     dbg('ERROR: ' + err.message);
