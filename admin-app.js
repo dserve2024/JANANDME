@@ -6,30 +6,42 @@ var isAdminUser = false;
 
 // ===== ADMIN INIT =====
 async function initAdmin() {
+  var loadingEl = document.getElementById('loading');
+  function setStatus(msg) {
+    var p = loadingEl ? loadingEl.querySelector('p') : null;
+    if (p) p.textContent = msg;
+  }
   try {
+    setStatus('กำลัง init LIFF...');
     await liff.init({ liffId: CONFIG.LIFF_ID });
 
     if (!liff.isLoggedIn()) {
+      setStatus('กำลัง login...');
       liff.login();
       return;
     }
 
+    setStatus('กำลังโหลดโปรไฟล์...');
     var profile = await liff.getProfile();
     userId = profile.userId;
 
     // Check admin permission
+    setStatus('กำลังตรวจสอบสิทธิ์ admin...');
     var data = await apiCall('checkAdmin');
     if (!data.success || !data.isAdmin) {
+      setStatus('ไม่ใช่ admin — กำลัง redirect...');
       window.location.href = '/';
       return;
     }
 
     isAdminUser = true;
-    document.getElementById('loading').style.display = 'none';
+    loadingEl.style.display = 'none';
     switchAdminSubTab('payment');
 
   } catch (err) {
-    document.getElementById('loading').innerHTML = '<p style="color:var(--red);">Error: ' + err.message + '</p>';
+    if (loadingEl) {
+      loadingEl.innerHTML = '<p style="color:var(--red);">Error: ' + err.message + '</p>';
+    }
   }
 }
 
