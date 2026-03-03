@@ -1112,10 +1112,10 @@ function renderAdminOrdersList(data) {
     // Voucher % circle
     var pct = 0;
     var pctHtml = '';
-    var ot = parseFloat(order.orderTotal) || 0;
+    var sub = parseFloat(order.subtotal) || 0;
     var vc = parseFloat(order.voucher) || 0;
-    if (ot > 0 && vc > 0) {
-      pct = Math.round((vc / ot) * 100);
+    if (sub > 0 && vc > 0) {
+      pct = Math.round((vc / sub) * 100);
       var pctColor = '#C9302C'; // red < 20%
       if (pct > 25) pctColor = '#0D6B3E';
       else if (pct > 22) pctColor = '#2ECC71';
