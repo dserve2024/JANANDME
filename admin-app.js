@@ -210,6 +210,10 @@ function checkAndOpenChatFromUrl_() {
 }
 
 function openAdminChat(targetUserId, displayName) {
+  // ปิด chat เก่าก่อน (clear polling + reset state)
+  if (adminChatPollingId) { clearInterval(adminChatPollingId); adminChatPollingId = null; }
+  // Clear ข้อความเก่าทันที เพื่อไม่ให้เห็นของ user คนก่อน
+  document.getElementById('chat-messages').innerHTML = '<div class="chat-empty">กำลังโหลด...</div>';
   adminChatUserId = targetUserId;
   document.getElementById('admin-chat-title').textContent = '💬 ' + displayName;
   showModal('chatModal');
