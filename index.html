@@ -34,9 +34,6 @@
   <div class="tab" data-tab="orders" onclick="switchTab('orders')">
     <span class="tab-icon">📋</span> รายการ
   </div>
-  <div class="tab" data-tab="admin" id="admin-tab" style="display:none;" onclick="switchTab('admin')">
-    <span class="tab-icon">⚙️</span> Admin
-  </div>
   <div class="tab" data-tab="guide" onclick="switchTab('guide')">
     <span class="tab-icon">📖</span> คู่มือ
   </div>
@@ -195,29 +192,6 @@
     </div>
   </div>
 
-  <!-- ADMIN SECTION -->
-  <div id="admin-section" class="section">
-    <div class="admin-sub-tabs">
-      <div class="admin-sub-tab" onclick="switchAdminSubTab('users')">👥 Users</div>
-      <div class="admin-sub-tab active" onclick="switchAdminSubTab('payment')">💸 โอนเงิน</div>
-      <div class="admin-sub-tab" onclick="switchAdminSubTab('deposit')">📦 มัดจำ</div>
-      <div class="admin-sub-tab" onclick="switchAdminSubTab('dashboard')">📊 ผลงาน</div>
-    </div>
-    <div id="admin-users-sub" class="admin-sub-section">
-      <div class="section-title"><h2>👥 จัดการ Users</h2></div>
-      <div id="admin-users-list"></div>
-    </div>
-    <div id="admin-payment-sub" class="admin-sub-section active">
-      <div id="admin-pay-summary"></div>
-      <div id="admin-pay-list"></div>
-    </div>
-    <div id="admin-deposit-sub" class="admin-sub-section">
-      <div id="admin-deposit-list"></div>
-    </div>
-    <div id="admin-dashboard-sub" class="admin-sub-section">
-      <div id="admin-dashboard-content"></div>
-    </div>
-  </div>
 
   <!-- GUIDE SECTION -->
   <div id="guide-section" class="section">
@@ -497,13 +471,6 @@
 </div>
 
 <!-- Confirm Payment Modal -->
-<div class="modal-overlay" id="confirmPayModal">
-  <div class="modal confirm-pay-modal" id="confirmPayModalInner">
-    <div class="modal-header"><h3 id="cpay-modal-title">✅ ยืนยันโอนเงินคืน</h3></div>
-    <div class="modal-body" id="cpay-modal-body" style="padding:16px;max-height:70vh;"></div>
-    <div class="modal-actions" id="cpay-modal-actions"></div>
-  </div>
-</div>
 
 <!-- TOAST -->
 <div class="toast" id="toast"></div>

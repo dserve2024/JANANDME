@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JAN&ME Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-inner" style="justify-content:space-between;">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div class="header-logo">⚙️</div>
+      <div>
+        <h1>JAN&ME</h1>
+        <div class="subtitle">ADMIN PANEL</div>
+      </div>
+    </div>
+    <a href="/" style="background:var(--primary);color:white;border:none;border-radius:var(--r-full);padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--f-th);white-space:nowrap;text-decoration:none;">🏪 หน้าหลัก</a>
+  </div>
+</div>
+
+<!-- ADMIN SUB-TABS -->
+<div class="tabs">
+  <div class="tab" data-tab="users" onclick="switchAdminSubTab('users')">
+    <span class="tab-icon">👥</span> Users
+  </div>
+  <div class="tab active" data-tab="payment" onclick="switchAdminSubTab('payment')">
+    <span class="tab-icon">💸</span> โอนเงิน
+  </div>
+  <div class="tab" data-tab="deposit" onclick="switchAdminSubTab('deposit')">
+    <span class="tab-icon">📦</span> มัดจำ
+  </div>
+  <div class="tab" data-tab="dashboard" onclick="switchAdminSubTab('dashboard')">
+    <span class="tab-icon">📊</span> ผลงาน
+  </div>
+</div>
+
+<!-- CONTENT -->
+<div class="content">
+
+  <!-- LOADING -->
+  <div id="loading" class="loading">
+    <div class="spinner"></div>
+    <p>กำลังตรวจสอบสิทธิ์...</p>
+  </div>
+
+  <!-- ADMIN SECTIONS -->
+  <div id="admin-users-sub" class="section" style="display:none;">
+    <div class="section-title"><h2>👥 จัดการ Users</h2></div>
+    <div id="admin-users-list"></div>
+  </div>
+  <div id="admin-payment-sub" class="section" style="display:none;">
+    <div id="admin-pay-summary"></div>
+    <div id="admin-pay-list"></div>
+  </div>
+  <div id="admin-deposit-sub" class="section" style="display:none;">
+    <div id="admin-deposit-list"></div>
+  </div>
+  <div id="admin-dashboard-sub" class="section" style="display:none;">
+    <div id="admin-dashboard-content"></div>
+  </div>
+
+</div>
+
+<!-- CONFIRM PAY MODAL -->
+<div class="modal-overlay" id="confirmPayModal">
+  <div class="modal confirm-pay-modal" id="confirmPayModalInner">
+    <div class="modal-header"><h3 id="cpay-modal-title">✅ ยืนยันโอนเงินคืน</h3></div>
+    <div class="modal-body" id="cpay-modal-body" style="padding:16px;max-height:70vh;"></div>
+    <div class="modal-actions" id="cpay-modal-actions"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- LOADING OVERLAY -->
+<div id="loadingOverlay" class="loading-overlay">
+  <div class="loading-overlay-content">
+    <div class="spinner"></div>
+    <p id="loadingText">กำลังดำเนินการ...</p>
+  </div>
+</div>
+
+<script src="app.js"></script>
+<script src="admin-app.js"></script>
+</body>
+</html>
