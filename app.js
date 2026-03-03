@@ -54,7 +54,7 @@ var EDGE_ACTIONS = [
   // Read actions (Phase 2)
   'getUserData', 'getOrders', 'getOrderDetail', 'getOrderHistory',
   'getDepositOrders', 'getDepositHistory', 'getDisputes',
-  'checkAdmin', 'adminGetUsers', 'adminGetOrders',
+  'checkAdmin', 'adminGetUsers',
   'adminGetDepositReturns', 'adminGetPendingPayments',
   // Write actions (Phase 3)
   'updateBank', 'addShopeeId', 'deleteShopeeId',
