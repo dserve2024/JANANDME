@@ -1017,7 +1017,6 @@ function renderAdminOrdersFilter() {
   var html = '<div class="admin-order-filters">';
   statuses.forEach(function(s) {
     var c = s.count !== undefined ? s.count : (counts[s.key] || 0);
-    if (s.key !== 'all' && c === 0) return;
     var active = adminOrderFilter === s.key ? ' active' : '';
     html += '<button class="aof-btn' + active + '" onclick="adminFilterOrders(\'' + s.key + '\')">' + s.label + ' (' + c + ')</button>';
   });
