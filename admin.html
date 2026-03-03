@@ -101,6 +101,21 @@
   </div>
 </div>
 
+<!-- Chat Modal -->
+<div class="modal-overlay" id="chatModal">
+  <div class="modal" style="height:80vh;display:flex;flex-direction:column;">
+    <div class="modal-header" style="display:flex;justify-content:space-between;align-items:center;">
+      <h3 id="admin-chat-title">💬 แชท</h3>
+      <button onclick="closeAdminChat()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--txt3);">✕</button>
+    </div>
+    <div id="chat-messages" class="chat-thread"></div>
+    <div class="chat-input-area">
+      <input type="text" id="chat-input" placeholder="พิมพ์ข้อความ..." onkeydown="if(event.key==='Enter')sendAdminChatMsg()">
+      <button onclick="sendAdminChatMsg()" class="chat-send-btn">📨</button>
+    </div>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 

@@ -21,6 +21,15 @@ async function initAdmin() {
 
     isAdminUser = true;
     if (loadingEl) loadingEl.style.display = 'none';
+
+    // Deep link: ?chat=Uxxxx&name=xxx → เปิด chat ของ user คนนั้นทันที
+    var params = new URLSearchParams(window.location.search);
+    var chatTarget = params.get('chat');
+    if (chatTarget) {
+      var chatName = params.get('name') || 'User';
+      openAdminChat(chatTarget, decodeURIComponent(chatName));
+    }
+
     switchAdminSubTab('payment');
 
   } catch (err) {
@@ -178,11 +187,71 @@ function adminSetAdmin(targetUserId, action) {
 }
 
 function adminSendMessage(targetUserId, displayName) {
-  var message = prompt('ส่งข้อความถึง ' + displayName + ':');
-  if (!message || !message.trim()) return;
-  apiCall('adminSendMessage', { targetUserId: targetUserId, message: message.trim() }).then(function(data) {
-    if (data.success) showToast('✅ ส่งข้อความแล้ว');
-    else showToast('❌ ' + (data.error || 'Error'));
+  openAdminChat(targetUserId, displayName);
+}
+
+// ===== ADMIN CHAT =====
+var adminChatUserId = null;
+var adminChatPollingId = null;
+
+function openAdminChat(targetUserId, displayName) {
+  adminChatUserId = targetUserId;
+  document.getElementById('admin-chat-title').textContent = '💬 ' + displayName;
+  showModal('chatModal');
+  loadAdminChatMessages();
+  adminChatPollingId = setInterval(loadAdminChatMessages, 5000);
+}
+
+function closeAdminChat() {
+  hideModal('chatModal');
+  if (adminChatPollingId) { clearInterval(adminChatPollingId); adminChatPollingId = null; }
+  adminChatUserId = null;
+}
+
+function loadAdminChatMessages() {
+  if (!adminChatUserId) return;
+  apiCall('getChatMessages', { userId: adminChatUserId, limit: 50 }).then(function(data) {
+    if (!data.success) return;
+    renderAdminChatMessages(data.messages);
+  });
+}
+
+function renderAdminChatMessages(messages) {
+  var el = document.getElementById('chat-messages');
+  if (!messages || !messages.length) {
+    el.innerHTML = '<div class="chat-empty">ยังไม่มีข้อความ</div>';
+    return;
+  }
+  var html = '';
+  messages.forEach(function(m) {
+    var isMe = m.sender_type === 'admin';
+    var time = new Date(m.created_at).toLocaleTimeString('th-TH', {hour:'2-digit',minute:'2-digit'});
+    html += '<div class="chat-bubble ' + (isMe ? 'me' : 'them') + '">' +
+      '<div>' + escapeHtml(m.message) + '</div>' +
+      '<div class="chat-time">' + time + '</div></div>';
+  });
+  el.innerHTML = html;
+  el.scrollTop = el.scrollHeight;
+}
+
+function sendAdminChatMsg() {
+  var input = document.getElementById('chat-input');
+  var msg = input.value.trim();
+  if (!msg || !adminChatUserId) return;
+  input.value = '';
+
+  // Optimistic
+  var el = document.getElementById('chat-messages');
+  var emptyEl = el.querySelector('.chat-empty');
+  if (emptyEl) emptyEl.remove();
+  var now = new Date().toLocaleTimeString('th-TH', {hour:'2-digit',minute:'2-digit'});
+  el.innerHTML += '<div class="chat-bubble me"><div>' + escapeHtml(msg) + '</div><div class="chat-time">' + now + '</div></div>';
+  el.scrollTop = el.scrollHeight;
+
+  apiCall('sendChatMessage', {
+    userId: adminChatUserId, senderType: 'admin', senderName: 'Admin', message: msg
+  }).then(function(data) {
+    if (!data.success) showToast('❌ ส่งไม่สำเร็จ');
   });
 }
 

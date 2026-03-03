@@ -22,7 +22,7 @@
         <div class="subtitle">ORDER MANAGEMENT</div>
       </div>
     </div>
-    <button onclick="showContactModal()" style="background:var(--red);color:white;border:none;border-radius:var(--r-full);padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--f-th);white-space:nowrap;">📞 แอดมิน</button>
+    <button onclick="openChat()" style="background:var(--red);color:white;border:none;border-radius:var(--r-full);padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--f-th);white-space:nowrap;">💬 แอดมิน</button>
   </div>
 </div>
 
@@ -84,7 +84,7 @@
         📷 ส่งรูป Order ได้เลยค่ะ<br>
         ระบบจะบันทึกให้อัตโนมัติ
       </p>
-      <button onclick="showContactModal()" class="contact-btn">📞 ติดต่อแอดมิน</button>
+      <button onclick="openChat()" class="contact-btn">💬 ติดต่อแอดมิน</button>
     </div>
   </div>
 
@@ -97,7 +97,7 @@
         บัญชีของคุณถูกระงับการใช้งาน<br>
         กรุณาติดต่อแอดมินเพื่อสอบถามข้อมูลเพิ่มเติม
       </p>
-      <button onclick="showContactModal()" style="display:inline-block;padding:14px 30px;background:var(--red);color:white;border:none;border-radius:var(--r-full);font-weight:700;font-size:15px;cursor:pointer;font-family:var(--f-th);">📞 ติดต่อแอดมิน</button>
+      <button onclick="openChat()" style="display:inline-block;padding:14px 30px;background:var(--red);color:white;border:none;border-radius:var(--r-full);font-weight:700;font-size:15px;cursor:pointer;font-family:var(--f-th);">💬 ติดต่อแอดมิน</button>
     </div>
   </div>
 
@@ -462,22 +462,17 @@
   </div>
 </div>
 
-<!-- Contact Admin Modal -->
-<div class="modal-overlay" id="contactModal">
-  <div class="modal">
-    <div class="modal-header"><h3>📞 ติดต่อแอดมิน</h3></div>
-    <div class="modal-body">
-      <p style="font-size:13px;color:var(--txt2);margin-bottom:15px;text-align:center;">พิมพ์ข้อความที่ต้องการส่งถึงแอดมิน<br>แอดมินจะติดต่อกลับในแชทค่ะ</p>
-      <div class="form-group">
-        <textarea id="contact-message" rows="4" style="width:100%;padding:12px;border:1.5px solid var(--border-s);border-radius:var(--r-sm);font-size:14px;resize:none;font-family:var(--f-th);background:var(--bg);color:var(--txt);" placeholder="พิมพ์ข้อความที่นี่..."></textarea>
-      </div>
-      <div id="contact-image-preview" style="margin-top:8px;"></div>
-      <button type="button" onclick="document.getElementById('contactImageInput').click()" style="width:100%;padding:10px;background:var(--surface);color:var(--txt2);border:1.5px dashed var(--border-s);border-radius:var(--r-sm);font-size:13px;cursor:pointer;margin-top:8px;font-family:var(--f-th);">📷 แนบรูปภาพ</button>
-      <input type="file" id="contactImageInput" accept="image/*" style="display:none" onchange="handleContactImage(this.files,'contact-image-preview')">
+<!-- Chat Modal -->
+<div class="modal-overlay" id="chatModal">
+  <div class="modal" style="height:80vh;display:flex;flex-direction:column;">
+    <div class="modal-header" style="display:flex;justify-content:space-between;align-items:center;">
+      <h3>💬 แชทกับแอดมิน</h3>
+      <button onclick="closeChat()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--txt3);">✕</button>
     </div>
-    <div class="modal-actions">
-      <button class="btn-cancel" onclick="cancelContact()">ยกเลิก</button>
-      <button class="btn-save" onclick="sendContactMessage()">📨 ส่ง</button>
+    <div id="chat-messages" class="chat-thread"></div>
+    <div class="chat-input-area">
+      <input type="text" id="chat-input" placeholder="พิมพ์ข้อความ..." onkeydown="if(event.key==='Enter')sendChatMsg()">
+      <button onclick="sendChatMsg()" class="chat-send-btn">📨</button>
     </div>
   </div>
 </div>

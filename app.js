@@ -31,6 +31,7 @@ async function init() {
       document.getElementById('loading').style.display = 'none';
       document.querySelector('.tabs').style.display = 'none';
       document.getElementById('contact-only-section').style.display = 'block';
+      openChat();
       return;
     }
 
@@ -60,7 +61,8 @@ var EDGE_ACTIONS = [
   'updateBank', 'addShopeeId', 'deleteShopeeId',
   'updateOrder', 'deleteOrder', 'contactAdmin', 'createDispute',
   'adminApproveUser', 'adminBlockUser', 'adminConfirmPayment',
-  'adminReviewDeposit', 'adminMarkPayment', 'adminSetAdmin'
+  'adminReviewDeposit', 'adminMarkPayment', 'adminSetAdmin',
+  'getChatMessages', 'sendChatMessage'
 ];
 
 function apiCall(action, params) {
@@ -673,95 +675,75 @@ function switchTab(tab) {
 function showModal(id) { document.getElementById(id).classList.add('show'); }
 function hideModal(id) { document.getElementById(id).classList.remove('show'); }
 
-// ===== CONTACT ADMIN =====
-var contactImageData = null; // { base64, preview }
+// ===== CHAT =====
+var chatPollingId = null;
+var chatDisplayName = '';
 
-function showContactModal() {
-  document.getElementById('contact-message').value = '';
-  contactImageData = null;
-  var previewEl = document.getElementById('contact-image-preview');
-  if (previewEl) previewEl.innerHTML = '';
-  showModal('contactModal');
+function escapeHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-function cancelContact() {
-  contactImageData = null;
-  hideModal('contactModal');
+function openChat() {
+  showModal('chatModal');
+  loadChatMessages();
+  chatPollingId = setInterval(loadChatMessages, 5000);
 }
 
-function handleContactImage(files, previewId) {
-  if (!files || !files.length) return;
-  compressImage(files[0], 1024, 0.8, function(base64, preview) {
-    contactImageData = { base64: base64, preview: preview };
-    var el = document.getElementById(previewId);
-    if (el) {
-      el.innerHTML = '<div style="position:relative;display:inline-block;">' +
-        '<img src="' + preview + '" style="max-width:100%;max-height:150px;border-radius:8px;border:1px solid var(--border-s);">' +
-        '<button onclick="removeContactImage(\'' + previewId + '\')" style="position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;background:var(--red);color:white;border:none;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>' +
-        '</div>';
-    }
+function closeChat() {
+  hideModal('chatModal');
+  if (chatPollingId) { clearInterval(chatPollingId); chatPollingId = null; }
+}
+
+function loadChatMessages() {
+  apiCall('getChatMessages', { userId: userId, limit: 50 }).then(function(data) {
+    if (!data.success) return;
+    renderChatMessages(data.messages);
   });
 }
 
-function removeContactImage(previewId) {
-  contactImageData = null;
-  var el = document.getElementById(previewId);
-  if (el) el.innerHTML = '';
+function renderChatMessages(messages) {
+  var el = document.getElementById('chat-messages');
+  if (!messages || !messages.length) {
+    el.innerHTML = '<div class="chat-empty">ยังไม่มีข้อความ<br>พิมพ์ข้อความด้านล่างเพื่อเริ่มสนทนา</div>';
+    return;
+  }
+  var html = '';
+  messages.forEach(function(m) {
+    var isMe = m.sender_type === 'user';
+    var time = new Date(m.created_at).toLocaleTimeString('th-TH', {hour:'2-digit',minute:'2-digit'});
+    html += '<div class="chat-bubble ' + (isMe ? 'me' : 'them') + '">' +
+      '<div>' + escapeHtml(m.message) + '</div>' +
+      '<div class="chat-time">' + time + '</div></div>';
+  });
+  el.innerHTML = html;
+  el.scrollTop = el.scrollHeight;
 }
 
-function sendContactDirect() {
-  var message = document.getElementById('contact-message-direct').value.trim();
-  if (!message) { showToast('❌ กรุณาพิมพ์ข้อความ'); return; }
+function sendChatMsg() {
+  var input = document.getElementById('chat-input');
+  var msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
 
-  showLoading('กำลังส่งข้อความ...');
-  var payload = {
-    source: 'liff_contact_admin',
-    message: message,
-    image: contactImageData ? contactImageData.base64 : null
-  };
+  // Optimistic: show bubble immediately
+  var el = document.getElementById('chat-messages');
+  var emptyEl = el.querySelector('.chat-empty');
+  if (emptyEl) emptyEl.remove();
+  var now = new Date().toLocaleTimeString('th-TH', {hour:'2-digit',minute:'2-digit'});
+  el.innerHTML += '<div class="chat-bubble me"><div>' + escapeHtml(msg) + '</div><div class="chat-time">' + now + '</div></div>';
+  el.scrollTop = el.scrollHeight;
 
-  apiPost(payload).then(function(data) {
-    hideLoading();
-    if (data.success) {
-      contactImageData = null;
-      showToast('✅ ส่งข้อความสำเร็จ!');
-      setTimeout(function() { if (liff.isInClient()) liff.closeWindow(); }, 1500);
-    } else {
-      showToast('❌ ' + (data.error || 'เกิดข้อผิดพลาด'));
-    }
-  }).catch(function() {
-    hideLoading();
-    showToast('❌ เกิดข้อผิดพลาด');
+  var name = '';
+  try { name = document.getElementById('profile-name').textContent || ''; } catch(e) {}
+
+  apiCall('sendChatMessage', {
+    userId: userId, senderType: 'user', senderName: name, message: msg
+  }).then(function(data) {
+    if (!data.success) showToast('❌ ส่งไม่สำเร็จ');
   });
 }
 
 function closeContactForm() { if (liff.isInClient()) liff.closeWindow(); }
-
-function sendContactMessage() {
-  var message = document.getElementById('contact-message').value.trim();
-  if (!message) { showToast('❌ กรุณาพิมพ์ข้อความ'); return; }
-
-  showLoading('กำลังส่งข้อความ...');
-  var payload = {
-    source: 'liff_contact_admin',
-    message: message,
-    image: contactImageData ? contactImageData.base64 : null
-  };
-
-  apiPost(payload).then(function(data) {
-    hideLoading();
-    hideModal('contactModal');
-    contactImageData = null;
-    var previewEl = document.getElementById('contact-image-preview');
-    if (previewEl) previewEl.innerHTML = '';
-    if (data.success) showToast('✅ ส่งข้อความสำเร็จ! แอดมินจะติดต่อกลับค่ะ');
-    else showToast('❌ ' + (data.error || 'เกิดข้อผิดพลาด'));
-  }).catch(function() {
-    hideLoading();
-    hideModal('contactModal');
-    showToast('❌ เกิดข้อผิดพลาด');
-  });
-}
 
 function showToast(msg) {
   var toast = document.getElementById('toast');
