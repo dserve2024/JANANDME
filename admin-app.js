@@ -874,7 +874,11 @@ function renderAdminOrdersFilter() {
     { key: 'Transferred', label: 'Transferred' },
     { key: 'Canceled', label: 'Canceled' },
     { key: 'Incorrect', label: 'Incorrect' },
-    { key: 'Ambiguous', label: 'Ambiguous' }
+    { key: 'Ambiguous', label: 'Ambiguous' },
+    { key: 'Investigating', label: 'Investigating' },
+    { key: 'New', label: 'New' },
+    { key: 'Shipped', label: 'Shipped' },
+    { key: 'Unpaid', label: 'Unpaid' }
   ];
 
   var html = '<div class="admin-order-filters">';
@@ -901,29 +905,30 @@ function renderAdminOrdersList(data) {
   }
 
   var html = '<div class="ao-summary" style="margin-bottom:12px;font-size:12px;color:var(--txt3);">รวม ' + data.total + ' รายการ (หน้า ' + data.page + '/' + data.totalPages + ')</div>';
+  html += '<div class="ao-grid">';
   orders.forEach(function(order) {
     var statusClass = getStatusClass(order.status);
     var paidR = order.paidRefund ? '✅' : '';
     var paidD = order.paidDeposit ? '✅' : '';
+    var displayName = order.displayName || '-';
 
     html += '<div class="order-card ao-card" onclick="showAdminOrderDetail(\'' + order.orderId + '\')">';
-    html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:3px;">';
-    html += '<span class="order-id">' + order.orderId + '</span>';
-    html += '<span class="order-status ' + statusClass + '">' + order.status + '</span>';
+    html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:2px;">';
+    html += '<span class="order-id" style="font-size:10px;">' + order.orderId + '</span>';
+    html += '<span class="order-status ' + statusClass + '" style="font-size:9px;">' + order.status + '</span>';
     html += '</div>';
+    html += '<div style="font-size:11px;font-weight:600;color:var(--txt);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">👤 ' + displayName + '</div>';
     html += '<div style="display:flex;justify-content:space-between;align-items:center;">';
-    html += '<div class="order-amount">฿' + numberFormat(order.orderTotal || 0) + '</div>';
-    html += '<div style="font-size:10px;color:var(--txt3);">' + (order.shopeeId || '-') + '</div>';
+    html += '<div class="order-amount" style="font-size:15px;">฿' + numberFormat(order.orderTotal || 0) + '</div>';
     html += '</div>';
-    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;">';
-    html += '<div style="font-size:10px;color:var(--txt3);">' + formatDateTime(order.createdAt) + '</div>';
+    html += '<div style="font-size:9px;color:var(--txt3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">🏪 ' + (order.shopeeId || '-') + '</div>';
     var badges = '';
-    if (order.refundAmount > 0) badges += '<span style="font-size:9px;color:var(--green);">💰' + numberFormat(order.refundAmount) + paidR + '</span> ';
-    if (order.depositAmount > 0) badges += '<span style="font-size:9px;color:var(--blue);">📦' + numberFormat(order.depositAmount) + paidD + '</span>';
-    html += '<div>' + badges + '</div>';
-    html += '</div>';
+    if (order.refundAmount > 0) badges += '<span style="font-size:8px;color:var(--green);">💰' + numberFormat(order.refundAmount) + paidR + '</span> ';
+    if (order.depositAmount > 0) badges += '<span style="font-size:8px;color:var(--blue);">📦' + numberFormat(order.depositAmount) + paidD + '</span>';
+    if (badges) html += '<div style="margin-top:2px;">' + badges + '</div>';
     html += '</div>';
   });
+  html += '</div>';
 
   listEl.innerHTML = html;
 
@@ -973,7 +978,7 @@ function renderAdminOrderDetail(order) {
   var bodyEl = document.getElementById('admin-order-modal-body');
   var actEl = document.getElementById('admin-order-modal-actions');
 
-  var statuses = ['Completed', 'Pending', 'Transferring', 'Transferred', 'Canceled', 'Incorrect', 'Ambiguous', 'Investigating'];
+  var statuses = ['Completed', 'Pending', 'Transferring', 'Transferred', 'Canceled', 'Incorrect', 'Ambiguous', 'Investigating', 'New', 'Shipped', 'Unpaid'];
 
   var html = '';
 
@@ -1034,6 +1039,7 @@ function renderAdminOrderDetail(order) {
 
   // Actions
   var actHtml = '<button class="btn-cancel" onclick="hideModal(\'adminOrderModal\')">← ยกเลิก</button>';
+  actHtml += '<button class="btn-danger" onclick="confirmDeleteAdminOrder()" style="background:var(--red);color:white;border:none;border-radius:var(--r-xs);padding:10px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--f-th);">🗑️ ลบ</button>';
   actHtml += '<button class="btn-confirm-green" onclick="saveAdminOrder()">💾 บันทึก</button>';
   actEl.innerHTML = actHtml;
 }
@@ -1068,6 +1074,26 @@ function saveAdminOrder() {
       loadAdminOrders();
     } else {
       showToast('❌ ' + (data.error || 'บันทึกไม่สำเร็จ'));
+    }
+  }).catch(function(err) {
+    hideLoading();
+    showToast('❌ เกิดข้อผิดพลาด: ' + (err.message || err));
+  });
+}
+
+function confirmDeleteAdminOrder() {
+  if (!adminEditOrderId) return;
+  if (!confirm('⚠️ ยืนยันลบ Order ' + adminEditOrderId + ' ?\nลบแล้วไม่สามารถกู้คืนได้')) return;
+
+  showLoading('กำลังลบ...');
+  apiCall('adminDeleteOrder', { orderId: adminEditOrderId }).then(function(data) {
+    hideLoading();
+    if (data.success) {
+      showToast('🗑️ ลบ Order สำเร็จ');
+      hideModal('adminOrderModal');
+      loadAdminOrders();
+    } else {
+      showToast('❌ ' + (data.error || 'ลบไม่สำเร็จ'));
     }
   }).catch(function(err) {
     hideLoading();
