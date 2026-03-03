@@ -537,3 +537,44 @@ body { font-family: var(--f-th); background: var(--bg); color: var(--txt); min-h
 .dash-rank-name { font-size:13px; font-weight:700; color:var(--txt); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .dash-rank-meta { font-size:11px; color:var(--txt3); }
 .dash-rank-amount { font-family:var(--f-en); font-size:14px; font-weight:800; color:var(--accent); flex-shrink:0; }
+
+/* ===== SIMULATE USER ===== */
+.sim-selector { margin-bottom:16px; }
+.sim-select { width:100%; padding:10px 12px; border:1px solid var(--border-s); border-radius:var(--r-sm); font-size:14px; font-family:var(--f-th); background:var(--surface); color:var(--txt); }
+.sim-profile-card { background:var(--surface); border-radius:var(--r-md); padding:16px; margin-bottom:14px; box-shadow:var(--sh-card); }
+.sim-profile-header { display:flex; align-items:center; gap:12px; margin-bottom:8px; }
+.sim-avatar { width:48px; height:48px; border-radius:50%; border:2.5px solid var(--border); object-fit:cover; flex-shrink:0; }
+.sim-profile-info { flex:1; min-width:0; }
+.sim-name { font-size:16px; font-weight:700; }
+.sim-bank { font-size:11px; color:var(--txt3); margin-top:4px; }
+.sim-finance { background:var(--surface); border-radius:var(--r-md); padding:14px; margin-bottom:14px; box-shadow:var(--sh-card); }
+.sim-finance-title { font-weight:700; font-size:13px; margin-bottom:10px; }
+.sim-section { background:var(--surface); border-radius:var(--r-md); padding:14px; margin-bottom:14px; box-shadow:var(--sh-card); }
+.sim-section-title { font-weight:700; font-size:13px; margin-bottom:10px; }
+.sim-shopee-row { display:flex; justify-content:space-between; align-items:center; padding:8px 0; }
+.sim-shopee-row + .sim-shopee-row { border-top:1px solid var(--border); }
+
+/* ===== ADMIN ORDERS ===== */
+.admin-order-filters { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px; }
+.aof-btn { padding:6px 12px; border:1px solid var(--border-s); border-radius:var(--r-full); background:var(--surface); font-size:11px; font-weight:600; color:var(--txt3); cursor:pointer; font-family:var(--f-th); transition:all .2s; }
+.aof-btn.active { background:var(--accent); color:white; border-color:var(--accent); }
+.aof-btn:active { transform:scale(.95); }
+.ao-card { cursor:pointer; transition:box-shadow .2s; }
+.ao-card:active { box-shadow:0 0 0 2px var(--accent-soft); }
+.ao-pagination { display:flex; align-items:center; justify-content:center; gap:12px; padding:14px 0; }
+.ao-page-info { font-size:12px; color:var(--txt3); font-weight:600; }
+
+/* ===== ADMIN ORDER DETAIL ===== */
+.aod-row { display:flex; justify-content:space-between; align-items:center; padding:6px 0; font-size:12px; }
+.aod-label { color:var(--txt3); font-weight:500; }
+.aod-value { font-weight:600; color:var(--txt); }
+.aod-divider { height:1px; background:var(--border); margin:10px 0; }
+.aod-field { margin-bottom:10px; }
+.aod-field label { display:block; font-size:11px; font-weight:600; color:var(--txt3); margin-bottom:4px; }
+.aod-field input, .aod-field select { width:100%; padding:8px 10px; border:1px solid var(--border-s); border-radius:var(--r-xs); font-size:13px; font-family:var(--f-th); background:var(--surface); }
+.aod-field input:focus, .aod-field select:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 2px var(--accent-soft); }
+.aod-field-row { display:flex; gap:10px; }
+.aod-field.half { flex:1; }
+.aod-check { margin-bottom:8px; }
+.aod-check label { display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; cursor:pointer; }
+.aod-check input[type="checkbox"] { width:18px; height:18px; accent-color:var(--green); }

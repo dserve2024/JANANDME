@@ -53,6 +53,14 @@ function switchAdminSubTab(sub) {
     document.querySelector('[data-tab="dashboard"]').classList.add('active');
     document.getElementById('admin-dashboard-sub').style.display = 'block';
     loadAdminDashboard();
+  } else if (sub === 'orders') {
+    document.querySelector('[data-tab="orders"]').classList.add('active');
+    document.getElementById('admin-orders-sub').style.display = 'block';
+    loadAdminOrders();
+  } else if (sub === 'simulate') {
+    document.querySelector('[data-tab="simulate"]').classList.add('active');
+    document.getElementById('admin-simulate-sub').style.display = 'block';
+    loadSimulate();
   }
 }
 
@@ -681,6 +689,390 @@ function dashCardSmall(label, value, color) {
     '<div class="dash-card-sm-val" style="color:' + color + '">' + (value || 0) + '</div>' +
     '<div class="dash-card-sm-lbl">' + label + '</div>' +
     '</div>';
+}
+
+// ===== SIMULATE USER =====
+var simulateUsersCache = null;
+
+function loadSimulate() {
+  var selectorEl = document.getElementById('admin-simulate-selector');
+  var viewEl = document.getElementById('admin-simulate-view');
+  viewEl.innerHTML = '';
+
+  if (simulateUsersCache) {
+    renderSimulateSelector(simulateUsersCache);
+    return;
+  }
+
+  selectorEl.innerHTML = '<div class="loading"><div class="spinner"></div><p>กำลังโหลด...</p></div>';
+  apiCall('adminGetUsers').then(function(data) {
+    if (!data.success) {
+      selectorEl.innerHTML = '<div class="empty-state"><div class="icon">❌</div><p>' + (data.error || 'โหลดไม่สำเร็จ') + '</p></div>';
+      return;
+    }
+    simulateUsersCache = (data.users || []).filter(function(u) { return u.approved && !u.blocked; });
+    renderSimulateSelector(simulateUsersCache);
+  });
+}
+
+function renderSimulateSelector(users) {
+  var selectorEl = document.getElementById('admin-simulate-selector');
+  var html = '<div class="sim-selector">';
+  html += '<label style="font-weight:700;font-size:14px;margin-bottom:8px;display:block;">🔍 เลือก User เพื่อดู View</label>';
+  html += '<select id="sim-user-select" onchange="onSimulateUserSelect()" class="sim-select">';
+  html += '<option value="">-- เลือก User --</option>';
+  users.forEach(function(u) {
+    html += '<option value="' + u.userId + '">' + u.displayName + '</option>';
+  });
+  html += '</select></div>';
+  selectorEl.innerHTML = html;
+}
+
+function onSimulateUserSelect() {
+  var sel = document.getElementById('sim-user-select');
+  if (!sel || !sel.value) {
+    document.getElementById('admin-simulate-view').innerHTML = '';
+    return;
+  }
+  simulateUser(sel.value);
+}
+
+function simulateUser(targetUserId) {
+  var viewEl = document.getElementById('admin-simulate-view');
+  viewEl.innerHTML = '<div class="loading"><div class="spinner"></div><p>กำลังโหลดข้อมูล...</p></div>';
+
+  apiCall('adminSimulateUser', { targetUserId: targetUserId }).then(function(data) {
+    if (!data.success) {
+      viewEl.innerHTML = '<div class="empty-state"><div class="icon">❌</div><p>' + (data.error || 'โหลดไม่สำเร็จ') + '</p></div>';
+      return;
+    }
+    renderSimulateView(data);
+  }).catch(function(err) {
+    viewEl.innerHTML = '<div class="empty-state"><div class="icon">❌</div><p>เกิดข้อผิดพลาด</p></div>';
+  });
+}
+
+function renderSimulateView(data) {
+  var viewEl = document.getElementById('admin-simulate-view');
+  var user = data.user || {};
+  var shopeeIds = data.shopeeIds || [];
+  var orders = data.orders || [];
+
+  var html = '';
+
+  // Profile card
+  html += '<div class="sim-profile-card">';
+  html += '<div class="sim-profile-header">';
+  if (user.profileUrl) html += '<img src="' + user.profileUrl + '" class="sim-avatar" onerror="this.style.display=\'none\'">';
+  html += '<div class="sim-profile-info">';
+  html += '<div class="sim-name">' + (user.displayName || 'Unknown') + '</div>';
+  var statusText = user.blocked ? '🚫 Blocked' : user.approved ? '✅ Active' : '⏳ Pending';
+  var statusColor = user.blocked ? 'var(--red)' : user.approved ? 'var(--green)' : 'var(--amber)';
+  html += '<div style="font-size:12px;color:' + statusColor + ';font-weight:600;">' + statusText + '</div>';
+  html += '</div></div>';
+  if (user.bankName) {
+    html += '<div class="sim-bank">🏦 ' + user.bankName + ' ' + (user.bankAccount || '') + ' (' + (user.accountName || '') + ')</div>';
+  }
+  if (user.phone) html += '<div class="sim-bank">📞 ' + user.phone + '</div>';
+  html += '<div style="font-size:9px;color:var(--txt3);font-family:monospace;margin-top:4px;word-break:break-all;">' + (user.userId || '') + '</div>';
+  html += '</div>';
+
+  // Financial summary (เหมือน user เห็น)
+  html += '<div class="sim-finance">';
+  html += '<div class="sim-finance-title">💰 สรุปการเงิน</div>';
+  html += '<div class="summary-row">';
+  html += '<div class="summary-card pending"><div class="summary-label">ยอดรอคืน</div><div class="summary-value" style="color:var(--green);">฿' + numberFormat(data.totalRefund || 0) + '</div></div>';
+  html += '<div class="summary-card deposit"><div class="summary-label">คาดว่าจะคืน</div><div class="summary-value" style="color:var(--blue);">฿' + numberFormat(data.expectedRefund || 0) + '</div></div>';
+  html += '</div>';
+  html += '<div class="summary-row">';
+  html += '<div class="summary-card pending"><div class="summary-label">ยอดค้างมัดจำ</div><div class="summary-value" style="color:var(--amber);">฿' + numberFormat(data.pendingDeposit || 0) + '</div></div>';
+  html += '<div class="summary-card deposit"><div class="summary-label">มัดจำคืนแล้ว</div><div class="summary-value" style="color:var(--txt3);">฿' + numberFormat(data.totalDeposit || 0) + '</div></div>';
+  html += '</div>';
+  html += '</div>';
+
+  // Shopee IDs
+  if (shopeeIds.length > 0) {
+    html += '<div class="sim-section">';
+    html += '<div class="sim-section-title">🏪 Shopee ID (' + shopeeIds.length + ')</div>';
+    shopeeIds.forEach(function(s) {
+      html += '<div class="sim-shopee-row">';
+      html += '<div><span style="font-weight:700;">' + s.shopeeId + '</span></div>';
+      html += '<div style="font-size:11px;color:var(--txt3);">' + (s.totalOrders || 0) + ' orders / ' + (s.paidOrders || 0) + ' paid</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+
+  // Orders list
+  html += '<div class="sim-section">';
+  html += '<div class="sim-section-title">📋 Orders (' + orders.length + ')</div>';
+  if (orders.length === 0) {
+    html += '<div class="empty-state"><div class="icon">📭</div><p>ไม่มีรายการ</p></div>';
+  } else {
+    html += '<div class="orders-grid">';
+    orders.forEach(function(order) {
+      var statusClass = getStatusClass(order.status);
+      var statusText2 = getStatusDisplay(order.status);
+      var byClass = order.createdBy === 'ADMIN' ? 'admin' : 'user';
+      var byText = order.createdBy === 'ADMIN' ? '🛒 Admin' : '👤 ตัวเอง';
+      html += '<div class="order-card">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:3px;">';
+      html += '<span class="order-id">' + order.orderId + '</span>';
+      html += '<span class="order-status ' + statusClass + '">' + statusText2 + '</span>';
+      html += '</div>';
+      html += '<div class="order-amount">฿' + numberFormat(order.orderTotal || 0) + '</div>';
+      html += '<div class="order-shopee" style="color:' + (order.shopeeId ? 'var(--txt3)' : 'var(--red)') + ';">🏪 ' + (order.shopeeId || '⚠️ รอระบุ') + '</div>';
+      html += '<div class="order-time">' + formatDateTime(order.orderTime) + '</div>';
+      html += '<div class="order-by ' + byClass + '">' + byText + '</div>';
+      if (parseFloat(order.refundAmount) > 0) {
+        html += '<div class="order-refund">💰 ฿' + numberFormat(order.refundAmount) + '</div>';
+      }
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+  html += '</div>';
+
+  viewEl.innerHTML = html;
+}
+
+// ===== ADMIN ORDERS =====
+var adminOrderFilter = 'all';
+var adminOrderPage = 1;
+
+function loadAdminOrders(status, page) {
+  adminOrderFilter = status || adminOrderFilter || 'all';
+  adminOrderPage = page || 1;
+
+  renderAdminOrdersFilter();
+
+  var listEl = document.getElementById('admin-orders-list');
+  listEl.innerHTML = '<div class="loading"><div class="spinner"></div><p>กำลังโหลด...</p></div>';
+  document.getElementById('admin-orders-pagination').innerHTML = '';
+
+  var params = { page: adminOrderPage };
+  if (adminOrderFilter !== 'all') params.status = adminOrderFilter;
+
+  apiCall('adminGetOrders', params).then(function(data) {
+    if (!data.success) {
+      listEl.innerHTML = '<div class="empty-state"><div class="icon">❌</div><p>' + (data.error || 'โหลดไม่สำเร็จ') + '</p></div>';
+      return;
+    }
+    renderAdminOrdersList(data);
+  }).catch(function() {
+    listEl.innerHTML = '<div class="empty-state"><div class="icon">❌</div><p>เกิดข้อผิดพลาด</p></div>';
+  });
+}
+
+function renderAdminOrdersFilter() {
+  var filterEl = document.getElementById('admin-orders-filter');
+  var statuses = [
+    { key: 'all', label: 'ทั้งหมด' },
+    { key: 'Completed', label: 'Completed' },
+    { key: 'Pending', label: 'Pending' },
+    { key: 'Transferring', label: 'Transferring' },
+    { key: 'Transferred', label: 'Transferred' },
+    { key: 'Canceled', label: 'Canceled' },
+    { key: 'Incorrect', label: 'Incorrect' },
+    { key: 'Ambiguous', label: 'Ambiguous' }
+  ];
+
+  var html = '<div class="admin-order-filters">';
+  statuses.forEach(function(s) {
+    var active = adminOrderFilter === s.key ? ' active' : '';
+    html += '<button class="aof-btn' + active + '" onclick="adminFilterOrders(\'' + s.key + '\')">' + s.label + '</button>';
+  });
+  html += '</div>';
+  filterEl.innerHTML = html;
+}
+
+function adminFilterOrders(status) {
+  loadAdminOrders(status, 1);
+}
+
+function renderAdminOrdersList(data) {
+  var listEl = document.getElementById('admin-orders-list');
+  var orders = data.orders || [];
+
+  if (orders.length === 0) {
+    listEl.innerHTML = '<div class="empty-state"><div class="icon">📭</div><p>ไม่มีรายการ</p></div>';
+    document.getElementById('admin-orders-pagination').innerHTML = '';
+    return;
+  }
+
+  var html = '<div class="ao-summary" style="margin-bottom:12px;font-size:12px;color:var(--txt3);">รวม ' + data.total + ' รายการ (หน้า ' + data.page + '/' + data.totalPages + ')</div>';
+  orders.forEach(function(order) {
+    var statusClass = getStatusClass(order.status);
+    var paidR = order.paidRefund ? '✅' : '';
+    var paidD = order.paidDeposit ? '✅' : '';
+
+    html += '<div class="order-card ao-card" onclick="showAdminOrderDetail(\'' + order.orderId + '\')">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:3px;">';
+    html += '<span class="order-id">' + order.orderId + '</span>';
+    html += '<span class="order-status ' + statusClass + '">' + order.status + '</span>';
+    html += '</div>';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;">';
+    html += '<div class="order-amount">฿' + numberFormat(order.orderTotal || 0) + '</div>';
+    html += '<div style="font-size:10px;color:var(--txt3);">' + (order.shopeeId || '-') + '</div>';
+    html += '</div>';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;">';
+    html += '<div style="font-size:10px;color:var(--txt3);">' + formatDateTime(order.createdAt) + '</div>';
+    var badges = '';
+    if (order.refundAmount > 0) badges += '<span style="font-size:9px;color:var(--green);">💰' + numberFormat(order.refundAmount) + paidR + '</span> ';
+    if (order.depositAmount > 0) badges += '<span style="font-size:9px;color:var(--blue);">📦' + numberFormat(order.depositAmount) + paidD + '</span>';
+    html += '<div>' + badges + '</div>';
+    html += '</div>';
+    html += '</div>';
+  });
+
+  listEl.innerHTML = html;
+
+  // Pagination
+  var pagEl = document.getElementById('admin-orders-pagination');
+  if (data.totalPages <= 1) {
+    pagEl.innerHTML = '';
+    return;
+  }
+  var pagHtml = '<div class="ao-pagination">';
+  if (data.page > 1) {
+    pagHtml += '<button class="aof-btn" onclick="loadAdminOrders(null,' + (data.page - 1) + ')">← ก่อนหน้า</button>';
+  }
+  pagHtml += '<span class="ao-page-info">' + data.page + ' / ' + data.totalPages + '</span>';
+  if (data.page < data.totalPages) {
+    pagHtml += '<button class="aof-btn" onclick="loadAdminOrders(null,' + (data.page + 1) + ')">ถัดไป →</button>';
+  }
+  pagHtml += '</div>';
+  pagEl.innerHTML = pagHtml;
+}
+
+// ===== ADMIN ORDER DETAIL MODAL =====
+var adminEditOrderId = null;
+
+function showAdminOrderDetail(orderId) {
+  adminEditOrderId = orderId;
+  var bodyEl = document.getElementById('admin-order-modal-body');
+  var actEl = document.getElementById('admin-order-modal-actions');
+  bodyEl.innerHTML = '<div class="loading"><div class="spinner"></div><p>กำลังโหลด...</p></div>';
+  actEl.innerHTML = '';
+  showModal('adminOrderModal');
+
+  apiCall('getOrderDetail', { orderId: orderId }).then(function(data) {
+    if (!data.success) {
+      bodyEl.innerHTML = '<div class="empty-state"><div class="icon">❌</div><p>' + (data.error || 'ไม่พบข้อมูล') + '</p></div>';
+      actEl.innerHTML = '<button class="btn-cancel" onclick="hideModal(\'adminOrderModal\')">ปิด</button>';
+      return;
+    }
+    renderAdminOrderDetail(data.order);
+  }).catch(function() {
+    bodyEl.innerHTML = '<div class="empty-state"><div class="icon">❌</div><p>เกิดข้อผิดพลาด</p></div>';
+    actEl.innerHTML = '<button class="btn-cancel" onclick="hideModal(\'adminOrderModal\')">ปิด</button>';
+  });
+}
+
+function renderAdminOrderDetail(order) {
+  var bodyEl = document.getElementById('admin-order-modal-body');
+  var actEl = document.getElementById('admin-order-modal-actions');
+
+  var statuses = ['Completed', 'Pending', 'Transferring', 'Transferred', 'Canceled', 'Incorrect', 'Ambiguous', 'Investigating'];
+
+  var html = '';
+
+  // Image link
+  if (order.imageUrl) {
+    var viewUrl = order.imageUrl;
+    if (viewUrl.indexOf('drive.google.com') !== -1) {
+      var fileId = viewUrl.match(/[-\w]{25,}/);
+      if (fileId) viewUrl = 'https://drive.google.com/file/d/' + fileId[0] + '/view';
+    }
+    html += '<a href="' + viewUrl + '" target="_blank" style="display:block;padding:10px;background:var(--txt);border-radius:var(--r-sm);text-align:center;text-decoration:none;color:white;font-weight:700;margin-bottom:12px;font-size:12px;">📷 ดูรูป Order</a>';
+  }
+
+  // Order info (read-only)
+  html += '<div class="aod-row"><span class="aod-label">Order ID</span><span class="aod-value" style="font-family:monospace;">' + order.orderId + '</span></div>';
+  html += '<div class="aod-row"><span class="aod-label">Order Time</span><span class="aod-value">' + formatDateTime(order.orderTime) + '</span></div>';
+  html += '<div class="aod-row"><span class="aod-label">Created By</span><span class="aod-value">' + (order.createdBy || '-') + '</span></div>';
+  html += '<div class="aod-row"><span class="aod-label">Last Edited</span><span class="aod-value">' + (order.lastEditedBy || '-') + '</span></div>';
+
+  html += '<div class="aod-divider"></div>';
+
+  // Editable fields
+  html += '<div class="aod-field"><label>Status</label><select id="aod-status">';
+  statuses.forEach(function(s) {
+    var sel = (order.status === s) ? ' selected' : '';
+    html += '<option value="' + s + '"' + sel + '>' + s + '</option>';
+  });
+  html += '</select></div>';
+
+  html += '<div class="aod-field"><label>Shopee ID</label><input type="text" id="aod-shopeeId" value="' + (order.shopeeId || '') + '"></div>';
+
+  html += '<div class="aod-divider"></div>';
+  html += '<div style="font-weight:700;font-size:12px;margin-bottom:8px;">💰 Financial</div>';
+
+  html += '<div class="aod-field-row">';
+  html += '<div class="aod-field half"><label>Subtotal</label><input type="number" id="aod-subtotal" value="' + (order.subtotal || 0) + '"></div>';
+  html += '<div class="aod-field half"><label>Shipping</label><input type="number" id="aod-shipping" value="' + (order.shipping || 0) + '"></div>';
+  html += '</div>';
+  html += '<div class="aod-field-row">';
+  html += '<div class="aod-field half"><label>Ship Discount</label><input type="number" id="aod-shippingDiscount" value="' + (order.shippingDiscount || 0) + '"></div>';
+  html += '<div class="aod-field half"><label>Voucher</label><input type="number" id="aod-voucher" value="' + (order.voucher || 0) + '"></div>';
+  html += '</div>';
+  html += '<div class="aod-field"><label>Order Total</label><input type="number" id="aod-orderTotal" value="' + (order.orderTotal || 0) + '"></div>';
+
+  // Refund/Deposit info (read-only display)
+  html += '<div class="aod-row" style="margin-top:8px;"><span class="aod-label">Refund Amount</span><span class="aod-value" style="color:var(--green);font-weight:700;">฿' + numberFormat(order.refundAmount || 0) + '</span></div>';
+  html += '<div class="aod-row"><span class="aod-label">Deposit Amount</span><span class="aod-value" style="color:var(--blue);font-weight:700;">฿' + numberFormat(order.depositAmount || 0) + '</span></div>';
+
+  html += '<div class="aod-divider"></div>';
+  html += '<div style="font-weight:700;font-size:12px;margin-bottom:8px;">✅ Paid Flags</div>';
+
+  var prChecked = order.paidRefund ? ' checked' : '';
+  var pdChecked = order.paidDeposit ? ' checked' : '';
+  html += '<div class="aod-check"><label><input type="checkbox" id="aod-paidRefund"' + prChecked + '> จ่ายคืนแล้ว</label></div>';
+  html += '<div class="aod-check"><label><input type="checkbox" id="aod-paidDeposit"' + pdChecked + '> จ่ายมัดจำคืน</label></div>';
+
+  bodyEl.innerHTML = html;
+
+  // Actions
+  var actHtml = '<button class="btn-cancel" onclick="hideModal(\'adminOrderModal\')">← ยกเลิก</button>';
+  actHtml += '<button class="btn-confirm-green" onclick="saveAdminOrder()">💾 บันทึก</button>';
+  actEl.innerHTML = actHtml;
+}
+
+function saveAdminOrder() {
+  if (!adminEditOrderId) return;
+
+  var params = {
+    orderId: adminEditOrderId,
+    status: document.getElementById('aod-status').value,
+    shopeeId: document.getElementById('aod-shopeeId').value,
+    subtotal: document.getElementById('aod-subtotal').value,
+    shipping: document.getElementById('aod-shipping').value,
+    shippingDiscount: document.getElementById('aod-shippingDiscount').value,
+    voucher: document.getElementById('aod-voucher').value,
+    orderTotal: document.getElementById('aod-orderTotal').value,
+    paidRefund: document.getElementById('aod-paidRefund').checked,
+    paidDeposit: document.getElementById('aod-paidDeposit').checked
+  };
+
+  showLoading('กำลังบันทึก...');
+  apiCall('adminUpdateOrder', params).then(function(data) {
+    hideLoading();
+    if (data.success) {
+      var changeCount = (data.changes || []).length;
+      if (changeCount > 0) {
+        showToast('✅ บันทึกสำเร็จ (' + changeCount + ' การเปลี่ยนแปลง)');
+      } else {
+        showToast('ℹ️ ไม่มีการเปลี่ยนแปลง');
+      }
+      hideModal('adminOrderModal');
+      loadAdminOrders();
+    } else {
+      showToast('❌ ' + (data.error || 'บันทึกไม่สำเร็จ'));
+    }
+  }).catch(function(err) {
+    hideLoading();
+    showToast('❌ เกิดข้อผิดพลาด: ' + (err.message || err));
+  });
 }
 
 // Start admin

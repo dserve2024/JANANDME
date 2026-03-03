@@ -39,6 +39,12 @@
   <div class="tab" data-tab="dashboard" onclick="switchAdminSubTab('dashboard')">
     <span class="tab-icon">📊</span> ผลงาน
   </div>
+  <div class="tab" data-tab="orders" onclick="switchAdminSubTab('orders')">
+    <span class="tab-icon">📋</span> Orders
+  </div>
+  <div class="tab" data-tab="simulate" onclick="switchAdminSubTab('simulate')">
+    <span class="tab-icon">🔍</span> Simulate
+  </div>
 </div>
 
 <!-- CONTENT -->
@@ -65,6 +71,15 @@
   <div id="admin-dashboard-sub" class="section" style="display:none;">
     <div id="admin-dashboard-content"></div>
   </div>
+  <div id="admin-orders-sub" class="section" style="display:none;">
+    <div id="admin-orders-filter"></div>
+    <div id="admin-orders-list"></div>
+    <div id="admin-orders-pagination"></div>
+  </div>
+  <div id="admin-simulate-sub" class="section" style="display:none;">
+    <div id="admin-simulate-selector"></div>
+    <div id="admin-simulate-view"></div>
+  </div>
 
 </div>
 
@@ -74,6 +89,15 @@
     <div class="modal-header"><h3 id="cpay-modal-title">✅ ยืนยันโอนเงินคืน</h3></div>
     <div class="modal-body" id="cpay-modal-body" style="padding:16px;max-height:70vh;"></div>
     <div class="modal-actions" id="cpay-modal-actions"></div>
+  </div>
+</div>
+
+<!-- ADMIN ORDER DETAIL MODAL -->
+<div class="modal-overlay" id="adminOrderModal">
+  <div class="modal" id="adminOrderModalInner" style="max-width:450px;">
+    <div class="modal-header"><h3 id="admin-order-modal-title">📋 Order Detail</h3></div>
+    <div class="modal-body" id="admin-order-modal-body" style="padding:16px;max-height:70vh;overflow-y:auto;"></div>
+    <div class="modal-actions" id="admin-order-modal-actions"></div>
   </div>
 </div>
 
