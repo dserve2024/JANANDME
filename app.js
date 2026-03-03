@@ -69,7 +69,7 @@ var EDGE_ACTIONS = [
 function apiCall(action, params) {
   params = params || {};
   params.action = action;
-  params.userId = userId;
+  if (!params.userId) params.userId = userId;
 
   // ใช้ Edge Function สำหรับทุก action ที่อยู่ใน EDGE_ACTIONS (ถ้าเปิด USE_EDGE)
   var useEdge = CONFIG.USE_EDGE && EDGE_ACTIONS.indexOf(action) !== -1;
