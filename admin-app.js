@@ -697,7 +697,13 @@ function renderAdminDashboard(data) {
   html += '<div class="dash-grid">';
   html += dashCard('ยอดขายรวม', r.totalSales, 'green', '💰');
   html += dashCard('กำไรจริง', r.netProfit, 'accent', '📈');
-  html += dashCard('ค่าธรรมเนียม (22%)', r.platformFee, 'red', '🏷️');
+  var feePct = r.feeRate ? Math.round(r.feeRate * 100) : 22;
+  html += '<div class="dash-card red" style="position:relative;">' +
+    '<button onclick="openFeeSettings(' + feePct + ')" style="position:absolute;top:6px;right:6px;background:none;border:none;font-size:16px;cursor:pointer;opacity:0.6;">⚙️</button>' +
+    '<div class="dash-card-icon">🏷️</div>' +
+    '<div class="dash-card-value">฿' + numberFormat(r.platformFee || 0) + '</div>' +
+    '<div class="dash-card-label">ค่าธรรมเนียม (' + feePct + '%)</div>' +
+    '</div>';
   html += dashCard('โอนคืนแล้ว', r.totalRefundPaid, 'blue', '💸');
   html += dashCard('มัดจำคืนแล้ว', r.totalDepositPaid, 'blue', '🔄');
   html += '</div></div>';
@@ -792,6 +798,31 @@ function dashCardSmall(label, value, color) {
     '</div>';
 }
 
+// ===== FEE SETTINGS =====
+function openFeeSettings(currentPct) {
+  document.getElementById('feeRateInput').value = currentPct;
+  showModal('feeSettingsModal');
+}
+
+function saveFeeRate() {
+  var pct = parseFloat(document.getElementById('feeRateInput').value);
+  if (isNaN(pct) || pct < 0 || pct > 100) {
+    showToast('กรุณากรอกค่า 0-100');
+    return;
+  }
+  hideModal('feeSettingsModal');
+  showLoading('กำลังบันทึก...');
+  apiCall('adminSetPlatformFee', { feeRate: pct }).then(function(res) {
+    hideLoading();
+    if (res.success) {
+      showToast('บันทึกค่าธรรมเนียม ' + pct + '% แล้ว');
+      loadAdminDashboard();
+    } else {
+      showToast(res.error || 'เกิดข้อผิดพลาด');
+    }
+  });
+}
+
 // ===== SHARE DASHBOARD FLEX =====
 function shareDashboardFlex() {
   if (!_dashData) {
@@ -844,7 +875,8 @@ function buildDashboardFlex_(data) {
   // === รายได้ ===
   bodyContents.push({ type: 'text', text: '💰 รายได้', size: 'sm', weight: 'bold', color: '#1a1a1a', margin: 'none' });
   bodyContents.push(flexRow('ยอดขายรวม', '฿' + fmt(r.totalSales)));
-  bodyContents.push(flexRow('ค่าธรรมเนียม (22%)', '-฿' + fmt(r.platformFee), false, '#E53935'));
+  var flexFeePct = r.feeRate ? Math.round(r.feeRate * 100) : 22;
+  bodyContents.push(flexRow('ค่าธรรมเนียม (' + flexFeePct + '%)', '-฿' + fmt(r.platformFee), false, '#E53935'));
   bodyContents.push(flexRow('โอนคืนแล้ว', '-฿' + fmt(r.totalRefundPaid), false, '#E53935'));
   bodyContents.push(flexRow('มัดจำคืนแล้ว', '-฿' + fmt(r.totalDepositPaid), false, '#E53935'));
   bodyContents.push({ type: 'separator', margin: 'md' });
