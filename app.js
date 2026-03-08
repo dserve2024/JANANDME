@@ -789,7 +789,9 @@ function sendChatMsg() {
     clearChatImage();
     apiPost({ source: 'liff_chat_image', image: imageData }).then(function(uploadResult) {
       if (!uploadResult || !uploadResult.success) {
-        showToast('อัปโหลดรูปไม่สำเร็จ');
+        var errMsg = (uploadResult && uploadResult.error) ? uploadResult.error : 'ไม่ทราบสาเหตุ';
+        console.error('Chat image upload failed:', errMsg);
+        showToast('อัปโหลดรูปไม่สำเร็จ: ' + errMsg);
         return;
       }
       apiCall('sendChatMessage', {
@@ -798,6 +800,9 @@ function sendChatMsg() {
       }).then(function(data) {
         if (!data.success) showToast('ส่งไม่สำเร็จ');
       });
+    }).catch(function(err) {
+      console.error('Chat image upload error:', err);
+      showToast('อัปโหลดรูปไม่สำเร็จ: เครือข่ายมีปัญหา');
     });
   } else {
     apiCall('sendChatMessage', {
