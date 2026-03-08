@@ -592,33 +592,32 @@ function viewOrder(orderId) {
       }
       html += '</select></div>';
 
-      html += '<div class="form-group full"><label>💰 Order Total</label><input type="number" id="edit-total" value="' + (order.orderTotal || '') + '" style="font-size:18px;font-weight:700;"></div>';
+      var voucherVal = parseFloat(order.voucher) || 0;
+      var subtotalVal = parseFloat(order.subtotal) || 0;
+      var voucherPct = subtotalVal > 0 ? (voucherVal / subtotalVal * 100).toFixed(1) : '0.0';
 
       html += '<div class="form-row">';
-      html += '<div class="form-group"><label>Coins Used</label><input type="number" id="edit-coins" value="' + (order.coinsUsed || '') + '"></div>';
-      html += '<div class="form-group"><label>Voucher</label><input type="number" id="edit-voucher" value="' + (order.voucher || '') + '"></div>';
+      html += '<div class="form-group" style="flex:6;"><label>Subtotal</label><input type="number" id="edit-subtotal" value="' + (order.subtotal || '') + '"></div>';
+      html += '<div class="form-group" style="flex:4;"><label>ส่วนลด/ได้รับ Coin <span style="color:var(--blue);font-weight:700;">(' + voucherPct + '%)</span></label><input type="number" id="edit-voucher" value="' + (order.voucher || '') + '"></div>';
       html += '</div>';
 
       html += '<div class="form-row">';
-      html += '<div class="form-group"><label>Shipping</label><input type="number" id="edit-shipping" value="' + (order.shipping || '') + '"></div>';
-      html += '<div class="form-group"><label>Shipping Discount</label><input type="number" id="edit-shipping-discount" value="' + (order.shippingDiscount || '') + '"></div>';
+      html += '<div class="form-group" style="flex:1;"><label>Shipping</label><input type="number" id="edit-shipping" value="' + (order.shipping || '') + '"></div>';
+      html += '<div class="form-group" style="flex:1;"><label>Shipping Disc.</label><input type="number" id="edit-shipping-discount" value="' + (order.shippingDiscount || '') + '"></div>';
+      html += '<div class="form-group" style="flex:2;"><label>💰 Order Total</label><input type="number" id="edit-total" value="' + (order.orderTotal || '') + '" style="font-weight:700;"></div>';
       html += '</div>';
 
       html += '<div class="form-row">';
-      html += '<div class="form-group"><label>Subtotal</label><input type="number" id="edit-subtotal" value="' + (order.subtotal || '') + '"></div>';
-      html += '<div class="form-group"><label>Status</label><input type="text" value="' + getStatusDisplay(order.status) + '" disabled style="color:' + (order.status === 'Transferring' ? 'var(--blue)' : '') + ';font-weight:700;"></div>';
-      html += '</div>';
-
-      html += '<div class="form-row">';
-      html += '<div class="form-group"><label>ยอดรอคืน</label><input type="text" value="฿' + numberFormat(order.refundAmount || 0) + '" disabled></div>';
-      html += '<div class="form-group"><label>ยอดมัดจำ</label><input type="text" value="฿' + numberFormat(order.depositAmount || 0) + '" disabled></div>';
+      html += '<div class="form-group" style="flex:4;"><label>Status</label><input type="text" value="' + getStatusDisplay(order.status) + '" disabled style="color:' + (order.status === 'Transferring' ? 'var(--blue)' : '') + ';font-weight:700;"></div>';
+      html += '<div class="form-group" style="flex:3;"><label>ยอดรอคืน</label><input type="text" value="฿' + numberFormat(order.refundAmount || 0) + '" disabled></div>';
+      html += '<div class="form-group" style="flex:3;"><label>ยอดมัดจำ</label><input type="text" value="฿' + numberFormat(order.depositAmount || 0) + '" disabled></div>';
       html += '</div>';
 
       html += '<div style="display:flex;gap:8px;margin-top:8px;">';
       html += '<button class="btn-secondary" style="flex:1;padding:10px;font-size:13px;border-radius:var(--r-xs);" onclick="viewOrderHistory(\'' + orderId + '\')">📜 ประวัติ</button>';
       html += '<button style="flex:1;padding:10px;font-size:13px;background:var(--red);color:white;border:none;border-radius:var(--r-xs);cursor:pointer;font-weight:700;" onclick="confirmDeleteOrder(\'' + orderId + '\')">🗑️ ลบ</button>';
+      html += '<button style="flex:1;padding:10px;font-size:13px;background:var(--red);color:white;border:none;border-radius:var(--r-xs);cursor:pointer;font-weight:700;" onclick="showDisputeModal(\'' + orderId + '\')">🚨 แจ้งปัญหา</button>';
       html += '</div>';
-      html += '<button style="width:100%;margin-top:8px;padding:14px;border:none;border-radius:var(--r-sm);background:var(--red);color:white;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--f-th);" onclick="showDisputeModal(\'' + orderId + '\')">🚨 แจ้งปัญหา</button>';
 
       document.getElementById('order-modal-body').innerHTML = html;
       document.getElementById('order-modal-actions').innerHTML = '<button class="btn-cancel" onclick="hideModal(\'orderModal\')">ปิด</button><button class="btn-save" onclick="saveOrder()">💾 บันทึก</button>';
@@ -644,7 +643,6 @@ function saveOrder() {
     shipping: document.getElementById('edit-shipping').value,
     shippingDiscount: document.getElementById('edit-shipping-discount').value,
     voucher: document.getElementById('edit-voucher').value,
-    coinsUsed: document.getElementById('edit-coins').value,
     orderTotal: document.getElementById('edit-total').value
   };
 
