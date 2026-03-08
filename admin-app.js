@@ -1170,9 +1170,12 @@ function renderSimulateView(data) {
       if (order.imageUrl) {
         html += '<div style="font-size:11px;color:var(--txt3);margin-top:2px;">📷 มีรูป</div>';
       }
-      if (parseFloat(order.refundAmount) > 0) {
-        html += '<div class="order-refund">💰 ฿' + numberFormat(order.refundAmount) + '</div>';
-      }
+      var simBadges = '';
+      var simPaidR = order.paidRefund ? '✅' : '';
+      var simPaidD = order.paidDeposit ? '✅' : '';
+      if (parseFloat(order.refundAmount) > 0) simBadges += '<span style="font-size:9px;color:var(--green);">💰 ฿' + numberFormat(order.refundAmount) + simPaidR + '</span> ';
+      if (parseFloat(order.depositAmount) > 0) simBadges += '<span style="font-size:9px;color:var(--blue);">📦 ฿' + numberFormat(order.depositAmount) + simPaidD + '</span>';
+      if (simBadges) html += '<div style="margin-top:4px;padding-top:4px;border-top:1px solid var(--border);">' + simBadges + '</div>';
       html += '</div>';
     });
     html += '</div>';
