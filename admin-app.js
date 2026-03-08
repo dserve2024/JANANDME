@@ -1144,6 +1144,10 @@ function renderSimulateView(data) {
   if (orders.length === 0) {
     html += '<div class="empty-state"><div class="icon">📭</div><p>ไม่มีรายการ</p></div>';
   } else {
+    // Sort by status priority (same as user view)
+    orders.sort(function(a, b) {
+      return getStatusPriority(a.status) - getStatusPriority(b.status);
+    });
     html += '<div class="orders-grid">';
     orders.forEach(function(order) {
       var statusClass = getStatusClass(order.status);
@@ -1159,6 +1163,9 @@ function renderSimulateView(data) {
       html += '<div class="order-shopee" style="color:' + (order.shopeeId ? 'var(--txt3)' : 'var(--red)') + ';">🏪 ' + (order.shopeeId || '⚠️ รอระบุ') + '</div>';
       html += '<div class="order-time">' + formatDateTime(order.orderTime) + '</div>';
       html += '<div class="order-by ' + byClass + '">' + byText + '</div>';
+      if (order.imageUrl) {
+        html += '<div style="font-size:11px;color:var(--txt3);margin-top:2px;">📷 มีรูป</div>';
+      }
       if (parseFloat(order.refundAmount) > 0) {
         html += '<div class="order-refund">💰 ฿' + numberFormat(order.refundAmount) + '</div>';
       }
