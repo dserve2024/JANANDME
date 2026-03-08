@@ -1177,6 +1177,7 @@ var adminOrderPage = 1;
 var adminStatusCounts = null;
 var adminNameCounts = null;
 var adminUserFilter = '';
+var adminNoImageCount = null;
 
 function loadAdminOrders(status, page) {
   adminOrderFilter = status || adminOrderFilter || 'all';
@@ -1202,6 +1203,9 @@ function loadAdminOrders(status, page) {
     }
     if (data.nameCounts) {
       adminNameCounts = data.nameCounts;
+    }
+    if (data.noImageCount !== undefined) {
+      adminNoImageCount = data.noImageCount;
     }
     renderAdminOrdersFilter();
     renderAdminOrdersList(data);
@@ -1249,12 +1253,13 @@ function renderAdminOrdersFilter() {
     { key: 'Investigating', label: 'Investigating' },
     { key: 'New', label: 'New' },
     { key: 'Shipped', label: 'Shipped' },
-    { key: 'Unpaid', label: 'Unpaid' }
+    { key: 'Unpaid', label: 'Unpaid' },
+    { key: 'no_image', label: '📷 ไม่มีรูป' }
   ];
 
   html += '<div class="admin-order-filters">';
   statuses.forEach(function(s) {
-    var c = s.count !== undefined ? s.count : (counts[s.key] || 0);
+    var c = s.key === 'no_image' ? (adminNoImageCount || 0) : (s.count !== undefined ? s.count : (counts[s.key] || 0));
     var active = adminOrderFilter === s.key ? ' active' : '';
     html += '<button class="aof-btn' + active + '" onclick="adminFilterOrders(\'' + s.key + '\')">' + s.label + ' (' + c + ')</button>';
   });
@@ -1315,8 +1320,11 @@ function renderAdminOrdersList(data) {
     }
 
     html += '<div class="order-card ao-card" style="' + cardBg + '" onclick="showAdminOrderDetail(\'' + order.orderId + '\')">';
+    var camIcon = order.hasImage
+      ? '<span style="color:var(--green);font-size:10px;" title="มีรูป">📷</span>'
+      : '<span style="color:var(--red);opacity:0.5;font-size:10px;" title="ไม่มีรูป">📷</span>';
     html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:2px;">';
-    html += '<span class="order-id" style="font-size:10px;">' + order.orderId + '</span>';
+    html += '<span class="order-id" style="font-size:10px;">' + camIcon + ' ' + order.orderId + '</span>';
     html += '<span class="order-status ' + statusClass + '" style="font-size:9px;">' + order.status + '</span>';
     html += '</div>';
     html += '<div style="font-size:11px;font-weight:600;color:var(--txt);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">👤 ' + displayName + '</div>';
