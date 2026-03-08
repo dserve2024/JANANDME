@@ -109,7 +109,13 @@
       <button onclick="closeAdminChat()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--txt3);">✕</button>
     </div>
     <div id="chat-messages" class="chat-thread"></div>
+    <div id="admin-chat-image-preview" class="chat-image-preview" style="display:none;">
+      <img id="admin-chat-preview-img" src="">
+      <button onclick="clearAdminChatImage()" class="chat-preview-close">✕</button>
+    </div>
     <div class="chat-input-area">
+      <input type="file" id="admin-chat-image-input" accept="image/*" style="display:none" onchange="previewAdminChatImage(this)">
+      <button onclick="document.getElementById('admin-chat-image-input').click()" class="chat-img-btn" title="แนบรูป">📷</button>
       <input type="text" id="chat-input" placeholder="พิมพ์ข้อความ..." onkeydown="if(event.key==='Enter')sendAdminChatMsg()">
       <button onclick="sendAdminChatMsg()" class="chat-send-btn">📨</button>
     </div>

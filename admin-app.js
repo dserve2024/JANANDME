@@ -259,10 +259,46 @@ function renderAdminChatMessages(messages) {
   el.scrollTop = el.scrollHeight;
 }
 
+var adminChatImageBase64 = null;
+
+function previewAdminChatImage(input) {
+  if (!input.files || !input.files[0]) return;
+  var file = input.files[0];
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var img = new Image();
+    img.onload = function() {
+      var maxDim = 1200;
+      var w = img.width, h = img.height;
+      if (w > maxDim || h > maxDim) {
+        if (w > h) { h = Math.round(h * maxDim / w); w = maxDim; }
+        else { w = Math.round(w * maxDim / h); h = maxDim; }
+      }
+      var canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      var compressed = canvas.toDataURL('image/jpeg', 0.7);
+      adminChatImageBase64 = compressed.split(',')[1];
+      document.getElementById('admin-chat-preview-img').src = compressed;
+      document.getElementById('admin-chat-image-preview').style.display = 'flex';
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearAdminChatImage() {
+  adminChatImageBase64 = null;
+  document.getElementById('admin-chat-image-preview').style.display = 'none';
+  document.getElementById('admin-chat-image-input').value = '';
+}
+
 function sendAdminChatMsg() {
   var input = document.getElementById('chat-input');
   var msg = input.value.trim();
-  if (!msg || !adminChatUserId) return;
+  var hasImage = !!adminChatImageBase64;
+  if (!msg && !hasImage) return;
+  if (!adminChatUserId) return;
   input.value = '';
 
   // Optimistic
@@ -270,14 +306,43 @@ function sendAdminChatMsg() {
   var emptyEl = el.querySelector('.chat-empty');
   if (emptyEl) emptyEl.remove();
   var now = new Date().toLocaleTimeString('th-TH', {hour:'2-digit',minute:'2-digit'});
-  el.innerHTML += '<div class="chat-bubble me"><div>' + escapeHtml(msg) + '</div><div class="chat-time">' + now + '</div></div>';
+  var previewHtml = '';
+  if (hasImage) {
+    var previewSrc = document.getElementById('admin-chat-preview-img').src;
+    previewHtml = '<img src="' + previewSrc + '" class="chat-img">';
+  }
+  el.innerHTML += '<div class="chat-bubble me">' + previewHtml +
+    (msg ? '<div>' + escapeHtml(msg) + '</div>' : '') +
+    '<div class="chat-time">' + now + '</div></div>';
   el.scrollTop = el.scrollHeight;
 
-  apiCall('sendChatMessage', {
-    userId: adminChatUserId, senderType: 'admin', senderName: 'Admin', message: msg
-  }).then(function(data) {
-    if (!data.success) showToast('❌ ส่งไม่สำเร็จ');
-  });
+  if (hasImage) {
+    var imageData = adminChatImageBase64;
+    clearAdminChatImage();
+    apiPost({ source: 'liff_chat_image', image: imageData }).then(function(uploadResult) {
+      if (!uploadResult || !uploadResult.success) {
+        var errMsg = (uploadResult && uploadResult.error) ? uploadResult.error : 'ไม่ทราบสาเหตุ';
+        console.error('Admin chat image upload failed:', errMsg);
+        showToast('อัปโหลดรูปไม่สำเร็จ: ' + errMsg);
+        return;
+      }
+      apiCall('sendChatMessage', {
+        userId: adminChatUserId, senderType: 'admin', senderName: 'Admin',
+        message: msg, imageUrl: uploadResult.imageUrl
+      }).then(function(data) {
+        if (!data.success) showToast('❌ ส่งไม่สำเร็จ');
+      });
+    }).catch(function(err) {
+      console.error('Admin chat image upload error:', err);
+      showToast('อัปโหลดรูปไม่สำเร็จ: เครือข่ายมีปัญหา');
+    });
+  } else {
+    apiCall('sendChatMessage', {
+      userId: adminChatUserId, senderType: 'admin', senderName: 'Admin', message: msg
+    }).then(function(data) {
+      if (!data.success) showToast('❌ ส่งไม่สำเร็จ');
+    });
+  }
 }
 
 // ===== ADMIN PAYMENTS =====
