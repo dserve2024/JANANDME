@@ -157,14 +157,7 @@
 
   <!-- ORDERS SECTION -->
   <div id="orders-section" class="section">
-    <div class="filter-row">
-      <button class="filter-btn active" onclick="filterOrders('all', this)">ทั้งหมด</button>
-      <button class="filter-btn" onclick="filterOrders('user', this)">👤 ตัวเอง</button>
-      <button class="filter-btn" onclick="filterOrders('admin', this)">🛒 Admin</button>
-      <button class="filter-btn" onclick="filterOrders('pending', this)">รอตรวจ</button>
-      <button class="filter-btn" onclick="filterOrders('transferring', this)">💳 รอค้างชำระ</button>
-      <button class="filter-btn" onclick="filterOrders('completed', this)">โอนแล้ว</button>
-    </div>
+    <div class="filter-row" id="filter-row"></div>
     <div id="orders-list"></div>
   </div>
 

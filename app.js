@@ -12,6 +12,7 @@ var currentDisplayName = '';
 var currentShopeeId = null;
 var currentOrderId = null;
 var currentFilter = 'all';
+var allOrders = [];
 
 // ===== INIT =====
 async function init() {
@@ -389,7 +390,12 @@ function getStatusDisplay(status) {
     'Pending': 'รอตรวจ',
     'Canceled': 'ยกเลิก',
     'Incorrect': 'ไม่ถูกต้อง',
-    'Ambiguous': 'ไม่ชัดเจน'
+    'Ambiguous': 'ไม่ชัดเจน',
+    'Shipped': 'จัดส่งแล้ว',
+    'New': 'ใหม่',
+    'To Pickup': 'รอรับสินค้า',
+    'Unpaid': 'ยังไม่ชำระ',
+    'Investigating': 'กำลังตรวจสอบ'
   };
   return map[status] || status || 'Pending';
 }
@@ -417,25 +423,83 @@ function getStatusPriority(status) {
 
 function loadOrders(filter) {
   currentFilter = filter || 'all';
-  var params = {};
+  if (allOrders.length === 0) {
+    var container = document.getElementById('orders-list');
+    container.innerHTML = '<div class="loading"><div class="spinner"></div><p>กำลังโหลด...</p></div>';
+    apiCall('getOrders', {}).then(function(data) {
+      if (data.success) {
+        allOrders = data.orders || [];
+        renderFilterButtons(allOrders);
+        applyFilter(currentFilter);
+      }
+    });
+  } else {
+    applyFilter(currentFilter);
+  }
+}
 
-  if (filter === 'user') params.filter = 'user';
-  else if (filter === 'admin') params.filter = 'admin';
-  else if (filter === 'pending') params.status = 'Pending';
-  else if (filter === 'transferring') params.status = 'Transferring';
-  else if (filter === 'completed') params.status = 'Transferred';
+function renderFilterButtons(orders) {
+  var container = document.getElementById('filter-row');
+  var statusCounts = {};
+  var userCount = 0, adminCount = 0;
 
-  apiCall('getOrders', params).then(function(data) {
-    if (data.success) {
-      renderOrders(data.orders);
+  orders.forEach(function(o) {
+    var s = o.status || 'Pending';
+    statusCounts[s] = (statusCounts[s] || 0) + 1;
+    if (o.createdBy === 'USER') userCount++;
+    else if (o.createdBy === 'ADMIN') adminCount++;
+  });
+
+  var html = '<button class="filter-btn' + (currentFilter === 'all' ? ' active' : '') + '" onclick="filterOrders(\'all\', this)">ทั้งหมด (' + orders.length + ')</button>';
+
+  if (userCount > 0) {
+    html += '<button class="filter-btn' + (currentFilter === 'user' ? ' active' : '') + '" onclick="filterOrders(\'user\', this)">👤 ตัวเอง (' + userCount + ')</button>';
+  }
+  if (adminCount > 0) {
+    html += '<button class="filter-btn' + (currentFilter === 'admin' ? ' active' : '') + '" onclick="filterOrders(\'admin\', this)">🛒 Admin (' + adminCount + ')</button>';
+  }
+
+  var statusOrder = [
+    { key: 'Pending', label: 'รอตรวจ' },
+    { key: 'Completed', label: '✅ สำเร็จ' },
+    { key: 'Transferring', label: '💳 รอค้างชำระ' },
+    { key: 'Transferred', label: '💸 โอนแล้ว' },
+    { key: 'Shipped', label: '🚚 จัดส่งแล้ว' },
+    { key: 'New', label: '🆕 ใหม่' },
+    { key: 'To Pickup', label: '📦 รอรับสินค้า' },
+    { key: 'Unpaid', label: '💳 ยังไม่ชำระ' },
+    { key: 'Canceled', label: '❌ ยกเลิก' },
+    { key: 'Incorrect', label: '⚠️ ไม่ถูกต้อง' },
+    { key: 'Ambiguous', label: '❓ ไม่ชัดเจน' },
+    { key: 'Investigating', label: '🔍 ตรวจสอบ' }
+  ];
+
+  statusOrder.forEach(function(s) {
+    if (statusCounts[s.key]) {
+      html += '<button class="filter-btn' + (currentFilter === s.key ? ' active' : '') + '" onclick="filterOrders(\'' + s.key + '\', this)">' + s.label + ' (' + statusCounts[s.key] + ')</button>';
     }
   });
+
+  container.innerHTML = html;
 }
 
 function filterOrders(filter, btn) {
   document.querySelectorAll('.filter-btn').forEach(function(b) { b.classList.remove('active'); });
   btn.classList.add('active');
-  loadOrders(filter);
+  currentFilter = filter;
+  applyFilter(filter);
+}
+
+function applyFilter(filter) {
+  var filtered = allOrders;
+  if (filter === 'user') {
+    filtered = allOrders.filter(function(o) { return o.createdBy === 'USER'; });
+  } else if (filter === 'admin') {
+    filtered = allOrders.filter(function(o) { return o.createdBy === 'ADMIN'; });
+  } else if (filter !== 'all') {
+    filtered = allOrders.filter(function(o) { return o.status === filter; });
+  }
+  renderOrders(filtered);
 }
 
 function renderOrders(orders) {
@@ -670,7 +734,7 @@ function switchTab(tab) {
   if (tabEl) tabEl.classList.add('active');
   document.getElementById(tab + '-section').classList.add('active');
 
-  if (tab === 'orders') loadOrders(currentFilter);
+  if (tab === 'orders') { allOrders = []; loadOrders(currentFilter); }
   if (tab === 'deposit') loadDepositOrders();
 }
 
