@@ -536,9 +536,6 @@ function renderOrders(orders) {
     if (parseFloat(order.refundAmount) > 0) {
       html += '<div class="order-refund">💰 ฿' + numberFormat(order.refundAmount) + '</div>';
     }
-    if (order.status === 'Transferring') {
-      html += '<div style="margin-top:6px;padding:6px 8px;background:var(--blue-soft);border-radius:var(--r-xs);font-size:10px;font-weight:700;color:var(--blue);text-align:center;cursor:pointer;" onclick="event.stopPropagation();switchTab(\'admin\');switchAdminSubTab(\'payment\');">💳 ไปหน้าจ่ายเงิน</div>';
-    }
     html += '</div>';
   });
   html += '</div>';
@@ -608,13 +605,6 @@ function viewOrder(orderId) {
       html += '<div class="form-group"><label>Subtotal</label><input type="number" id="edit-subtotal" value="' + (order.subtotal || '') + '"></div>';
       html += '<div class="form-group"><label>Status</label><input type="text" value="' + getStatusDisplay(order.status) + '" disabled style="color:' + (order.status === 'Transferring' ? 'var(--blue)' : '') + ';font-weight:700;"></div>';
       html += '</div>';
-
-      if (order.status === 'Transferring') {
-        html += '<div style="padding:12px;background:var(--blue-soft);border-radius:var(--r-sm);margin:8px 0;text-align:center;cursor:pointer;" onclick="hideModal(\'orderModal\');switchTab(\'admin\');switchAdminSubTab(\'payment\');">';
-        html += '<div style="font-size:14px;font-weight:700;color:var(--blue);">💳 ไปหน้าจ่ายเงิน</div>';
-        html += '<div style="font-size:11px;color:var(--txt3);margin-top:2px;">กดเพื่อไปจัดการชำระเงินใน Admin</div>';
-        html += '</div>';
-      }
 
       html += '<div class="form-row">';
       html += '<div class="form-group"><label>ยอดรอคืน</label><input type="text" value="฿' + numberFormat(order.refundAmount || 0) + '" disabled></div>';
