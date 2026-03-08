@@ -101,8 +101,14 @@ function apiPost(data) {
   data.userId = userId;
   return fetch(CONFIG.API_URL, {
     method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
-  }).then(function(r) { return r.json(); });
+  }).then(function(r) {
+    return r.text().then(function(text) {
+      try { return JSON.parse(text); }
+      catch (e) { return { success: false, error: 'Server error: ' + text.substring(0, 100) }; }
+    });
+  });
 }
 
 // ===== LOAD DATA =====
@@ -1306,7 +1312,8 @@ function submitDepositReturn() {
     }
   }).catch(function(err) {
     hideLoading();
-    showToast('❌ เกิดข้อผิดพลาด');
+    console.error('Deposit upload error:', err);
+    showToast('❌ ' + (err.message || 'เกิดข้อผิดพลาด กรุณาลองใหม่'));
   });
 }
 
