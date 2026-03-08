@@ -1060,11 +1060,17 @@ function simulateUser(targetUserId) {
   var viewEl = document.getElementById('admin-simulate-view');
   viewEl.innerHTML = '<div class="loading"><div class="spinner"></div><p>กำลังโหลดข้อมูล...</p></div>';
 
-  apiCall('adminSimulateUser', { targetUserId: targetUserId }).then(function(data) {
+  Promise.all([
+    apiCall('adminSimulateUser', { targetUserId: targetUserId }),
+    apiCall('getTransferHistory', { targetUserId: targetUserId })
+  ]).then(function(results) {
+    var data = results[0];
+    var transferData = results[1];
     if (!data.success) {
       viewEl.innerHTML = '<div class="empty-state"><div class="icon">❌</div><p>' + (data.error || 'โหลดไม่สำเร็จ') + '</p></div>';
       return;
     }
+    data.transfers = (transferData && transferData.success ? transferData.transfers : []) || [];
     renderSimulateView(data);
   }).catch(function(err) {
     viewEl.innerHTML = '<div class="empty-state"><div class="icon">❌</div><p>เกิดข้อผิดพลาด</p></div>';
@@ -1137,6 +1143,41 @@ function renderSimulateView(data) {
       html += '<div class="sim-shopee-row">';
       html += '<div><span style="font-weight:700;">' + s.shopeeId + '</span></div>';
       html += '<div style="font-size:11px;color:var(--txt3);">' + (s.totalOrders || 0) + ' orders / ' + (s.paidOrders || 0) + ' paid</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+
+  // Transfer history (grouped by date)
+  var transfers = data.transfers || [];
+  if (transfers.length > 0) {
+    // Build orderId → amounts map
+    var orderMap = {};
+    orders.forEach(function(o) {
+      orderMap[o.orderId] = { refund: parseFloat(o.refundAmount) || 0, deposit: parseFloat(o.depositAmount) || 0 };
+    });
+
+    html += '<div class="sim-section">';
+    html += '<div class="sim-section-title">💸 ประวัติโอนเงิน (' + transfers.length + ' ครั้ง)</div>';
+    transfers.forEach(function(t) {
+      var icon = t.type === 'deposit' ? '🔄' : '💸';
+      var label = t.type === 'deposit' ? 'โอนมัดจำคืน' : 'โอนคืนเงิน';
+      var dateStr = formatDateTime(t.timestamp);
+      var orderList = String(t.orders || '').split(',').map(function(s) { return s.trim(); }).filter(function(s) { return s; });
+
+      html += '<div style="padding:10px 0;border-bottom:1px solid var(--border-s);">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;">';
+      html += '<span style="font-size:12px;font-weight:700;">' + icon + ' ' + label + ' ' + dateStr + '</span>';
+      html += '<span style="font-size:13px;font-weight:700;color:var(--green);">฿' + numberFormat(t.amount) + '</span>';
+      html += '</div>';
+      for (var j = 0; j < orderList.length; j++) {
+        var oid = orderList[j];
+        var amt = orderMap[oid] ? (t.type === 'deposit' ? orderMap[oid].deposit : orderMap[oid].refund) : 0;
+        html += '<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--txt2);margin-top:3px;padding-left:8px;">';
+        html += '<span>' + (j + 1) + '. ' + oid + '</span>';
+        html += '<span style="font-weight:600;">฿' + numberFormat(amt) + '</span>';
+        html += '</div>';
+      }
       html += '</div>';
     });
     html += '</div>';
