@@ -1010,6 +1010,7 @@ function buildDashboardFlex_(data) {
 // ===== SIMULATE USER =====
 var simulateUsersCache = null;
 var simulateCurrentUserId = null;
+var simulateOrders = [];
 
 function loadSimulate() {
   var selectorEl = document.getElementById('admin-simulate-selector');
@@ -1075,6 +1076,7 @@ function renderSimulateView(data) {
   var user = data.user || {};
   var shopeeIds = data.shopeeIds || [];
   var orders = data.orders || [];
+  simulateOrders = orders;
 
   var html = '';
 
@@ -1121,7 +1123,7 @@ function renderSimulateView(data) {
   html += '</div>';
 
   // Group 3: History - ได้รับแล้ว
-  html += '<div class="fin-history">';
+  html += '<div class="fin-history" onclick="showSimPaidHistory()" style="cursor:pointer;">';
   html += '<div class="fin-history-top"><span class="fin-history-icon">✅</span><span class="fin-history-label">ได้รับแล้วทั้งหมด</span></div>';
   html += '<div class="fin-history-value">฿' + numberFormat(totalReceived) + '</div>';
   html += '<div class="fin-history-detail">คืนเงิน ฿' + numberFormat(refPaid) + ' + มัดจำ ฿' + numberFormat(depReturned) + '</div>';
@@ -1178,6 +1180,52 @@ function renderSimulateView(data) {
   html += '</div>';
 
   viewEl.innerHTML = html;
+}
+
+function showSimPaidHistory() {
+  var paid = simulateOrders.filter(function(o) {
+    return o.paidRefund === true || o.paidDeposit === true;
+  });
+  paid.sort(function(a, b) {
+    var da = new Date(a.completedTime || a.orderTime || 0);
+    var db = new Date(b.completedTime || b.orderTime || 0);
+    return db - da;
+  });
+
+  var html = '';
+  var grandTotal = 0;
+
+  if (paid.length === 0) {
+    html += '<div style="text-align:center;padding:20px;color:var(--txt3);">ยังไม่มีรายการที่ได้รับเงิน</div>';
+  } else {
+    paid.forEach(function(o) {
+      var ref = parseFloat(o.refundPaid) || 0;
+      var dep = parseFloat(o.depositPaid) || 0;
+      var total = ref + dep;
+      grandTotal += total;
+      var dateStr = formatDateTime(o.completedTime || o.orderTime);
+      var parts = [];
+      if (ref > 0) parts.push('คืนเงิน ฿' + numberFormat(ref));
+      if (dep > 0) parts.push('มัดจำ ฿' + numberFormat(dep));
+
+      html += '<div style="padding:10px 0;border-bottom:1px solid var(--border-s);">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;">';
+      html += '<span style="font-size:13px;font-weight:700;color:var(--txt);">' + o.orderId + '</span>';
+      html += '<span style="font-size:14px;font-weight:700;color:var(--green);">฿' + numberFormat(total) + '</span>';
+      html += '</div>';
+      html += '<div style="display:flex;justify-content:space-between;margin-top:3px;">';
+      html += '<span style="font-size:11px;color:var(--txt3);">' + parts.join(' + ') + '</span>';
+      html += '<span style="font-size:11px;color:var(--txt3);">' + dateStr + '</span>';
+      html += '</div>';
+      html += '</div>';
+    });
+    html += '<div style="padding:12px 0 0;text-align:center;font-size:13px;font-weight:700;color:var(--txt2);">รวม ฿' + numberFormat(grandTotal) + ' (' + paid.length + ' รายการ)</div>';
+  }
+
+  document.getElementById('admin-order-modal-body').innerHTML = html;
+  document.getElementById('admin-order-modal-actions').innerHTML = '<button class="btn-cancel" style="width:100%;" onclick="hideModal(\'adminOrderModal\')">ปิด</button>';
+  document.querySelector('#adminOrderModal .modal-header h3').textContent = '✅ ได้รับเงินแล้วทั้งหมด';
+  showModal('adminOrderModal');
 }
 
 // ===== ADMIN ORDERS =====
