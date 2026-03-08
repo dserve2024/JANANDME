@@ -1009,6 +1009,7 @@ function buildDashboardFlex_(data) {
 
 // ===== SIMULATE USER =====
 var simulateUsersCache = null;
+var simulateCurrentUserId = null;
 
 function loadSimulate() {
   var selectorEl = document.getElementById('admin-simulate-selector');
@@ -1054,6 +1055,7 @@ function onSimulateUserSelect() {
 }
 
 function simulateUser(targetUserId) {
+  simulateCurrentUserId = targetUserId;
   var viewEl = document.getElementById('admin-simulate-view');
   viewEl.innerHTML = '<div class="loading"><div class="spinner"></div><p>กำลังโหลดข้อมูล...</p></div>';
 
@@ -1154,7 +1156,7 @@ function renderSimulateView(data) {
       var statusText2 = getStatusDisplay(order.status);
       var byClass = order.createdBy === 'ADMIN' ? 'admin' : 'user';
       var byText = order.createdBy === 'ADMIN' ? '🛒 Admin' : '👤 ตัวเอง';
-      html += '<div class="order-card">';
+      html += '<div class="order-card" onclick="showAdminOrderDetail(\'' + order.orderId + '\')">';
       html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:3px;">';
       html += '<span class="order-id">' + order.orderId + '</span>';
       html += '<span class="order-status ' + statusClass + '">' + statusText2 + '</span>';
@@ -1556,6 +1558,7 @@ function saveAdminOrder() {
       }
       hideModal('adminOrderModal');
       loadAdminOrders();
+      if (simulateCurrentUserId) simulateUser(simulateCurrentUserId);
     } else {
       showToast('❌ ' + (data.error || 'บันทึกไม่สำเร็จ'));
     }
@@ -1576,6 +1579,7 @@ function confirmDeleteAdminOrder() {
       showToast('🗑️ ลบ Order สำเร็จ');
       hideModal('adminOrderModal');
       loadAdminOrders();
+      if (simulateCurrentUserId) simulateUser(simulateCurrentUserId);
     } else {
       showToast('❌ ' + (data.error || 'ลบไม่สำเร็จ'));
     }
