@@ -596,21 +596,21 @@ function viewOrder(orderId) {
       var subtotalVal = parseFloat(order.subtotal) || 0;
       var voucherPct = subtotalVal > 0 ? (voucherVal / subtotalVal * 100).toFixed(1) : '0.0';
 
-      html += '<div class="form-row">';
-      html += '<div class="form-group" style="flex:6;"><label>Subtotal</label><input type="number" id="edit-subtotal" value="' + (order.subtotal || '') + '"></div>';
-      html += '<div class="form-group" style="flex:4;"><label>ส่วนลด/ได้รับ Coin <span style="color:var(--blue);font-weight:700;">(' + voucherPct + '%)</span></label><input type="number" id="edit-voucher" value="' + (order.voucher || '') + '"></div>';
+      html += '<div class="form-row" style="grid-template-columns:6fr 4fr;">';
+      html += '<div class="form-group"><label>Subtotal</label><input type="number" id="edit-subtotal" value="' + (order.subtotal || '') + '" oninput="updateVoucherPct()"></div>';
+      html += '<div class="form-group"><label>ส่วนลด/Coin <span id="voucher-pct" style="color:var(--blue);font-weight:700;">(' + voucherPct + '%)</span></label><input type="number" id="edit-voucher" value="' + (order.voucher || '') + '" oninput="updateVoucherPct()"></div>';
       html += '</div>';
 
-      html += '<div class="form-row">';
-      html += '<div class="form-group" style="flex:1;"><label>Shipping</label><input type="number" id="edit-shipping" value="' + (order.shipping || '') + '"></div>';
-      html += '<div class="form-group" style="flex:1;"><label>Shipping Disc.</label><input type="number" id="edit-shipping-discount" value="' + (order.shippingDiscount || '') + '"></div>';
-      html += '<div class="form-group" style="flex:2;"><label>💰 Order Total</label><input type="number" id="edit-total" value="' + (order.orderTotal || '') + '" style="font-weight:700;"></div>';
+      html += '<div class="form-row" style="grid-template-columns:1fr 1fr 2fr;">';
+      html += '<div class="form-group"><label>Shipping</label><input type="number" id="edit-shipping" value="' + (order.shipping || '') + '"></div>';
+      html += '<div class="form-group"><label>Ship Disc.</label><input type="number" id="edit-shipping-discount" value="' + (order.shippingDiscount || '') + '"></div>';
+      html += '<div class="form-group"><label>💰 Order Total</label><input type="number" id="edit-total" value="' + (order.orderTotal || '') + '" style="font-weight:700;"></div>';
       html += '</div>';
 
-      html += '<div class="form-row">';
-      html += '<div class="form-group" style="flex:4;"><label>Status</label><input type="text" value="' + getStatusDisplay(order.status) + '" disabled style="color:' + (order.status === 'Transferring' ? 'var(--blue)' : '') + ';font-weight:700;"></div>';
-      html += '<div class="form-group" style="flex:3;"><label>ยอดรอคืน</label><input type="text" value="฿' + numberFormat(order.refundAmount || 0) + '" disabled></div>';
-      html += '<div class="form-group" style="flex:3;"><label>ยอดมัดจำ</label><input type="text" value="฿' + numberFormat(order.depositAmount || 0) + '" disabled></div>';
+      html += '<div class="form-row" style="grid-template-columns:4fr 3fr 3fr;">';
+      html += '<div class="form-group"><label>Status</label><input type="text" value="' + getStatusDisplay(order.status) + '" disabled style="color:' + (order.status === 'Transferring' ? 'var(--blue)' : '') + ';font-weight:700;"></div>';
+      html += '<div class="form-group"><label>ยอดรอคืน</label><input type="text" value="฿' + numberFormat(order.refundAmount || 0) + '" disabled></div>';
+      html += '<div class="form-group"><label>ยอดมัดจำ</label><input type="text" value="฿' + numberFormat(order.depositAmount || 0) + '" disabled></div>';
       html += '</div>';
 
       html += '<div style="display:flex;gap:8px;margin-top:8px;">';
@@ -633,6 +633,13 @@ function viewOrder(orderId) {
   } else {
     doViewOrder();
   }
+}
+
+function updateVoucherPct() {
+  var v = parseFloat(document.getElementById('edit-voucher').value) || 0;
+  var s = parseFloat(document.getElementById('edit-subtotal').value) || 0;
+  var pct = s > 0 ? (v / s * 100).toFixed(1) : '0.0';
+  document.getElementById('voucher-pct').textContent = '(' + pct + '%)';
 }
 
 function saveOrder() {
