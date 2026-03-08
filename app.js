@@ -671,6 +671,7 @@ function switchTab(tab) {
   document.getElementById(tab + '-section').classList.add('active');
 
   if (tab === 'orders') loadOrders(currentFilter);
+  if (tab === 'deposit') loadDepositOrders();
 }
 
 function showModal(id) { document.getElementById(id).classList.add('show'); }
@@ -880,23 +881,6 @@ function submitDispute() {
     hideLoading();
     showToast('❌ เกิดข้อผิดพลาด');
   });
-}
-
-// ===== ORDER SUB-TABS =====
-function switchOrderSubTab(sub) {
-  var tabs = document.querySelectorAll('#orders-section .admin-sub-tab');
-  tabs.forEach(function(t) { t.classList.remove('active'); });
-  document.getElementById('orders-list-sub').classList.remove('active');
-  document.getElementById('orders-upload-sub').classList.remove('active');
-  if (sub === 'list') {
-    tabs[0].classList.add('active');
-    document.getElementById('orders-list-sub').classList.add('active');
-    loadOrders(currentFilter);
-  } else {
-    tabs[1].classList.add('active');
-    document.getElementById('orders-upload-sub').classList.add('active');
-    loadDepositOrders();
-  }
 }
 
 // ===== DEPOSIT RETURN UPLOAD =====

@@ -34,6 +34,9 @@
   <div class="tab" data-tab="orders" onclick="switchTab('orders')">
     <span class="tab-icon">📋</span> รายการ
   </div>
+  <div class="tab" data-tab="deposit" onclick="switchTab('deposit')">
+    <span class="tab-icon">📤</span> มัดจำ
+  </div>
   <div class="tab" data-tab="guide" onclick="switchTab('guide')">
     <span class="tab-icon">📖</span> คู่มือ
   </div>
@@ -154,31 +157,25 @@
 
   <!-- ORDERS SECTION -->
   <div id="orders-section" class="section">
-    <div class="admin-sub-tabs">
-      <div class="admin-sub-tab active" onclick="switchOrderSubTab('list')">📋 รายการ</div>
-      <div class="admin-sub-tab" onclick="switchOrderSubTab('upload')">📤 ส่งคืนมัดจำ</div>
+    <div class="filter-row">
+      <button class="filter-btn active" onclick="filterOrders('all', this)">ทั้งหมด</button>
+      <button class="filter-btn" onclick="filterOrders('user', this)">👤 ตัวเอง</button>
+      <button class="filter-btn" onclick="filterOrders('admin', this)">🛒 Admin</button>
+      <button class="filter-btn" onclick="filterOrders('pending', this)">รอตรวจ</button>
+      <button class="filter-btn" onclick="filterOrders('transferring', this)">💳 รอค้างชำระ</button>
+      <button class="filter-btn" onclick="filterOrders('completed', this)">โอนแล้ว</button>
     </div>
-    <!-- Sub: Order List -->
-    <div id="orders-list-sub" class="admin-sub-section active">
-      <div class="filter-row">
-        <button class="filter-btn active" onclick="filterOrders('all', this)">ทั้งหมด</button>
-        <button class="filter-btn" onclick="filterOrders('user', this)">👤 ตัวเอง</button>
-        <button class="filter-btn" onclick="filterOrders('admin', this)">🛒 Admin</button>
-        <button class="filter-btn" onclick="filterOrders('pending', this)">รอตรวจ</button>
-        <button class="filter-btn" onclick="filterOrders('transferring', this)">💳 รอค้างชำระ</button>
-        <button class="filter-btn" onclick="filterOrders('completed', this)">โอนแล้ว</button>
-      </div>
-      <div id="orders-list"></div>
+    <div id="orders-list"></div>
+  </div>
+
+  <!-- DEPOSIT RETURN SECTION -->
+  <div id="deposit-section" class="section">
+    <div class="section-toggle">
+      <div class="st-btn active" onclick="showUploadSub('new',this)">📤 ส่งใหม่</div>
+      <div class="st-btn" onclick="showUploadSub('history',this)">📋 ประวัติ</div>
     </div>
-    <!-- Sub: Deposit Return Upload -->
-    <div id="orders-upload-sub" class="admin-sub-section">
-      <div class="section-toggle">
-        <div class="st-btn active" onclick="showUploadSub('new',this)">📤 ส่งใหม่</div>
-        <div class="st-btn" onclick="showUploadSub('history',this)">📋 ประวัติ</div>
-      </div>
-      <div id="upload-new"></div>
-      <div id="upload-history" style="display:none"></div>
-    </div>
+    <div id="upload-new"></div>
+    <div id="upload-history" style="display:none"></div>
   </div>
 
 
