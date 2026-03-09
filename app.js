@@ -858,10 +858,15 @@ function renderTransferHistory(transfers, modalBodyId, modalActionsId, modalSele
 }
 
 function showPaidHistory() {
+  showLoading('กำลังโหลด...');
   apiCall('getTransferHistory', {}).then(function(data) {
+    hideLoading();
     if (!data.success) { showToast('โหลดข้อมูลไม่สำเร็จ'); return; }
     renderTransferHistory(data.transfers || [], 'order-modal-body', 'order-modal-actions', '#orderModal', 'orderModal');
     showModal('orderModal');
+  }).catch(function() {
+    hideLoading();
+    showToast('❌ เกิดข้อผิดพลาด');
   });
 }
 
