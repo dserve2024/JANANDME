@@ -386,6 +386,8 @@ function saveBank() {
 }
 
 // ===== ORDERS =====
+var _searchQuery = '';
+var _monthFilter = '';
 
 // Status display helpers
 function getStatusDisplay(status) {
@@ -430,18 +432,73 @@ function getStatusPriority(status) {
 function loadOrders(filter) {
   currentFilter = filter || 'all';
   if (allOrders.length === 0) {
+    _searchQuery = '';
+    _monthFilter = '';
     var container = document.getElementById('orders-list');
     container.innerHTML = '<div class="loading"><div class="spinner"></div><p>กำลังโหลด...</p></div>';
     apiCall('getOrders', {}).then(function(data) {
       if (data.success) {
         allOrders = data.orders || [];
         renderFilterButtons(allOrders);
+        renderSearchBar(allOrders);
         applyFilter(currentFilter);
       }
     });
   } else {
     applyFilter(currentFilter);
   }
+}
+
+function renderSearchBar(orders) {
+  var sbEl = document.getElementById('orders-search-bar');
+  if (!sbEl) return;
+
+  // Extract unique months from orderTime (format: MM/dd/yyyy HH:mm)
+  var months = {};
+  orders.forEach(function(o) {
+    if (!o.orderTime) return;
+    var parts = String(o.orderTime).split('/');
+    if (parts.length >= 3) {
+      var yyyy = parts[2].split(' ')[0];
+      var key = parts[0] + '/' + yyyy;
+      months[key] = (months[key] || 0) + 1;
+    }
+  });
+  var monthKeys = Object.keys(months).sort(function(a, b) {
+    var pa = a.split('/'); var pb = b.split('/');
+    var ya = parseInt(pa[1]); var yb = parseInt(pb[1]);
+    if (ya !== yb) return yb - ya;
+    return parseInt(pb[0]) - parseInt(pa[0]);
+  });
+
+  var thMonths = ['','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  var html = '<div class="osb-row">';
+  html += '<input type="text" class="osb-search" id="osb-input" placeholder="🔍 ค้นหา Order ID..." oninput="onOrderSearch(this.value)" value="' + _searchQuery + '">';
+  if (monthKeys.length > 1) {
+    html += '<select class="osb-month" onchange="onMonthFilter(this.value)">';
+    html += '<option value="">เดือนทั้งหมด</option>';
+    monthKeys.forEach(function(mk) {
+      var p = mk.split('/');
+      var mIdx = parseInt(p[0]);
+      var label = (thMonths[mIdx] || p[0]) + ' ' + (parseInt(p[1]) + 543);
+      html += '<option value="' + mk + '"' + (_monthFilter === mk ? ' selected' : '') + '>' + label + '</option>';
+    });
+    html += '</select>';
+  }
+  html += '</div>';
+
+  sbEl.innerHTML = html;
+  sbEl.style.display = '';
+}
+
+function onOrderSearch(val) {
+  _searchQuery = (val || '').trim().toLowerCase();
+  applyFilter(currentFilter);
+}
+
+function onMonthFilter(val) {
+  _monthFilter = val || '';
+  applyFilter(currentFilter);
 }
 
 function renderFilterButtons(orders) {
@@ -499,11 +556,24 @@ function filterOrders(filter, btn) {
 function applyFilter(filter) {
   var filtered = allOrders;
   if (filter === 'user') {
-    filtered = allOrders.filter(function(o) { return o.createdBy === 'USER'; });
+    filtered = filtered.filter(function(o) { return o.createdBy === 'USER'; });
   } else if (filter === 'admin') {
-    filtered = allOrders.filter(function(o) { return o.createdBy === 'ADMIN'; });
+    filtered = filtered.filter(function(o) { return o.createdBy === 'ADMIN'; });
   } else if (filter !== 'all') {
-    filtered = allOrders.filter(function(o) { return o.status === filter; });
+    filtered = filtered.filter(function(o) { return o.status === filter; });
+  }
+  if (_monthFilter) {
+    filtered = filtered.filter(function(o) {
+      if (!o.orderTime) return false;
+      var parts = String(o.orderTime).split('/');
+      if (parts.length < 3) return false;
+      return parts[0] + '/' + parts[2].split(' ')[0] === _monthFilter;
+    });
+  }
+  if (_searchQuery) {
+    filtered = filtered.filter(function(o) {
+      return String(o.orderId || '').toLowerCase().indexOf(_searchQuery) !== -1;
+    });
   }
   renderOrders(filtered);
 }
@@ -511,45 +581,138 @@ function applyFilter(filter) {
 function renderOrders(orders) {
   var container = document.getElementById('orders-list');
 
+  // Summary bar
+  var totalAmt = 0;
+  if (orders && orders.length > 0) {
+    orders.forEach(function(o) { totalAmt += parseFloat(o.orderTotal) || 0; });
+  }
+  var summaryHtml = orders && orders.length > 0
+    ? '<div class="order-summary">' + orders.length + ' รายการ | รวม <strong>฿' + numberFormat(totalAmt) + '</strong></div>'
+    : '';
+
   if (!orders || orders.length === 0) {
-    container.innerHTML = '<div class="empty-state"><div class="icon">📭</div><p>ไม่มีรายการ</p></div>';
+    container.innerHTML = summaryHtml + '<div class="empty-state"><div class="icon">📭</div><p>ไม่มีรายการ</p></div>';
     return;
   }
 
-  // Sort by status priority: Transferring > Pending > Completed > Transferred > ...
   orders.sort(function(a, b) {
     return getStatusPriority(a.status) - getStatusPriority(b.status);
   });
 
-  var html = '<div class="orders-grid">';
+  var html = summaryHtml + '<div class="orders-grid">';
   orders.forEach(function(order) {
     var statusClass = getStatusClass(order.status);
     var statusText = getStatusDisplay(order.status);
     var byClass = order.createdBy === 'ADMIN' ? 'admin' : 'user';
     var byText = order.createdBy === 'ADMIN' ? '🛒 Admin' : '👤 ตัวเอง';
-    var shopeeText = order.shopeeId || '⚠️ รอระบุ';
-    var shopeeColor = order.shopeeId ? 'var(--txt3)' : 'var(--red)';
+    var oid = order.orderId;
 
-    html += '<div class="order-card" onclick="viewOrder(\'' + order.orderId + '\')">';
+    // Card highlight class (feature 9)
+    var cardExtraClass = '';
+    if (!order.shopeeId) cardExtraClass = ' card-warn';
+    else if (order.status === 'Incorrect' || order.status === 'Ambiguous') cardExtraClass = ' card-error';
+
+    html += '<div class="order-card' + cardExtraClass + '" onclick="viewOrder(\'' + oid + '\')">';
+
+    // Photo thumbnail top-right (feature 6)
+    if (order.imageUrl) {
+      var previewSrc = order.imageUrl.replace('/view', '/preview');
+      html += '<div class="oc-thumb" onclick="event.stopPropagation();openPvModal([\'' + order.imageUrl.replace(/'/g,"") + '\'],\'รูป Order\')">';
+      html += '<iframe src="' + previewSrc + '" class="oc-thumb-iframe" scrolling="no" frameborder="0"></iframe>';
+      html += '</div>';
+    }
+
     html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:3px;">';
-    html += '<span class="order-id">' + order.orderId + '</span>';
+    html += '<span class="order-id">' + oid + '</span>';
     html += '<span class="order-status ' + statusClass + '">' + statusText + '</span>';
     html += '</div>';
+
     html += '<div class="order-amount">฿' + numberFormat(order.orderTotal || 0) + '</div>';
-    html += '<div class="order-shopee" style="color:' + shopeeColor + ';">🏪 ' + shopeeText + '</div>';
+
+    // Quick Shopee ID fix or display (feature 5)
+    if (order.shopeeId) {
+      html += '<div class="order-shopee">🏪 ' + order.shopeeId + '</div>';
+    } else {
+      var shopeeIds = (userData && userData.shopeeIds) ? userData.shopeeIds : [];
+      html += '<div onclick="event.stopPropagation()" class="oc-quick-shopee">';
+      if (shopeeIds.length > 0) {
+        html += '<select class="oc-shopee-select" onchange="quickSetShopeeId(\'' + oid + '\',this.value,event)">';
+        html += '<option value="">⚠️ ระบุ Shopee ID</option>';
+        shopeeIds.forEach(function(s) {
+          html += '<option value="' + s.shopeeId + '">' + s.shopeeId + '</option>';
+        });
+        html += '</select>';
+      } else {
+        html += '<div class="order-shopee" style="color:var(--red);">⚠️ รอระบุ</div>';
+      }
+      html += '</div>';
+    }
+
     html += '<div class="order-time">' + formatDateTime(order.orderTime) + '</div>';
     html += '<div class="order-by ' + byClass + '">' + byText + '</div>';
-    if (order.imageUrl) {
-      html += '<div style="font-size:11px;color:var(--txt3);margin-top:2px;">📷 มีรูป</div>';
+
+    // Settlement status (feature 1)
+    var refundAmt = parseFloat(order.refundAmount) || 0;
+    var depositAmt = parseFloat(order.depositAmount) || 0;
+    var isSettleable = order.status === 'Completed' || order.status === 'Transferring' || order.status === 'Transferred';
+    var settleHtml = '';
+    if (isSettleable) {
+      if (refundAmt > 0) {
+        if (order.paidRefund) {
+          settleHtml += '<span class="oc-settle green">✅ รับแล้ว</span>';
+        } else {
+          settleHtml += '<span class="oc-settle blue">💰 รอรับ ฿' + numberFormat(refundAmt) + '</span>';
+        }
+      }
+      if (depositAmt > 0) {
+        if (order.paidDeposit) {
+          settleHtml += '<span class="oc-settle green">✅ มัดจำคืนแล้ว</span>';
+        } else {
+          settleHtml += '<span class="oc-settle amber">🔒 มัดจำ ฿' + numberFormat(depositAmt) + '</span>';
+        }
+      }
     }
-    if (parseFloat(order.refundAmount) > 0) {
-      html += '<div class="order-refund">💰 ฿' + numberFormat(order.refundAmount) + '</div>';
+    if (settleHtml) {
+      html += '<div class="oc-settle-row">' + settleHtml + '</div>';
     }
+
     html += '</div>';
   });
   html += '</div>';
 
   container.innerHTML = html;
+}
+
+function quickSetShopeeId(orderId, shopeeId, e) {
+  if (e) e.stopPropagation();
+  if (!shopeeId) return;
+  var order = null;
+  for (var i = 0; i < allOrders.length; i++) {
+    if (allOrders[i].orderId === orderId) { order = allOrders[i]; break; }
+  }
+  if (!order) return;
+  showLoading('กำลังบันทึก...');
+  apiCall('updateOrder', {
+    orderId: orderId,
+    shopeeId: shopeeId,
+    subtotal: order.subtotal,
+    voucher: order.voucher,
+    shipping: order.shipping,
+    shippingDiscount: order.shippingDiscount,
+    orderTotal: order.orderTotal
+  }).then(function(data) {
+    hideLoading();
+    if (data.success) {
+      order.shopeeId = shopeeId;
+      showToast('✅ บันทึก Shopee ID สำเร็จ');
+      applyFilter(currentFilter);
+    } else {
+      showToast('❌ ' + (data.error || 'เกิดข้อผิดพลาด'));
+    }
+  }).catch(function() {
+    hideLoading();
+    showToast('❌ เกิดข้อผิดพลาด');
+  });
 }
 
 function viewOrder(orderId) {
@@ -578,8 +741,19 @@ function viewOrder(orderId) {
 
       html += '<div class="form-row">';
       html += '<div class="form-group"><label>Order ID</label><input type="text" value="' + order.orderId + '" disabled></div>';
-      html += '<div class="form-group"><label>Order Time</label><input type="text" value="' + formatDateTime(order.orderTime) + '" disabled></div>';
+      html += '<div class="form-group"><label>วันที่สั่งซื้อ</label><input type="text" value="' + formatDateTime(order.orderTime) + '" disabled></div>';
       html += '</div>';
+
+      if (order.paymentTime || order.completedTime) {
+        html += '<div class="form-row">';
+        if (order.paymentTime) {
+          html += '<div class="form-group"><label>วันที่ชำระ</label><input type="text" value="' + formatDateTime(order.paymentTime) + '" disabled></div>';
+        }
+        if (order.completedTime) {
+          html += '<div class="form-group"><label>วันที่สำเร็จ</label><input type="text" value="' + formatDateTime(order.completedTime) + '" disabled></div>';
+        }
+        html += '</div>';
+      }
 
       var allShopeeIds = (userData && userData.shopeeIds) ? userData.shopeeIds : [];
       html += '<div class="form-group full"><label>Shopee ID <span style="color:var(--red);">*</span></label>';
@@ -618,6 +792,17 @@ function viewOrder(orderId) {
       html += '<div class="form-group"><label>ยอดรอคืน</label><input type="text" value="฿' + numberFormat(order.refundAmount || 0) + '" disabled></div>';
       html += '<div class="form-group"><label>ยอดมัดจำ</label><input type="text" value="฿' + numberFormat(order.depositAmount || 0) + '" disabled></div>';
       html += '</div>';
+
+      var extraFields = [];
+      if (parseFloat(order.coinsUsed) > 0) {
+        extraFields.push('<div class="form-group"><label>ส่วนลด Coins</label><input type="text" value="' + numberFormat(order.coinsUsed) + '%" disabled></div>');
+      }
+      if (order.lastEditedBy) {
+        extraFields.push('<div class="form-group"><label>แก้ไขล่าสุดโดย</label><input type="text" value="' + (order.lastEditedBy === 'USER' ? '👤 ตัวเอง' : '🛒 Admin') + '" disabled></div>');
+      }
+      if (extraFields.length > 0) {
+        html += '<div class="form-row">' + extraFields.join('') + '</div>';
+      }
 
       html += '<div style="display:flex;gap:8px;margin-top:8px;">';
       html += '<button class="btn-secondary" style="flex:1;padding:10px;font-size:13px;border-radius:var(--r-xs);" onclick="viewOrderHistory(\'' + orderId + '\')">📜 ประวัติ</button>';
