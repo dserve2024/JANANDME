@@ -179,6 +179,20 @@ body { font-family: var(--f-th); background: var(--bg); color: var(--txt); min-h
 .osb-search:focus { border-color:var(--accent); }
 .osb-month { padding:8px 10px; border:1.5px solid var(--border-s); border-radius:var(--r-full); font-size:11px; font-family:var(--f-th); background:var(--surface); color:var(--txt2); outline:none; cursor:pointer; }
 
+/* ===== ORDER DETAIL MODAL ===== */
+.od-meta { display:flex; flex-wrap:wrap; gap:4px 16px; margin-bottom:10px; font-size:11px; }
+.od-meta-label { color:var(--txt3); }
+.od-meta-val { font-weight:600; color:var(--txt); font-family:var(--f-mono); font-size:10px; }
+.od-photo-btn { display:inline-flex; align-items:center; gap:4px; margin-bottom:10px; padding:5px 12px; border:1px solid var(--border-s); border-radius:var(--r-full); font-size:12px; font-family:var(--f-th); background:var(--surface); color:var(--txt2); text-decoration:none; cursor:pointer; }
+.od-photo-btn:active { opacity:.6; }
+.od-status-row { display:flex; gap:0; margin-top:10px; padding:8px 0; border-top:1px solid var(--border); }
+.od-stat-item { flex:1; display:flex; flex-direction:column; gap:2px; }
+.od-stat-label { font-size:10px; color:var(--txt3); font-weight:600; }
+.od-stat-val { font-size:12px; font-weight:700; color:var(--txt); }
+.od-stat-val.transferring { color:var(--blue); }
+.od-stat-val.money { color:var(--blue); }
+.od-stat-val.deposit { color:var(--amber); }
+
 /* ===== FILTER ===== */
 .filter-row { display:flex; gap:6px; margin-bottom:14px; overflow-x:auto; padding-bottom:4px; -ms-overflow-style:none; scrollbar-width:none; }
 .filter-row::-webkit-scrollbar { display:none; }

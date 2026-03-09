@@ -725,83 +725,70 @@ function viewOrder(orderId) {
       var order = data.order;
       var html = '';
 
+      // A. Plain text info row (Order ID + dates)
+      html += '<div class="od-meta">';
+      html += '<span><span class="od-meta-label">Order ID </span><span class="od-meta-val">' + order.orderId + '</span></span>';
+      html += '<span><span class="od-meta-label">สั่งซื้อ </span><span class="od-meta-val">' + formatDateTime(order.orderTime) + '</span></span>';
+      if (order.paymentTime) html += '<span><span class="od-meta-label">ชำระ </span><span class="od-meta-val">' + formatDateTime(order.paymentTime) + '</span></span>';
+      if (order.completedTime) html += '<span><span class="od-meta-label">สำเร็จ </span><span class="od-meta-val">' + formatDateTime(order.completedTime) + '</span></span>';
+      html += '</div>';
+
+      // B. Photo button (if exists)
       if (order.imageUrl) {
         var viewUrl = order.imageUrl;
         if (viewUrl.indexOf('drive.google.com') !== -1) {
           var fileId = viewUrl.match(/[-\w]{25,}/);
-          if (fileId) {
-            viewUrl = 'https://drive.google.com/file/d/' + fileId[0] + '/view';
-          }
+          if (fileId) viewUrl = 'https://drive.google.com/file/d/' + fileId[0] + '/view';
         }
-        html += '<a href="' + viewUrl + '" target="_blank" style="display:block;padding:12px;background:var(--txt);border-radius:var(--r-sm);text-align:center;text-decoration:none;color:white;font-weight:700;margin-bottom:12px;font-size:13px;">📷 ดูรูป Order</a>';
+        html += '<a href="' + viewUrl + '" target="_blank" class="od-photo-btn">📷 ดูรูป Order</a>';
       }
 
-      html += '<div class="form-row">';
-      html += '<div class="form-group"><label>Order ID</label><input type="text" value="' + order.orderId + '" disabled></div>';
-      html += '<div class="form-group"><label>วันที่สั่งซื้อ</label><input type="text" value="' + formatDateTime(order.orderTime) + '" disabled></div>';
-      html += '</div>';
-
-      if (order.paymentTime || order.completedTime) {
-        html += '<div class="form-row">';
-        if (order.paymentTime) {
-          html += '<div class="form-group"><label>วันที่ชำระ</label><input type="text" value="' + formatDateTime(order.paymentTime) + '" disabled></div>';
-        }
-        if (order.completedTime) {
-          html += '<div class="form-group"><label>วันที่สำเร็จ</label><input type="text" value="' + formatDateTime(order.completedTime) + '" disabled></div>';
-        }
-        html += '</div>';
-      }
-
+      // C. Shopee ID (50%) | แก้ไขล่าสุดโดย (50%)
       var allShopeeIds = (userData && userData.shopeeIds) ? userData.shopeeIds : [];
-      html += '<div class="form-group full"><label>Shopee ID <span style="color:var(--red);">*</span></label>';
+      var lastEditedText = order.lastEditedBy ? (order.lastEditedBy === 'USER' ? '👤 ตัวเอง' : '🛒 Admin') : '-';
+      html += '<div class="form-row" style="grid-template-columns:1fr 1fr;">';
+      html += '<div class="form-group"><label>Shopee ID <span style="color:var(--red);">*</span></label>';
       html += '<select id="edit-shopee-id" style="background:white;">';
       html += '<option value="">-- เลือก --</option>';
-      if (allShopeeIds.length > 0) {
-        allShopeeIds.forEach(function(s) {
-          var selected = (s.shopeeId === order.shopeeId) ? 'selected' : '';
-          html += '<option value="' + s.shopeeId + '" ' + selected + '>' + s.shopeeId + '</option>';
-        });
-      }
+      allShopeeIds.forEach(function(s) {
+        var selected = (s.shopeeId === order.shopeeId) ? 'selected' : '';
+        html += '<option value="' + s.shopeeId + '" ' + selected + '>' + s.shopeeId + '</option>';
+      });
       if (order.shopeeId && allShopeeIds.length > 0 && !allShopeeIds.find(function(s) { return s.shopeeId === order.shopeeId; })) {
         html += '<option value="' + order.shopeeId + '" selected>' + order.shopeeId + ' (Admin)</option>';
       } else if (order.shopeeId && allShopeeIds.length === 0) {
         html += '<option value="' + order.shopeeId + '" selected>' + order.shopeeId + '</option>';
       }
       html += '</select></div>';
+      html += '<div class="form-group"><label>แก้ไขล่าสุดโดย</label><input type="text" value="' + lastEditedText + '" disabled></div>';
+      html += '</div>';
 
+      // D. Subtotal | ส่วนลด/Coin%
       var voucherVal = parseFloat(order.voucher) || 0;
       var subtotalVal = parseFloat(order.subtotal) || 0;
       var voucherPct = subtotalVal > 0 ? (voucherVal / subtotalVal * 100).toFixed(1) : '0.0';
-
       html += '<div class="form-row" style="grid-template-columns:6fr 4fr;">';
       html += '<div class="form-group"><label>Subtotal</label><input type="number" id="edit-subtotal" value="' + (order.subtotal || '') + '" oninput="updateVoucherPct()"></div>';
       html += '<div class="form-group"><label>ส่วนลด/Coin <span id="voucher-pct" style="color:var(--blue);font-weight:700;">(' + voucherPct + '%)</span></label><input type="number" id="edit-voucher" value="' + (order.voucher || '') + '" oninput="updateVoucherPct()"></div>';
       html += '</div>';
 
+      // E. Shipping | Ship Disc. | Order Total
       html += '<div class="form-row" style="grid-template-columns:1fr 1fr 2fr;">';
       html += '<div class="form-group"><label>Shipping</label><input type="number" id="edit-shipping" value="' + (order.shipping || '') + '"></div>';
       html += '<div class="form-group"><label>Ship Disc.</label><input type="number" id="edit-shipping-discount" value="' + (order.shippingDiscount || '') + '"></div>';
       html += '<div class="form-group"><label>💰 Order Total</label><input type="number" id="edit-total" value="' + (order.orderTotal || '') + '" style="font-weight:700;"></div>';
       html += '</div>';
 
-      html += '<div class="form-row" style="grid-template-columns:4fr 3fr 3fr;">';
-      html += '<div class="form-group"><label>Status</label><input type="text" value="' + getStatusDisplay(order.status) + '" disabled style="color:' + (order.status === 'Transferring' ? 'var(--blue)' : '') + ';font-weight:700;"></div>';
-      html += '<div class="form-group"><label>ยอดรอคืน</label><input type="text" value="฿' + numberFormat(order.refundAmount || 0) + '" disabled></div>';
-      html += '<div class="form-group"><label>ยอดมัดจำ</label><input type="text" value="฿' + numberFormat(order.depositAmount || 0) + '" disabled></div>';
+      // F. Status / ยอดรอคืน / ยอดมัดจำ — plain text
+      var statusValClass = order.status === 'Transferring' ? ' transferring' : '';
+      html += '<div class="od-status-row">';
+      html += '<div class="od-stat-item"><span class="od-stat-label">สถานะ</span><span class="od-stat-val' + statusValClass + '">' + getStatusDisplay(order.status) + '</span></div>';
+      html += '<div class="od-stat-item"><span class="od-stat-label">ยอดรอคืน</span><span class="od-stat-val money">฿' + numberFormat(order.refundAmount || 0) + '</span></div>';
+      html += '<div class="od-stat-item"><span class="od-stat-label">ยอดมัดจำ</span><span class="od-stat-val deposit">฿' + numberFormat(order.depositAmount || 0) + '</span></div>';
       html += '</div>';
 
-      var extraFields = [];
-      if (parseFloat(order.coinsUsed) > 0) {
-        extraFields.push('<div class="form-group"><label>ส่วนลด Coins</label><input type="text" value="' + numberFormat(order.coinsUsed) + '%" disabled></div>');
-      }
-      if (order.lastEditedBy) {
-        extraFields.push('<div class="form-group"><label>แก้ไขล่าสุดโดย</label><input type="text" value="' + (order.lastEditedBy === 'USER' ? '👤 ตัวเอง' : '🛒 Admin') + '" disabled></div>');
-      }
-      if (extraFields.length > 0) {
-        html += '<div class="form-row">' + extraFields.join('') + '</div>';
-      }
-
-      html += '<div style="display:flex;gap:8px;margin-top:8px;">';
+      // G. Action buttons
+      html += '<div style="display:flex;gap:8px;margin-top:10px;">';
       html += '<button class="btn-secondary" style="flex:1;padding:10px;font-size:13px;border-radius:var(--r-xs);" onclick="viewOrderHistory(\'' + orderId + '\')">📜 ประวัติ</button>';
       html += '<button style="flex:1;padding:10px;font-size:13px;background:var(--red);color:white;border:none;border-radius:var(--r-xs);cursor:pointer;font-weight:700;" onclick="confirmDeleteOrder(\'' + orderId + '\')">🗑️ ลบ</button>';
       html += '<button style="flex:1;padding:10px;font-size:13px;background:var(--red);color:white;border:none;border-radius:var(--r-xs);cursor:pointer;font-weight:700;" onclick="showDisputeModal(\'' + orderId + '\')">🚨 แจ้งปัญหา</button>';
@@ -809,6 +796,8 @@ function viewOrder(orderId) {
 
       document.getElementById('order-modal-body').innerHTML = html;
       document.getElementById('order-modal-actions').innerHTML = '<button class="btn-cancel" onclick="hideModal(\'orderModal\')">ปิด</button><button class="btn-save" onclick="saveOrder()">💾 บันทึก</button>';
+      // Fix: reset modal header (renderTransferHistory อาจเปลี่ยนไว้)
+      document.querySelector('#orderModal .modal-header h3').textContent = '📦 รายละเอียด';
       showModal('orderModal');
     });
   }
