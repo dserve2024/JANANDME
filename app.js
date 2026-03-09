@@ -614,12 +614,9 @@ function renderOrders(orders) {
 
     html += '<div class="order-card' + cardExtraClass + '" onclick="viewOrder(\'' + oid + '\')">';
 
-    // Photo thumbnail top-right (feature 6)
+    // Photo button (feature 6)
     if (order.imageUrl) {
-      var previewSrc = order.imageUrl.replace('/view', '/preview');
-      html += '<div class="oc-thumb" onclick="event.stopPropagation();openPvModal([\'' + order.imageUrl.replace(/'/g,"") + '\'],\'รูป Order\')">';
-      html += '<iframe src="' + previewSrc + '" class="oc-thumb-iframe" scrolling="no" frameborder="0"></iframe>';
-      html += '</div>';
+      html += '<div class="oc-thumb" onclick="event.stopPropagation();openPvModal([\'' + order.imageUrl.replace(/'/g,"") + '\'],\'รูป Order\')">📷</div>';
     }
 
     html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:3px;">';
