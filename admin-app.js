@@ -399,7 +399,11 @@ function renderAdminPayments() {
   summaryEl.innerHTML = '<div class="admin-pay-summary" style="margin-bottom:0;grid-template-columns:1fr 1fr;">' +
     '<div class="aps-card warn"><div class="aps-num">' + totalUsers + '</div><div class="aps-lbl">รอโอน</div></div>' +
     '<div class="aps-card info"><div class="aps-num">฿' + numberFormat(totalAmount) + '</div><div class="aps-lbl">ยอดรวม</div></div>' +
-    '</div>';
+    '</div>' +
+    (totalUsers > 0 ? '<div style="display:flex;gap:8px;margin-top:10px;">' +
+      '<button class="pay-btn" style="flex:1;background:var(--blue);color:#fff;" onclick="exportPaymentsCSV()">📊 Export</button>' +
+      '<button class="pay-btn" style="flex:1;background:var(--green);color:#fff;" onclick="bulkApproveAll()">✅ Bulk Approved</button>' +
+      '</div>' : '');
 
   var listEl = document.getElementById('admin-pay-list');
   if (adminPaymentData.length === 0) {
@@ -568,6 +572,128 @@ function showPaymentSuccess(user, orders, totalAmount, isDeposit) {
 }
 
 function backToPaymentList() { renderAdminPayments(); }
+
+function exportPaymentsCSV() {
+  if (adminPaymentData.length === 0) { showToast('ไม่มีข้อมูล'); return; }
+
+  var rows = [];
+  for (var g = 0; g < adminPaymentData.length; g += 10) {
+    var chunk = adminPaymentData.slice(g, g + 10);
+    var groupNum = Math.floor(g / 10) + 1;
+    var startIdx = g + 1;
+    var endIdx = Math.min(g + 10, adminPaymentData.length);
+
+    // คำนวณ sum ของกลุ่มนี้ก่อน
+    var groupSum = 0;
+    chunk.forEach(function(user) {
+      var selected = paymentSelections[user.userId] || new Set();
+      user.orders.forEach(function(o) {
+        if (selected.size === 0 || selected.has(o.orderId)) groupSum += parseFloat(o.amount) || 0;
+      });
+    });
+
+    // เว้นบรรทัดระหว่างกลุ่ม
+    if (rows.length > 0) rows.push('');
+    rows.push('ลำดับ,ชื่อ,ธนาคาร,เลขบัญชี,ชื่อบัญชี,เบอร์โทร,ยอดโอน');
+    rows.push('"--- กลุ่มที่ ' + groupNum + ' (' + startIdx + '-' + endIdx + ') รวม ' + chunk.length + ' คน ---",,,,,"ยอดรวม",' + groupSum.toFixed(2));
+
+    chunk.forEach(function(user, ci) {
+      var selected = paymentSelections[user.userId] || new Set();
+      var total = 0;
+      user.orders.forEach(function(o) {
+        if (selected.size === 0 || selected.has(o.orderId)) total += parseFloat(o.amount) || 0;
+      });
+      var acct = String(user.bankAccount || '').replace(/[^0-9]/g, '');
+      var phone = String(user.phone || '').replace(/[^0-9]/g, '');
+      rows.push(
+        (g + ci + 1) + ',' +
+        '"' + (user.displayName || '') + '",' +
+        '"' + (user.bankName || '') + '",' +
+        acct + ',' +
+        '"' + (user.accountName || '') + '",' +
+        phone + ',' +
+        total.toFixed(2)
+      );
+    });
+  }
+
+  var csv = '\uFEFF' + rows.join('\r\n');
+  var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'transfer_' + new Date().toISOString().slice(0, 10) + '.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('📊 Export สำเร็จ ' + adminPaymentData.length + ' รายการ');
+}
+
+function bulkApproveAll() {
+  if (adminPaymentData.length === 0) { showToast('ไม่มีรายการ'); return; }
+
+  var totalUsers = adminPaymentData.length;
+  var totalAmt = 0;
+  adminPaymentData.forEach(function(u) {
+    u.orders.forEach(function(o) { totalAmt += parseFloat(o.amount) || 0; });
+  });
+
+  if (!confirm('✅ Bulk Approved\n\nจะยืนยันโอนเงินทั้งหมด ' + totalUsers + ' คน\nยอดรวม ฿' + numberFormat(totalAmt) + '\n\nดำเนินการต่อ?')) return;
+
+  showLoading('กำลังอนุมัติ 0/' + totalUsers + '...');
+
+  var idx = 0;
+  var errors = [];
+  var snapshot = adminPaymentData.slice(); // snapshot ก่อน loop
+
+  function processNext() {
+    if (idx >= snapshot.length) {
+      hideLoading();
+      adminPaymentData = [];
+      paymentSelections = {};
+      renderAdminPayments();
+      var msg = errors.length === 0
+        ? '✅ Bulk Approved สำเร็จ ' + totalUsers + ' คน'
+        : '⚠️ สำเร็จ ' + (totalUsers - errors.length) + '/' + totalUsers + ' คน';
+      showToast(msg);
+      return;
+    }
+    var user = snapshot[idx];
+    idx++;
+    showLoading('กำลังอนุมัติ ' + idx + '/' + totalUsers + '...');
+
+    var selected = paymentSelections[user.userId] || new Set();
+    var orders = selected.size > 0
+      ? user.orders.filter(function(o) { return selected.has(o.orderId); })
+      : user.orders;
+    var refundOrders = orders.filter(function(o) { return o.type !== 'deposit'; });
+    var depositOrders = orders.filter(function(o) { return o.type === 'deposit'; });
+    var promises = [];
+    if (refundOrders.length > 0) {
+      promises.push(apiCall('adminConfirmPayment', {
+        targetUserId: user.userId,
+        orderIds: refundOrders.map(function(o) { return o.orderId; }).join(','),
+        totalAmount: refundOrders.reduce(function(s, o) { return s + (parseFloat(o.amount) || 0); }, 0),
+        type: 'refund'
+      }));
+    }
+    if (depositOrders.length > 0) {
+      promises.push(apiCall('adminConfirmPayment', {
+        targetUserId: user.userId,
+        orderIds: depositOrders.map(function(o) { return o.orderId; }).join(','),
+        totalAmount: depositOrders.reduce(function(s, o) { return s + (parseFloat(o.amount) || 0); }, 0),
+        type: 'deposit'
+      }));
+    }
+    Promise.all(promises).then(function() {
+      processNext();
+    }).catch(function() {
+      errors.push(user.userId);
+      processNext();
+    });
+  }
+
+  processNext();
+}
 
 // ===== ADMIN DEPOSIT RETURNS =====
 function loadAdminDepositReturns() {
