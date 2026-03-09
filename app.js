@@ -614,13 +614,13 @@ function renderOrders(orders) {
 
     html += '<div class="order-card' + cardExtraClass + '" onclick="viewOrder(\'' + oid + '\')">';
 
-    // Photo button (feature 6)
-    if (order.imageUrl) {
-      html += '<div class="oc-thumb" onclick="event.stopPropagation();openPvModal([\'' + order.imageUrl.replace(/'/g,"") + '\'],\'รูป Order\')">📷</div>';
-    }
-
     html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:3px;">';
+    html += '<div style="display:flex;align-items:center;gap:4px;">';
     html += '<span class="order-id">' + oid + '</span>';
+    if (order.imageUrl) {
+      html += '<span class="oc-thumb" onclick="event.stopPropagation();openPvModal([\'' + order.imageUrl.replace(/'/g,"") + '\'],\'รูป Order\')">📷</span>';
+    }
+    html += '</div>';
     html += '<span class="order-status ' + statusClass + '">' + statusText + '</span>';
     html += '</div>';
 
