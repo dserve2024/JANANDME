@@ -1000,15 +1000,6 @@ var depositProductFiles = [];
 var depositTrackingFiles = [];
 var depositCurrentStep = 1;
 
-function showUploadSub(name, el) {
-  document.querySelectorAll('.section-toggle .st-btn').forEach(function(b) { b.classList.remove('active'); });
-  if (el) el.classList.add('active');
-  document.getElementById('upload-new').style.display = name === 'new' ? '' : 'none';
-  document.getElementById('upload-history').style.display = name === 'history' ? '' : 'none';
-  if (name === 'new') loadDepositOrders();
-  if (name === 'history') loadDepositHistory();
-}
-
 function loadDepositOrders() {
   var container = document.getElementById('upload-new');
   container.innerHTML = '<div class="loading"><div class="spinner"></div><p>กำลังโหลด...</p></div>';
@@ -1305,6 +1296,7 @@ function submitDepositReturn() {
     hideLoading();
     if (data.success) {
       showToast('✅ ส่งข้อมูลสำเร็จ!');
+      window._depositNeedsRefresh = true;
       depositCurrentStep = 5;
       renderDepositWizard();
     } else {
@@ -1326,7 +1318,184 @@ function resetDepositWizard() {
   loadDepositOrders();
 }
 
+// ===== PHOTO VIEWER MODAL =====
+function openPvModal(urls, title) {
+  var modal = document.getElementById('pvModal');
+  document.getElementById('pvTitle').textContent = title || 'รูปภาพ';
+  var gallery = document.getElementById('pvGallery');
+  var html = '';
+  for (var i = 0; i < urls.length; i++) {
+    var url = urls[i].trim();
+    if (!url) continue;
+    // Convert Drive view URL to direct thumbnail
+    var imgSrc = url.replace('/view', '/preview');
+    html += '<div class="pv-thumb" onclick="openPvFull(\'' + url.replace(/'/g, "\\'") + '\')">';
+    html += '<iframe src="' + imgSrc + '" class="pv-iframe" scrolling="no" frameborder="0" allowfullscreen></iframe>';
+    html += '<div class="pv-thumb-overlay">🔍</div>';
+    html += '</div>';
+  }
+  gallery.innerHTML = html || '<div style="text-align:center;color:var(--txt3);padding:20px;">ไม่มีรูปภาพ</div>';
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closePvModal(e) {
+  if (e && e.target !== document.getElementById('pvModal')) return;
+  document.getElementById('pvModal').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function openPvFull(url) {
+  window.open(url, '_blank');
+}
+
+// ===== PHOTO EDIT MODAL =====
+var _peSubmissionId = '';
+var _peProductUrls = [];
+var _peTrackingUrls = [];
+var _peRemovedProductUrls = [];
+var _peRemovedTrackingUrls = [];
+var _peNewProductFiles = [];
+var _peNewTrackingFiles = [];
+
+function openPeModal(submissionId, productUrlsJson, trackingUrlsJson) {
+  _peSubmissionId = submissionId;
+  _peProductUrls = JSON.parse(productUrlsJson || '[]').filter(function(u) { return u; });
+  _peTrackingUrls = JSON.parse(trackingUrlsJson || '[]').filter(function(u) { return u; });
+  _peRemovedProductUrls = [];
+  _peRemovedTrackingUrls = [];
+  _peNewProductFiles = [];
+  _peNewTrackingFiles = [];
+  renderPeGrid('product');
+  renderPeGrid('tracking');
+  document.getElementById('peModal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closePeModal(e) {
+  if (e && e.target !== document.getElementById('peModal')) return;
+  document.getElementById('peModal').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function renderPeGrid(type) {
+  var isProduct = type === 'product';
+  var urls = isProduct ? _peProductUrls : _peTrackingUrls;
+  var newFiles = isProduct ? _peNewProductFiles : _peNewTrackingFiles;
+  var maxCount = isProduct ? 5 : 3;
+  var gridId = isProduct ? 'peProductGrid' : 'peTrackingGrid';
+  var countId = isProduct ? 'peProductCount' : 'peTrackingCount';
+  var addBtnId = isProduct ? 'peAddProductBtn' : 'peAddTrackingBtn';
+  var total = urls.length + newFiles.length;
+
+  document.getElementById(countId).textContent = total + '/' + maxCount;
+  document.getElementById(addBtnId).style.display = total >= maxCount ? 'none' : '';
+
+  var html = '';
+  // Existing Drive URLs
+  for (var i = 0; i < urls.length; i++) {
+    var src = urls[i].replace('/view', '/preview');
+    html += '<div class="pe-thumb" data-type="' + type + '" data-idx="' + i + '">';
+    html += '<iframe src="' + src + '" class="pe-iframe" scrolling="no" frameborder="0"></iframe>';
+    html += '<button class="pe-del-btn" onclick="peRemoveExisting(\'' + type + '\',' + i + ')">✕</button>';
+    html += '</div>';
+  }
+  // New files (preview)
+  for (var j = 0; j < newFiles.length; j++) {
+    html += '<div class="pe-thumb">';
+    html += '<img src="' + newFiles[j].preview + '" class="pe-preview-img">';
+    html += '<button class="pe-del-btn" onclick="peRemoveNew(\'' + type + '\',' + j + ')">✕</button>';
+    html += '</div>';
+  }
+  document.getElementById(gridId).innerHTML = html;
+}
+
+function peRemoveExisting(type, idx) {
+  if (type === 'product') {
+    _peRemovedProductUrls.push(_peProductUrls[idx]);
+    _peProductUrls.splice(idx, 1);
+  } else {
+    _peRemovedTrackingUrls.push(_peTrackingUrls[idx]);
+    _peTrackingUrls.splice(idx, 1);
+  }
+  renderPeGrid(type);
+}
+
+function peRemoveNew(type, idx) {
+  if (type === 'product') _peNewProductFiles.splice(idx, 1);
+  else _peNewTrackingFiles.splice(idx, 1);
+  renderPeGrid(type);
+}
+
+function handlePeFileChange(event, type) {
+  var files = event.target.files;
+  var isProduct = type === 'product';
+  var existing = isProduct ? _peProductUrls : _peTrackingUrls;
+  var newFiles = isProduct ? _peNewProductFiles : _peNewTrackingFiles;
+  var maxCount = isProduct ? 5 : 3;
+  var remain = maxCount - existing.length - newFiles.length;
+  var toProcess = Math.min(files.length, remain);
+
+  for (var i = 0; i < toProcess; i++) {
+    (function(file, t) {
+      compressImage(file, 1200, 0.8, function(base64, preview) {
+        if (t === 'product') _peNewProductFiles.push({ base64: base64, preview: preview });
+        else _peNewTrackingFiles.push({ base64: base64, preview: preview });
+        renderPeGrid(t);
+      });
+    })(files[i], type);
+  }
+  event.target.value = '';
+}
+
+function savePePhotos() {
+  if (_peProductUrls.length + _peNewProductFiles.length === 0) {
+    showToast('❌ ต้องมีรูปสินค้าอย่างน้อย 1 รูป');
+    return;
+  }
+  var saveBtn = document.getElementById('peSaveBtn');
+  saveBtn.disabled = true;
+  showLoading('กำลังบันทึก...');
+
+  var payload = {
+    source: 'liff_update_deposit_photos',
+    submissionId: _peSubmissionId,
+    removedProductUrls: _peRemovedProductUrls,
+    removedTrackingUrls: _peRemovedTrackingUrls,
+    newProductPhotos: _peNewProductFiles.map(function(f) { return f.base64; }),
+    newTrackingPhotos: _peNewTrackingFiles.map(function(f) { return f.base64; })
+  };
+
+  apiPost(payload).then(function(data) {
+    hideLoading();
+    saveBtn.disabled = false;
+    if (data.success) {
+      showToast('✅ บันทึกรูปภาพสำเร็จ');
+      closePeModal();
+      // Update cached history items + re-render
+      for (var i = 0; i < _historyItems.length; i++) {
+        if (_historyItems[i].submissionId === _peSubmissionId) {
+          _historyItems[i].productPhotos = data.productPhotos || [];
+          _historyItems[i].trackingPhotos = data.trackingPhotos || [];
+        }
+      }
+      renderDepositHistory(_historyFilter === 'all' ? _historyItems
+        : _historyItems.filter(function(x) { return x.status === _historyFilter; }));
+    } else {
+      showToast('❌ ' + (data.error || 'เกิดข้อผิดพลาด'));
+    }
+  }).catch(function(err) {
+    hideLoading();
+    saveBtn.disabled = false;
+    showToast('❌ ' + (err.message || 'เกิดข้อผิดพลาด'));
+  });
+}
+
 // ===== DEPOSIT HISTORY =====
+var _historyItems = [];
+var _historyFilter = 'all';
+var _historyLoaded = false;
+
 function loadDepositHistory() {
   var container = document.getElementById('upload-history');
   container.innerHTML = '<div class="loading"><div class="spinner"></div><p>กำลังโหลด...</p></div>';
@@ -1335,43 +1504,153 @@ function loadDepositHistory() {
       container.innerHTML = '<div class="empty-state"><div class="icon">❌</div><p>โหลดไม่สำเร็จ</p></div>';
       return;
     }
-    renderDepositHistory(data.submissions || []);
+    _historyItems = data.submissions || [];
+    _historyLoaded = true;
+    _historyFilter = 'all';
+    renderDepositHistory(_historyItems);
   });
 }
 
-function renderDepositHistory(items) {
+function setHistoryFilter(status, el) {
+  _historyFilter = status;
+  document.querySelectorAll('.hf-pill').forEach(function(p) { p.classList.remove('active'); });
+  if (el) el.classList.add('active');
+  var filtered = status === 'all' ? _historyItems
+    : _historyItems.filter(function(x) { return x.status === status; });
+  renderFilteredHistory(filtered);
+}
+
+function renderFilteredHistory(items) {
   var container = document.getElementById('upload-history');
+  var pillsHtml = document.getElementById('hf-pills') ? document.getElementById('hf-pills').outerHTML : '';
   if (items.length === 0) {
-    container.innerHTML = '<div class="empty-state"><div class="icon">📤</div><p>ยังไม่มีประวัติการส่งคืน</p></div>';
+    container.innerHTML = pillsHtml + '<div class="empty-state" style="margin-top:12px"><div class="icon">📭</div><p>ไม่มีรายการ</p></div>';
     return;
   }
+  container.innerHTML = pillsHtml + renderHistoryCards(items);
+}
+
+function getHistoryItemById(subId) {
+  for (var i = 0; i < _historyItems.length; i++) {
+    if (_historyItems[i].submissionId === subId) return _historyItems[i];
+  }
+  return null;
+}
+
+function openPvBySubId(subId, type) {
+  var item = getHistoryItemById(subId);
+  if (!item) return;
+  var urls = type === 'product' ? item.productPhotos : item.trackingPhotos;
+  var title = type === 'product' ? 'รูปสินค้า' : 'หลักฐานการส่ง';
+  openPvModal(urls, title);
+}
+
+function openPeBySubId(subId) {
+  var item = getHistoryItemById(subId);
+  if (!item) return;
+  openPeModal(subId, JSON.stringify(item.productPhotos || []), JSON.stringify(item.trackingPhotos || []));
+}
+
+function renderHistoryCards(items) {
   var html = '';
   items.forEach(function(item) {
     var iconClass = item.status === 'Approved' ? 'sent' : item.status === 'Rejected' ? 'rejected' : 'review';
     var statusIcon = item.status === 'Approved' ? '✅' : item.status === 'Rejected' ? '❌' : '⏳';
-    var statusText = item.status || 'Pending';
+    var statusText = item.status === 'Approved' ? 'อนุมัติแล้ว' : item.status === 'Rejected' ? 'ไม่ผ่าน' : 'รอตรวจ';
+    var sid = item.submissionId.replace(/'/g, '');
 
     html += '<div class="history-card">';
     html += '<div class="hc-top">';
     html += '<div class="hc-icon ' + iconClass + '">' + statusIcon + '</div>';
-    html += '<div class="hc-info"><div class="hc-oid">' + item.orderId + '</div>';
-    html += '<div class="hc-time">' + (item.submittedAt || '') + '</div></div>';
+    html += '<div class="hc-info">';
+    html += '<div class="hc-oid">' + item.orderId + '</div>';
+    if (item.shopeeId) html += '<div class="hc-shopee">@' + item.shopeeId + '</div>';
+    html += '<div class="hc-time">' + (item.submittedAt || '') + '</div>';
+    html += '</div>';
     html += '<div class="hc-status ' + iconClass + '">' + statusText + '</div>';
     html += '</div>';
 
+    // Photo badges (clickable via lookup)
     html += '<div class="hc-labels">';
-    html += '<span class="hc-label photo">📷 ' + item.productPhotos.length + ' รูป</span>';
-    if (item.trackingPhotos.length > 0) html += '<span class="hc-label tracking">🚚 ' + item.trackingPhotos.length + ' รูป</span>';
+    if (item.productPhotos.length > 0) {
+      html += '<span class="hc-label photo hc-label-btn" onclick="openPvBySubId(\'' + sid + '\',\'product\')">📷 ' + item.productPhotos.length + ' รูป</span>';
+    }
+    if (item.trackingPhotos.length > 0) {
+      html += '<span class="hc-label tracking hc-label-btn" onclick="openPvBySubId(\'' + sid + '\',\'tracking\')">🚚 ' + item.trackingPhotos.length + ' รูป</span>';
+    }
     html += '<span style="margin-left:auto;font-size:11px;font-weight:700;color:var(--purple);">฿' + numberFormat(item.depositAmount || 0) + '</span>';
     html += '</div>';
 
+    // Note (ถ้ามี)
+    if (item.note) {
+      html += '<div class="hc-note">📝 ' + item.note + '</div>';
+    }
+
+    // Status details
+    if (item.status === 'Approved' && item.reviewedAt) {
+      html += '<div class="hc-approved-row">✅ อนุมัติแล้ว เมื่อ ' + item.reviewedAt + '</div>';
+    }
     if (item.status === 'Rejected' && item.adminNote) {
-      html += '<div style="margin-top:8px;padding:8px 10px;background:var(--red-soft);border-radius:var(--r-xs);font-size:11px;color:var(--red);">💬 แอดมิน: ' + item.adminNote + '</div>';
+      html += '<div class="hc-admin-note">💬 แอดมิน: ' + item.adminNote + '</div>';
+    }
+
+    // Action buttons
+    if (item.status === 'Pending') {
+      html += '<div class="hc-actions">';
+      html += '<button class="hc-btn-edit" onclick="openPeBySubId(\'' + sid + '\')">✏️ แก้ไขรูป</button>';
+      html += '</div>';
+    }
+    if (item.status === 'Rejected') {
+      html += '<div class="hc-actions">';
+      html += '<button class="hc-btn-resubmit" onclick="resubmitFromRejected(\'' + item.orderId + '\')">🔄 ส่งใหม่</button>';
+      html += '</div>';
     }
 
     html += '</div>';
   });
-  container.innerHTML = html;
+  return html;
+}
+
+function renderDepositHistory(items) {
+  var container = document.getElementById('upload-history');
+
+  // Build filter pills
+  var pendingCount = _historyItems.filter(function(x) { return x.status === 'Pending'; }).length;
+  var approvedCount = _historyItems.filter(function(x) { return x.status === 'Approved'; }).length;
+  var rejectedCount = _historyItems.filter(function(x) { return x.status === 'Rejected'; }).length;
+
+  var pillsHtml = '<div class="hf-pills" id="hf-pills">';
+  pillsHtml += '<button class="hf-pill' + (_historyFilter === 'all' ? ' active' : '') + '" onclick="setHistoryFilter(\'all\',this)">ทั้งหมด ' + _historyItems.length + '</button>';
+  if (pendingCount > 0) pillsHtml += '<button class="hf-pill amber' + (_historyFilter === 'Pending' ? ' active' : '') + '" onclick="setHistoryFilter(\'Pending\',this)">⏳ รอตรวจ ' + pendingCount + '</button>';
+  if (approvedCount > 0) pillsHtml += '<button class="hf-pill green' + (_historyFilter === 'Approved' ? ' active' : '') + '" onclick="setHistoryFilter(\'Approved\',this)">✅ อนุมัติ ' + approvedCount + '</button>';
+  if (rejectedCount > 0) pillsHtml += '<button class="hf-pill red' + (_historyFilter === 'Rejected' ? ' active' : '') + '" onclick="setHistoryFilter(\'Rejected\',this)">❌ ไม่ผ่าน ' + rejectedCount + '</button>';
+  pillsHtml += '</div>';
+
+  if (items.length === 0) {
+    container.innerHTML = pillsHtml + '<div class="empty-state" style="margin-top:12px"><div class="icon">📤</div><p>ยังไม่มีประวัติการส่งคืน</p></div>';
+    return;
+  }
+  container.innerHTML = pillsHtml + renderHistoryCards(items);
+}
+
+function resubmitFromRejected(orderId) {
+  // Switch to "ส่งใหม่" tab
+  var newBtn = document.querySelector('.section-toggle .st-btn');
+  showUploadSub('new', newBtn);
+}
+
+function showUploadSub(name, el) {
+  document.querySelectorAll('.section-toggle .st-btn').forEach(function(b) { b.classList.remove('active'); });
+  if (el) el.classList.add('active');
+  document.getElementById('upload-new').style.display = name === 'new' ? '' : 'none';
+  document.getElementById('upload-history').style.display = name === 'history' ? '' : 'none';
+  if (name === 'new') loadDepositOrders();
+  if (name === 'history') {
+    if (window._depositNeedsRefresh || !_historyLoaded) {
+      window._depositNeedsRefresh = false;
+      loadDepositHistory();
+    }
+  }
 }
 
 // Start — ไม่เรียก init() ถ้าอยู่ใน admin page (admin-app.js จะเรียก initAdmin() เอง)

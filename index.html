@@ -452,6 +452,45 @@
 
 <!-- Confirm Payment Modal -->
 
+<!-- Photo Viewer Modal -->
+<div class="pv-overlay" id="pvModal" style="display:none" onclick="closePvModal(event)">
+  <div class="pv-container">
+    <div class="pv-header">
+      <span id="pvTitle"></span>
+      <button class="pv-close" onclick="closePvModal()">✕</button>
+    </div>
+    <div class="pv-gallery" id="pvGallery"></div>
+  </div>
+</div>
+
+<!-- Photo Edit Modal -->
+<div class="pe-overlay" id="peModal" style="display:none" onclick="closePeModal(event)">
+  <div class="pe-container">
+    <div class="pe-header">
+      <span>✏️ แก้ไขรูปภาพ</span>
+      <button class="pe-close" onclick="closePeModal()">✕</button>
+    </div>
+    <div class="pe-body">
+      <div class="pe-section">
+        <div class="pe-label">📷 รูปสินค้า <span class="pe-count" id="peProductCount"></span></div>
+        <div class="pe-grid" id="peProductGrid"></div>
+        <button class="pe-add-btn" id="peAddProductBtn" onclick="document.getElementById('peProductInput').click()">+ เพิ่มรูป</button>
+        <input type="file" id="peProductInput" accept="image/*" multiple style="display:none" onchange="handlePeFileChange(event,'product')">
+      </div>
+      <div class="pe-section">
+        <div class="pe-label">🚚 หลักฐานการส่ง <span class="pe-count" id="peTrackingCount"></span></div>
+        <div class="pe-grid" id="peTrackingGrid"></div>
+        <button class="pe-add-btn" id="peAddTrackingBtn" onclick="document.getElementById('peTrackingInput').click()">+ เพิ่มรูป</button>
+        <input type="file" id="peTrackingInput" accept="image/*" multiple style="display:none" onchange="handlePeFileChange(event,'tracking')">
+      </div>
+    </div>
+    <div class="pe-footer">
+      <button class="pe-btn-cancel" onclick="closePeModal()">ยกเลิก</button>
+      <button class="pe-btn-save" id="peSaveBtn" onclick="savePePhotos()">บันทึก</button>
+    </div>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
