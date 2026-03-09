@@ -1141,8 +1141,7 @@ function formatDateTime(dateStr) {
     var day = String(d.getDate()).padStart(2, '0');
     var hours = String(d.getHours()).padStart(2, '0');
     var mins = String(d.getMinutes()).padStart(2, '0');
-    var secs = String(d.getSeconds()).padStart(2, '0');
-    return year + '-' + month + '-' + day + ' ' + hours + ':' + mins + ':' + secs;
+    return year + '-' + month + '-' + day + ' ' + hours + ':' + mins;
   } catch (e) { return dateStr; }
 }
 
