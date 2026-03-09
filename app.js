@@ -725,12 +725,16 @@ function viewOrder(orderId) {
       var order = data.order;
       var html = '';
 
-      // A. Plain text info row (Order ID + dates)
+      // A. Plain text info grid (2-col: left=OrderID/ชำระ, right=สั่งซื้อ/สำเร็จ)
       html += '<div class="od-meta">';
-      html += '<span><span class="od-meta-label">Order ID </span><span class="od-meta-val">' + order.orderId + '</span></span>';
-      html += '<span><span class="od-meta-label">สั่งซื้อ </span><span class="od-meta-val">' + formatDateTime(order.orderTime) + '</span></span>';
-      if (order.paymentTime) html += '<span><span class="od-meta-label">ชำระ </span><span class="od-meta-val">' + formatDateTime(order.paymentTime) + '</span></span>';
-      if (order.completedTime) html += '<span><span class="od-meta-label">สำเร็จ </span><span class="od-meta-val">' + formatDateTime(order.completedTime) + '</span></span>';
+      html += '<div class="od-meta-col">';
+      html += '<div class="od-meta-item"><span class="od-meta-label">Order ID</span><span class="od-meta-val od-meta-val--id">' + order.orderId + '</span></div>';
+      if (order.paymentTime) html += '<div class="od-meta-item"><span class="od-meta-label">ชำระเงิน</span><span class="od-meta-val">' + formatDateTime(order.paymentTime) + '</span></div>';
+      html += '</div>';
+      html += '<div class="od-meta-col">';
+      html += '<div class="od-meta-item"><span class="od-meta-label">สั่งซื้อ</span><span class="od-meta-val">' + formatDateTime(order.orderTime) + '</span></div>';
+      if (order.completedTime) html += '<div class="od-meta-item"><span class="od-meta-label">สำเร็จ</span><span class="od-meta-val">' + formatDateTime(order.completedTime) + '</span></div>';
+      html += '</div>';
       html += '</div>';
 
       // B. Photo button (if exists)
