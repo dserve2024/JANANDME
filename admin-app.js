@@ -73,6 +73,10 @@ function switchAdminSubTab(sub) {
     document.querySelector('[data-tab="simulate"]').classList.add('active');
     document.getElementById('admin-simulate-sub').style.display = 'block';
     loadSimulate();
+  } else if (sub === 'broadcast') {
+    document.querySelector('[data-tab="broadcast"]').classList.add('active');
+    document.getElementById('admin-broadcast-sub').style.display = 'block';
+    loadAdminBroadcast();
   }
 }
 
@@ -1782,3 +1786,68 @@ function confirmDeleteAdminOrder() {
 
 // Start admin
 initAdmin();
+
+// ===== ADMIN BROADCAST =====
+var broadcastActiveCount_ = 0;
+
+function loadAdminBroadcast() {
+  apiCall('adminGetUsers').then(function(data) {
+    broadcastActiveCount_ = (data.users || []).filter(function(u) { return u.approved && !u.blocked; }).length;
+    renderAdminBroadcast(broadcastActiveCount_);
+  });
+}
+
+function renderAdminBroadcast(activeCount) {
+  var container = document.getElementById('admin-broadcast-content');
+  if (!container) return;
+
+  var html =
+    '<div class="section-title"><h2>📢 Broadcast ข้อความ</h2></div>' +
+    '<div class="summary-row" style="margin-bottom:16px;">' +
+      '<div class="summary-card pending"><div class="summary-label">จะส่งถึง</div>' +
+      '<div class="summary-value" style="color:var(--txt);">' + activeCount + '<span style="font-size:14px;color:var(--txt3);font-weight:400;"> คน</span></div></div>' +
+    '</div>' +
+
+    '<div style="font-weight:700;font-size:14px;margin-bottom:10px;">ข้อความสำเร็จรูป</div>' +
+    '<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px;">' +
+      '<button onclick="confirmBroadcast(\'preset\',\'1\',\'🛍️ แจ้งเตือนมีโปรให้กด\')" ' +
+        'style="padding:12px;border:1px solid var(--border);border-radius:var(--r-xs);background:var(--surface);font-size:13px;cursor:pointer;text-align:left;font-family:var(--f-th);">🛍️ แจ้งเตือนมีโปรให้กด</button>' +
+      '<button onclick="confirmBroadcast(\'preset\',\'2\',\'📤 แจ้งเตือนส่งออเดอร์\')" ' +
+        'style="padding:12px;border:1px solid var(--border);border-radius:var(--r-xs);background:var(--surface);font-size:13px;cursor:pointer;text-align:left;font-family:var(--f-th);">📤 แจ้งเตือนส่งออเดอร์</button>' +
+      '<button onclick="confirmBroadcast(\'preset\',\'3\',\'💸 แจ้งโอนเรียบร้อย\')" ' +
+        'style="padding:12px;border:1px solid var(--border);border-radius:var(--r-xs);background:var(--surface);font-size:13px;cursor:pointer;text-align:left;font-family:var(--f-th);">💸 แจ้งโอนเรียบร้อย</button>' +
+    '</div>' +
+
+    '<div style="font-weight:700;font-size:14px;margin-bottom:10px;">ส่งข้อความทั่วไป</div>' +
+    '<textarea id="broadcast-text" placeholder="พิมพ์ข้อความที่ต้องการส่ง..." maxlength="500" ' +
+      'style="width:100%;height:100px;padding:12px;border:1px solid var(--border);border-radius:var(--r-xs);font-size:14px;font-family:var(--f-th);resize:vertical;box-sizing:border-box;"></textarea>' +
+    '<div style="text-align:right;font-size:11px;color:var(--txt3);margin-bottom:10px;"><span id="bc-char-count">0</span>/500</div>' +
+    '<button onclick="confirmBroadcastText()" ' +
+      'style="width:100%;padding:12px;background:var(--primary);color:white;border:none;border-radius:var(--r-xs);font-size:14px;font-weight:700;cursor:pointer;font-family:var(--f-th);">📢 Broadcast</button>';
+
+  container.innerHTML = html;
+
+  var ta = document.getElementById('broadcast-text');
+  if (ta) {
+    ta.addEventListener('input', function() {
+      document.getElementById('bc-char-count').textContent = this.value.length;
+    });
+  }
+}
+
+function confirmBroadcast(type, value, label) {
+  if (!confirm('📢 ยืนยันส่ง Broadcast\n\n"' + label + '"\n\nจะส่งถึง ' + broadcastActiveCount_ + ' คน\n\nดำเนินการต่อ?')) return;
+  showLoading('กำลังส่ง...');
+  var apiParams = type === 'preset' ? { presetId: value } : { message: value };
+  apiCall('adminBroadcast', apiParams).then(function(data) {
+    hideLoading();
+    if (data.success) showToast('✅ ส่งแล้ว ' + data.sent + ' คน');
+    else showToast('❌ ' + (data.error || 'Error'));
+  });
+}
+
+function confirmBroadcastText() {
+  var msg = (document.getElementById('broadcast-text').value || '').trim();
+  if (!msg) { showToast('⚠️ กรุณากรอกข้อความ'); return; }
+  confirmBroadcast('text', msg, msg.substring(0, 30) + (msg.length > 30 ? '...' : ''));
+}
