@@ -576,22 +576,12 @@ function backToPaymentList() { renderAdminPayments(); }
 function exportPaymentsCSV() {
   if (adminPaymentData.length === 0) { showToast('ไม่มีข้อมูล'); return; }
 
-  // Sort by BANK_ID ascending, users without BANK_ID go to end
-  var sorted = adminPaymentData.slice().sort(function(a, b) {
-    var aId = (a.bankId || '').toString().trim();
-    var bId = (b.bankId || '').toString().trim();
-    if (aId === '' && bId === '') return 0;
-    if (aId === '') return 1;
-    if (bId === '') return -1;
-    return aId.localeCompare(bId);
-  });
-
   var rows = [];
-  for (var g = 0; g < sorted.length; g += 10) {
-    var chunk = sorted.slice(g, g + 10);
+  for (var g = 0; g < adminPaymentData.length; g += 10) {
+    var chunk = adminPaymentData.slice(g, g + 10);
     var groupNum = Math.floor(g / 10) + 1;
     var startIdx = g + 1;
-    var endIdx = Math.min(g + 10, sorted.length);
+    var endIdx = Math.min(g + 10, adminPaymentData.length);
 
     // คำนวณ sum ของกลุ่มนี้ก่อน
     var groupSum = 0;
@@ -604,8 +594,8 @@ function exportPaymentsCSV() {
 
     // เว้นบรรทัดระหว่างกลุ่ม
     if (rows.length > 0) rows.push('');
-    rows.push('ลำดับ,ชื่อ,ธนาคาร,เลขบัญชี,ชื่อบัญชี,เบอร์โทร,BANK_ID,ยอดโอน');
-    rows.push('"--- กลุ่มที่ ' + groupNum + ' (' + startIdx + '-' + endIdx + ') รวม ' + chunk.length + ' คน ---",,,,,,"ยอดรวม",' + groupSum.toFixed(2));
+    rows.push('ลำดับ,ชื่อ,ธนาคาร,เลขบัญชี,ชื่อบัญชี,เบอร์โทร,ยอดโอน');
+    rows.push('"--- กลุ่มที่ ' + groupNum + ' (' + startIdx + '-' + endIdx + ') รวม ' + chunk.length + ' คน ---",,,,,"ยอดรวม",' + groupSum.toFixed(2));
 
     chunk.forEach(function(user, ci) {
       var selected = paymentSelections[user.userId] || new Set();
@@ -623,7 +613,6 @@ function exportPaymentsCSV() {
         '="' + acct + '",' +
         '"' + (user.accountName || '') + '",' +
         '="' + phone + '",' +
-        '"' + (user.bankId || '') + '",' +
         total.toFixed(2)
       );
     });
@@ -637,7 +626,7 @@ function exportPaymentsCSV() {
   a.download = 'transfer_' + new Date().toISOString().slice(0, 10) + '.csv';
   a.click();
   URL.revokeObjectURL(url);
-  showToast('📊 Export สำเร็จ ' + sorted.length + ' รายการ');
+  showToast('📊 Export สำเร็จ ' + adminPaymentData.length + ' รายการ');
 }
 
 function bulkApproveAll() {

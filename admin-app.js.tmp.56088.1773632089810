@@ -637,7 +637,7 @@ function exportPaymentsCSV() {
   a.download = 'transfer_' + new Date().toISOString().slice(0, 10) + '.csv';
   a.click();
   URL.revokeObjectURL(url);
-  showToast('📊 Export สำเร็จ ' + sorted.length + ' รายการ');
+  showToast('📊 Export สำเร็จ ' + adminPaymentData.length + ' รายการ');
 }
 
 function bulkApproveAll() {

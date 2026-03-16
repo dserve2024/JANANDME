@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JAN&ME</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-inner" style="justify-content:space-between;">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div class="header-logo">🏪</div>
+      <div>
+        <h1>JAN&ME</h1>
+        <div class="subtitle">ORDER MANAGEMENT</div>
+      </div>
+    </div>
+    <button onclick="openChat()" style="background:var(--red);color:white;border:none;border-radius:var(--r-full);padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--f-th);white-space:nowrap;">💬 แอดมิน</button>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" data-tab="info" onclick="switchTab('info')">
+    <span class="tab-icon">👤</span> ข้อมูล
+  </div>
+  <div class="tab" data-tab="orders" onclick="switchTab('orders')">
+    <span class="tab-icon">📋</span> รายการ
+  </div>
+  <div class="tab" data-tab="deposit" onclick="switchTab('deposit')">
+    <span class="tab-icon">📤</span> มัดจำ
+  </div>
+  <div class="tab" data-tab="guide" onclick="switchTab('guide')">
+    <span class="tab-icon">📖</span> คู่มือ
+  </div>
+</div>
+
+<!-- CONTENT -->
+<div class="content">
+
+  <!-- LOADING -->
+  <div id="loading" class="loading">
+    <div class="spinner"></div>
+    <p>กำลังโหลด...</p>
+  </div>
+
+  <!-- PENDING APPROVAL SECTION -->
+  <div id="pending-approval-section" class="section" style="display:none;">
+    <div style="text-align:center;padding:60px 20px;">
+      <div style="font-size:80px;margin-bottom:20px;">⏳</div>
+      <h2 style="margin-bottom:15px;color:var(--txt);">รอการอนุมัติ</h2>
+      <p style="color:var(--txt2);margin-bottom:30px;line-height:1.6;">
+        บัญชีของคุณกำลังรอการตรวจสอบ<br>
+        จากทีมงาน กรุณารอสักครู่นะคะ
+      </p>
+      <p style="color:var(--txt3);font-size:13px;margin-bottom:20px;">
+        📷 ส่งรูป Order ได้เลยค่ะ<br>
+        ระบบจะบันทึกให้อัตโนมัติ
+      </p>
+      <button onclick="openChat()" class="contact-btn">💬 ติดต่อแอดมิน</button>
+    </div>
+  </div>
+
+  <!-- BLOCKED SECTION -->
+  <div id="blocked-section" class="section" style="display:none;">
+    <div style="text-align:center;padding:60px 20px;">
+      <div style="font-size:80px;margin-bottom:20px;">🚫</div>
+      <h2 style="margin-bottom:15px;color:var(--red);">บัญชีถูกระงับ</h2>
+      <p style="color:var(--txt2);margin-bottom:30px;line-height:1.6;">
+        บัญชีของคุณถูกระงับการใช้งาน<br>
+        กรุณาติดต่อแอดมินเพื่อสอบถามข้อมูลเพิ่มเติม
+      </p>
+      <button onclick="openChat()" style="display:inline-block;padding:14px 30px;background:var(--red);color:white;border:none;border-radius:var(--r-full);font-weight:700;font-size:15px;cursor:pointer;font-family:var(--f-th);">💬 ติดต่อแอดมิน</button>
+    </div>
+  </div>
+
+  <!-- INFO SECTION -->
+  <div id="info-section" class="section">
+    <div class="stagger">
+      <!-- Profile -->
+      <div class="profile-section">
+        <img id="profile-pic" class="profile-pic" src="" alt="">
+        <div class="profile-info">
+          <div id="profile-name" class="profile-name">-</div>
+          <div class="profile-id">LINE Member</div>
+          <div id="profile-status" class="profile-badge"></div>
+        </div>
+        <div class="profile-orders">
+          <div id="total-orders" class="num">0</div>
+          <div class="lbl">ORDERS</div>
+        </div>
+      </div>
+
+      <!-- Group 1: Hero Card - รวมยอดรอรับ -->
+      <div class="fin-hero">
+        <div class="fin-hero-top">
+          <span class="fin-hero-icon">💰</span>
+          <span class="fin-hero-label">รวมยอดรอรับ</span>
+        </div>
+        <div id="total-combined" class="fin-hero-value">฿0</div>
+        <div id="total-combined-detail" class="fin-hero-detail">ยอดรอคืน ฿0 + มัดจำ ฿0</div>
+      </div>
+
+      <!-- Group 2: Forecast -->
+      <div class="fin-grid">
+        <div class="fin-box expect">
+          <div class="fin-top"><span class="fin-icon">📋</span><span class="fin-label">คาดว่าจะได้รับ</span></div>
+          <div id="expected-refund" class="fin-value">฿0</div>
+        </div>
+        <div class="fin-box expect">
+          <div class="fin-top"><span class="fin-icon">📦</span><span class="fin-label">คาดมัดจำ</span></div>
+          <div id="pending-deposit" class="fin-value">฿0</div>
+        </div>
+      </div>
+
+      <!-- Group 3: History - ได้รับแล้ว -->
+      <div class="fin-history" onclick="showPaidHistory()" style="cursor:pointer;">
+        <div class="fin-history-top">
+          <span class="fin-history-icon">✅</span>
+          <span class="fin-history-label">ได้รับแล้วทั้งหมด</span>
+        </div>
+        <div id="total-received" class="fin-history-value">฿0</div>
+        <div id="total-received-detail" class="fin-history-detail">คืนเงิน ฿0 + มัดจำ ฿0</div>
+      </div>
+
+      <!-- Shopee IDs -->
+      <div class="section-title">
+        <h2>🛒 Shopee ID</h2>
+        <button class="btn-add" onclick="showAddShopeeModal()">+</button>
+      </div>
+      <div id="shopee-list"></div>
+
+      <!-- Orders รอระบุ ShopeeId -->
+      <div id="pending-orders-section" style="display:none;">
+        <div class="section-title" style="margin-top:20px;">
+          <h2>⚠️ รอระบุ Shopee ID</h2>
+        </div>
+        <div id="pending-orders-list"></div>
+      </div>
+
+      <!-- Bank -->
+      <div class="section-title">
+        <h2>🏦 บัญชีรับเงิน</h2>
+      </div>
+      <div id="bank-display"></div>
+
+      <!-- Contact Admin moved to header -->
+    </div>
+  </div>
+
+  <!-- ORDERS SECTION -->
+  <div id="orders-section" class="section">
+    <div id="orders-search-bar" style="display:none"></div>
+    <div class="filter-row" id="filter-row"></div>
+    <div id="orders-list"></div>
+  </div>
+
+  <!-- DEPOSIT RETURN SECTION -->
+  <div id="deposit-section" class="section">
+    <div class="section-toggle">
+      <div class="st-btn active" onclick="showUploadSub('new',this)">📤 ส่งใหม่</div>
+      <div class="st-btn" onclick="showUploadSub('history',this)">📋 ประวัติ</div>
+    </div>
+    <div id="upload-new"></div>
+    <div id="upload-history" style="display:none"></div>
+  </div>
+
+
+  <!-- GUIDE SECTION -->
+  <div id="guide-section" class="section">
+    <div class="guide-content stagger">
+
+      <div class="guide-hero">
+        <div class="g-icon">📖</div>
+        <h2>คู่มือการใช้งาน</h2>
+        <p>ขั้นตอนง่ายๆ สำหรับสมาชิก JAN&ME<br>ดูแลเรื่องเงินคืนและมัดจำให้ครบทุกขั้นตอน</p>
+      </div>
+
+      <!-- Step 1 -->
+      <div class="guide-section">
+        <div class="gs-title"><span class="gs-num">1</span> เริ่มต้นใช้งาน</div>
+        <div class="guide-card">
+          <h4>👤 สมัครสมาชิก</h4>
+          <ul>
+            <li>Add Friend บัญชี LINE Official "@janandme"</li>
+            <li>ระบบจะสร้างบัญชีให้อัตโนมัติ</li>
+            <li>รอแอดมินอนุมัติ (ปกติไม่เกิน 24 ชม.)</li>
+          </ul>
+          <div class="guide-tip">💡 หากรอนานเกินไป กดปุ่ม "ติดต่อแอดมิน" ในหน้าข้อมูลได้เลย</div>
+        </div>
+        <div class="guide-card">
+          <h4>🛒 เพิ่ม Shopee ID</h4>
+          <ul>
+            <li>ไปที่หน้า "ข้อมูล" → กดปุ่ม + ที่หัวข้อ Shopee ID</li>
+            <li>พิมพ์ชื่อบัญชี Shopee ที่ใช้สั่งซื้อ</li>
+            <li>สามารถเพิ่มได้หลายบัญชี</li>
+          </ul>
+        </div>
+        <div class="guide-card">
+          <h4>🏦 เพิ่มบัญชีรับเงิน</h4>
+          <ul>
+            <li>กดที่การ์ดบัญชีรับเงิน หรือกดปุ่ม "+ เพิ่มบัญชี"</li>
+            <li>เลือกธนาคาร กรอกเลขบัญชี ชื่อบัญชี</li>
+            <li>ใช้สำหรับรับเงินคืนจากแอดมิน</li>
+          </ul>
+          <div class="guide-tip">⚠️ ตรวจสอบเลขบัญชีให้ถูกต้อง เพื่อป้องกันการโอนผิด</div>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="guide-section">
+        <div class="gs-title"><span class="gs-num">2</span> การส่ง Order</div>
+        <div class="guide-card">
+          <h4>📷 ส่งรูป Order จาก Shopee</h4>
+          <ul>
+            <li>เปิดแอป Shopee → ไปที่คำสั่งซื้อที่สำเร็จแล้ว</li>
+            <li>Screenshot หน้ารายละเอียดคำสั่งซื้อ</li>
+            <li>ส่งรูปเข้าแชท LINE Bot โดยตรง</li>
+            <li>ระบบจะอ่านข้อมูลจากรูปอัตโนมัติ (OCR)</li>
+          </ul>
+        </div>
+        <div class="guide-card">
+          <h4>🆔 ระบุ Shopee ID ให้ Order</h4>
+          <ul>
+            <li>หาก Order ยังไม่มี Shopee ID จะแสดงที่หัวข้อ "รอระบุ"</li>
+            <li>กดที่รายการ → เลือก Shopee ID จาก dropdown</li>
+            <li>กดบันทึก</li>
+          </ul>
+          <div class="guide-tip">💡 Order ที่ไม่มี Shopee ID จะไม่ถูกนำไปคำนวณยอดเงินคืน</div>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="guide-section">
+        <div class="gs-title"><span class="gs-num">3</span> ยอดเงินคืน & มัดจำ</div>
+        <div class="guide-card">
+          <h4>💰 ยอดรอคืน (Refund)</h4>
+          <p>คำนวณจากสูตร:</p>
+          <p style="font-family:var(--f-mono);font-size:11px;background:var(--bg);padding:8px;border-radius:var(--r-xs);margin-top:6px;">
+            refund = subtotal + shipping<br>
+            &nbsp;&nbsp;- shippingDiscount - voucher<br>
+            &nbsp;&nbsp;- depositAmount
+          </p>
+          <ul style="margin-top:8px;">
+            <li>เฉพาะ Order ที่สถานะ "Completed"</li>
+            <li>หักยอดที่จ่ายคืนแล้วออกอัตโนมัติ</li>
+          </ul>
+        </div>
+        <div class="guide-card">
+          <h4>🏦 ยอดมัดจำ (Deposit)</h4>
+          <p>คำนวณจาก:</p>
+          <p style="font-family:var(--f-mono);font-size:11px;background:var(--bg);padding:8px;border-radius:var(--r-xs);margin-top:6px;">
+            deposit = จำนวนชิ้น x 100 บาท
+          </p>
+          <ul style="margin-top:8px;">
+            <li>เก็บมัดจำทุก Order</li>
+            <li>คืนมัดจำเมื่อ Order สำเร็จและตรวจสอบเรียบร้อย</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="guide-section">
+        <div class="gs-title"><span class="gs-num">4</span> สถานะ Order</div>
+        <div class="guide-card">
+          <table class="guide-table">
+            <tr><th>สถานะ</th><th>ความหมาย</th><th>แก้ไขได้?</th></tr>
+            <tr><td>Pending</td><td>ส่งรูปแล้ว รอแอดมินตรวจ</td><td><span class="tag yes">ได้</span></td></tr>
+            <tr><td>Completed</td><td>ตรวจสอบผ่าน รอโอนเงินคืน</td><td><span class="tag no">ไม่ได้</span></td></tr>
+            <tr><td>Transferring</td><td>รอค้างชำระ (กดไปหน้า Admin ได้)</td><td><span class="tag no">ไม่ได้</span></td></tr>
+            <tr><td>Transferred</td><td>โอนเงินคืนเรียบร้อย</td><td><span class="tag no">ไม่ได้</span></td></tr>
+            <tr><td>Canceled</td><td>Order ถูกยกเลิก</td><td><span class="tag no">ไม่ได้</span></td></tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- Step 5 -->
+      <div class="guide-section">
+        <div class="gs-title"><span class="gs-num">5</span> แจ้งปัญหา</div>
+        <div class="guide-card">
+          <h4>🚨 วิธีแจ้งปัญหา</h4>
+          <ul>
+            <li>กดที่ Order ที่ต้องการ → กดปุ่ม "แจ้งปัญหา"</li>
+            <li>เลือกเหตุผลและอธิบายรายละเอียด</li>
+            <li>แอดมินจะได้รับแจ้งเตือนทันที</li>
+          </ul>
+          <div class="guide-tip">💡 หากมีปัญหาเร่งด่วน กดปุ่ม "ติดต่อแอดมิน" ที่หน้าข้อมูล หรือพิมพ์ข้อความในแชท LINE Bot ได้โดยตรง</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- ===== MODALS ===== -->
+
+<!-- Add Shopee ID -->
+<div class="modal-overlay" id="addShopeeModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>🛒 เพิ่ม Shopee ID</h3>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Shopee ID / ชื่อร้าน</label>
+        <input type="text" id="new-shopee-id" placeholder="เช่น momojun36">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="hideModal('addShopeeModal')">ยกเลิก</button>
+      <button class="btn-save" onclick="addShopeeId()">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- View/Delete Shopee ID -->
+<div class="modal-overlay" id="viewShopeeModal">
+  <div class="modal">
+    <div class="modal-header"><h3>🛒 Shopee ID</h3></div>
+    <div class="modal-body" id="shopee-modal-body"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="hideModal('viewShopeeModal')">ปิด</button>
+    </div>
+  </div>
+</div>
+
+<!-- Bank Modal -->
+<div class="modal-overlay" id="bankModal">
+  <div class="modal">
+    <div class="modal-header"><h3>🏦 บัญชีรับเงิน</h3></div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>ธนาคาร</label>
+        <select id="input-bank-name">
+          <option value="">-- เลือกธนาคาร --</option>
+          <option value="กสิกรไทย">กสิกรไทย</option>
+          <option value="กรุงเทพ">กรุงเทพ</option>
+          <option value="กรุงไทย">กรุงไทย</option>
+          <option value="ไทยพาณิชย์">ไทยพาณิชย์</option>
+          <option value="ทหารไทยธนชาต">ทหารไทยธนชาต</option>
+          <option value="กรุงศรี">กรุงศรี</option>
+          <option value="ออมสิน">ออมสิน</option>
+          <option value="PromptPay">PromptPay</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>เลขบัญชี</label>
+        <input type="text" id="input-bank-account" placeholder="เลขบัญชี หรือ เบอร์ PromptPay">
+      </div>
+      <div class="form-group">
+        <label>ชื่อบัญชี</label>
+        <input type="text" id="input-account-name" placeholder="ชื่อ-นามสกุล">
+      </div>
+      <div class="form-group">
+        <label>เบอร์โทรศัพท์</label>
+        <input type="tel" id="input-phone" placeholder="08X-XXX-XXXX">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="hideModal('bankModal')">ยกเลิก</button>
+      <button class="btn-save" onclick="saveBank()">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- Order Detail -->
+<div class="modal-overlay" id="orderModal">
+  <div class="modal">
+    <div class="modal-header"><h3>📦 รายละเอียด</h3></div>
+    <div class="modal-body" id="order-modal-body" style="padding:15px;"></div>
+    <div class="modal-actions" id="order-modal-actions">
+      <button class="btn-cancel" onclick="hideModal('orderModal')">ปิด</button>
+      <button class="btn-save" onclick="saveOrder()">💾 บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Delete -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal" style="max-width:300px;">
+    <div class="modal-body" style="text-align:center;padding:30px;">
+      <div style="font-size:40px;margin-bottom:15px;">⚠️</div>
+      <p style="font-size:15px;color:var(--txt);margin-bottom:10px;">ยืนยันการลบ?</p>
+      <p style="font-size:13px;color:var(--txt3);">ลบแล้วข้อมูลจะหายไม่สามารถกู้คืนได้</p>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="hideModal('confirmModal')">ยกเลิก</button>
+      <button class="btn-delete" id="confirm-delete-btn">ลบ</button>
+    </div>
+  </div>
+</div>
+
+<!-- Dispute Modal -->
+<div class="modal-overlay" id="disputeModal">
+  <div class="modal">
+    <div class="modal-header" style="background:var(--red);"><h3>🚨 แจ้งปัญหา</h3></div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Order ID</label>
+        <input type="text" id="dispute-order-id" disabled>
+      </div>
+      <div class="form-group">
+        <label>เหตุผล</label>
+        <select id="dispute-reason">
+          <option value="">-- เลือกเหตุผล --</option>
+          <option value="ยอดเงินไม่ถูกต้อง">ยอดเงินไม่ถูกต้อง</option>
+          <option value="สถานะไม่อัปเดต">สถานะไม่อัปเดต</option>
+          <option value="ไม่ได้รับเงินคืน">ไม่ได้รับเงินคืน</option>
+          <option value="ข้อมูลผิดพลาด">ข้อมูลผิดพลาด</option>
+          <option value="อื่นๆ">อื่นๆ</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>รายละเอียดเพิ่มเติม</label>
+        <input type="text" id="dispute-detail" placeholder="อธิบายปัญหาเพิ่มเติม...">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="hideModal('disputeModal')">ยกเลิก</button>
+      <button class="btn-delete" onclick="submitDispute()">🚨 ส่งแจ้งปัญหา</button>
+    </div>
+  </div>
+</div>
+
+<!-- Chat Modal -->
+<div class="modal-overlay" id="chatModal">
+  <div class="modal" style="height:80vh;display:flex;flex-direction:column;">
+    <div class="modal-header" style="display:flex;justify-content:space-between;align-items:center;">
+      <h3>💬 แชทกับแอดมิน</h3>
+      <button onclick="closeChat()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--txt3);">✕</button>
+    </div>
+    <div id="chat-messages" class="chat-thread"></div>
+    <div id="chat-image-preview" class="chat-image-preview" style="display:none;">
+      <img id="chat-preview-img" src="">
+      <button onclick="clearChatImage()" class="chat-preview-close">✕</button>
+    </div>
+    <div class="chat-input-area">
+      <input type="file" id="chat-image-input" accept="image/*" style="display:none" onchange="previewChatImage(this)">
+      <button onclick="document.getElementById('chat-image-input').click()" class="chat-img-btn" title="แนบรูป">📷</button>
+      <input type="text" id="chat-input" placeholder="พิมพ์ข้อความ..." onkeydown="if(event.key==='Enter')sendChatMsg()">
+      <button onclick="sendChatMsg()" class="chat-send-btn">📨</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Payment Modal -->
+
+<!-- Photo Viewer Modal -->
+<div class="pv-overlay" id="pvModal" style="display:none" onclick="closePvModal(event)">
+  <div class="pv-container">
+    <div class="pv-header">
+      <span id="pvTitle"></span>
+      <button class="pv-close" onclick="closePvModal()">✕</button>
+    </div>
+    <div class="pv-gallery" id="pvGallery"></div>
+  </div>
+</div>
+
+<!-- Photo Edit Modal -->
+<div class="pe-overlay" id="peModal" style="display:none" onclick="closePeModal(event)">
+  <div class="pe-container">
+    <div class="pe-header">
+      <span>✏️ แก้ไขรูปภาพ</span>
+      <button class="pe-close" onclick="closePeModal()">✕</button>
+    </div>
+    <div class="pe-body">
+      <div class="pe-section">
+        <div class="pe-label">📷 รูปสินค้า <span class="pe-count" id="peProductCount"></span></div>
+        <div class="pe-grid" id="peProductGrid"></div>
+        <button class="pe-add-btn" id="peAddProductBtn" onclick="document.getElementById('peProductInput').click()">+ เพิ่มรูป</button>
+        <input type="file" id="peProductInput" accept="image/*" multiple style="display:none" onchange="handlePeFileChange(event,'product')">
+      </div>
+      <div class="pe-section">
+        <div class="pe-label">🚚 หลักฐานการส่ง <span class="pe-count" id="peTrackingCount"></span></div>
+        <div class="pe-grid" id="peTrackingGrid"></div>
+        <button class="pe-add-btn" id="peAddTrackingBtn" onclick="document.getElementById('peTrackingInput').click()">+ เพิ่มรูป</button>
+        <input type="file" id="peTrackingInput" accept="image/*" multiple style="display:none" onchange="handlePeFileChange(event,'tracking')">
+      </div>
+    </div>
+    <div class="pe-footer">
+      <button class="pe-btn-cancel" onclick="closePeModal()">ยกเลิก</button>
+      <button class="pe-btn-save" id="peSaveBtn" onclick="savePePhotos()">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- LOADING OVERLAY -->
+<div id="loadingOverlay" class="loading-overlay">
+  <div class="loading-box">
+    <div class="spinner"></div>
+    <p id="loadingText">กำลังดำเนินการ...</p>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
