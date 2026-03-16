@@ -897,7 +897,6 @@ function renderAdminDashboard(data) {
     '<div class="dash-card-label">ค่าธรรมเนียม (' + feePct + '%)</div>' +
     '</div>';
   html += dashCard('ยอดโอนคืน', r.totalRefund, 'blue', '💸');
-  html += dashCard('ยอดมัดจำ', r.totalDeposit, 'blue', '🔄');
   html += '</div></div>';
 
   html += '<div class="dash-section">';
@@ -1070,7 +1069,6 @@ function buildDashboardFlex_(data) {
   var flexFeePct = r.feeRate ? Math.round(r.feeRate * 100) : 22;
   bodyContents.push(flexRow('ค่าธรรมเนียม (' + flexFeePct + '%)', '-฿' + fmt(r.platformFee), false, '#E53935'));
   bodyContents.push(flexRow('ยอดโอนคืน', '-฿' + fmt(r.totalRefund), false, '#E53935'));
-  bodyContents.push(flexRow('ยอดมัดจำ', '-฿' + fmt(r.totalDeposit), false, '#E53935'));
   bodyContents.push({ type: 'separator', margin: 'md' });
   bodyContents.push(flexRow('📈 กำไรจริง', '฿' + fmt(r.netProfit), true, '#27AE60'));
 
