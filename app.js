@@ -63,7 +63,7 @@ var EDGE_ACTIONS = [
   'updateBank', 'addShopeeId', 'deleteShopeeId',
   'updateOrder', 'deleteOrder', 'contactAdmin', 'createDispute',
   'adminApproveUser', 'adminBlockUser', 'adminConfirmPayment',
-  'adminReviewDeposit', 'adminMarkPayment',
+  'adminReviewDeposit', 'adminMarkPayment', 'adminSetAdmin',
   'getChatMessages', 'sendChatMessage'
 ];
 
