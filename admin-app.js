@@ -1789,33 +1789,47 @@ initAdmin();
 
 // ===== ADMIN BROADCAST =====
 var broadcastActiveCount_ = 0;
+var broadcastAdminCount_ = 0;
+var broadcastTarget_ = 'all';
 
 function loadAdminBroadcast() {
   apiCall('adminGetUsers').then(function(data) {
-    broadcastActiveCount_ = (data.users || []).filter(function(u) { return u.approved && !u.blocked; }).length;
-    renderAdminBroadcast(broadcastActiveCount_);
+    var users = data.users || [];
+    broadcastActiveCount_ = users.filter(function(u) { return u.approved && !u.blocked; }).length;
+    broadcastAdminCount_ = users.filter(function(u) { return u.isAdmin; }).length;
+    renderAdminBroadcast();
   });
 }
 
-function renderAdminBroadcast(activeCount) {
+function setBroadcastTarget(target) {
+  broadcastTarget_ = target;
+  renderAdminBroadcast();
+}
+
+function renderAdminBroadcast() {
   var container = document.getElementById('admin-broadcast-content');
   if (!container) return;
 
+  var allActive = broadcastTarget_ === 'all';
+  var allStyle = 'flex:1;padding:10px;border-radius:var(--r-full);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--f-th);border:2px solid ' + (allActive ? '#2563EB' : 'var(--border)') + ';background:' + (allActive ? '#EFF6FF' : 'var(--surface)') + ';color:' + (allActive ? '#2563EB' : 'var(--txt3)') + ';';
+  var adminStyle = 'flex:1;padding:10px;border-radius:var(--r-full);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--f-th);border:2px solid ' + (!allActive ? '#2563EB' : 'var(--border)') + ';background:' + (!allActive ? '#EFF6FF' : 'var(--surface)') + ';color:' + (!allActive ? '#2563EB' : 'var(--txt3)') + ';';
+
   var html =
     '<div class="section-title"><h2>📢 Broadcast ข้อความ</h2></div>' +
-    '<div class="summary-row" style="margin-bottom:16px;">' +
-      '<div class="summary-card pending"><div class="summary-label">จะส่งถึง</div>' +
-      '<div class="summary-value" style="color:var(--txt);">' + activeCount + '<span style="font-size:14px;color:var(--txt3);font-weight:400;"> คน</span></div></div>' +
+
+    '<div style="display:flex;gap:8px;margin-bottom:16px;">' +
+      '<button onclick="setBroadcastTarget(\'all\')" style="' + allStyle + '">👥 ทุกคน (' + broadcastActiveCount_ + ' คน)</button>' +
+      '<button onclick="setBroadcastTarget(\'admin\')" style="' + adminStyle + '">👑 Admin (' + broadcastAdminCount_ + ' คน)</button>' +
     '</div>' +
 
     '<div style="font-weight:700;font-size:14px;margin-bottom:10px;">ข้อความสำเร็จรูป</div>' +
     '<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px;">' +
       '<button onclick="confirmBroadcast(\'preset\',\'1\',\'🛍️ แจ้งเตือนมีโปรให้กด\')" ' +
-        'style="padding:12px;border:1px solid var(--border);border-radius:var(--r-xs);background:var(--surface);font-size:13px;cursor:pointer;text-align:left;font-family:var(--f-th);">🛍️ แจ้งเตือนมีโปรให้กด</button>' +
+        'style="padding:12px;border:1px solid #BFDBFE;border-radius:var(--r-xs);background:#EFF6FF;color:#1D4ED8;font-size:13px;cursor:pointer;text-align:left;font-family:var(--f-th);">🛍️ แจ้งเตือนมีโปรให้กด</button>' +
       '<button onclick="confirmBroadcast(\'preset\',\'2\',\'📤 แจ้งเตือนส่งออเดอร์\')" ' +
-        'style="padding:12px;border:1px solid var(--border);border-radius:var(--r-xs);background:var(--surface);font-size:13px;cursor:pointer;text-align:left;font-family:var(--f-th);">📤 แจ้งเตือนส่งออเดอร์</button>' +
+        'style="padding:12px;border:1px solid #BFDBFE;border-radius:var(--r-xs);background:#EFF6FF;color:#1D4ED8;font-size:13px;cursor:pointer;text-align:left;font-family:var(--f-th);">📤 แจ้งเตือนส่งออเดอร์</button>' +
       '<button onclick="confirmBroadcast(\'preset\',\'3\',\'💸 แจ้งโอนเรียบร้อย\')" ' +
-        'style="padding:12px;border:1px solid var(--border);border-radius:var(--r-xs);background:var(--surface);font-size:13px;cursor:pointer;text-align:left;font-family:var(--f-th);">💸 แจ้งโอนเรียบร้อย</button>' +
+        'style="padding:12px;border:1px solid #BFDBFE;border-radius:var(--r-xs);background:#EFF6FF;color:#1D4ED8;font-size:13px;cursor:pointer;text-align:left;font-family:var(--f-th);">💸 แจ้งโอนเรียบร้อย</button>' +
     '</div>' +
 
     '<div style="font-weight:700;font-size:14px;margin-bottom:10px;">ส่งข้อความทั่วไป</div>' +
@@ -1823,7 +1837,7 @@ function renderAdminBroadcast(activeCount) {
       'style="width:100%;height:100px;padding:12px;border:1px solid var(--border);border-radius:var(--r-xs);font-size:14px;font-family:var(--f-th);resize:vertical;box-sizing:border-box;"></textarea>' +
     '<div style="text-align:right;font-size:11px;color:var(--txt3);margin-bottom:10px;"><span id="bc-char-count">0</span>/500</div>' +
     '<button onclick="confirmBroadcastText()" ' +
-      'style="width:100%;padding:12px;background:var(--primary);color:white;border:none;border-radius:var(--r-xs);font-size:14px;font-weight:700;cursor:pointer;font-family:var(--f-th);">📢 Broadcast</button>';
+      'style="width:100%;padding:12px;background:#2563EB;color:white;border:none;border-radius:var(--r-xs);font-size:14px;font-weight:700;cursor:pointer;font-family:var(--f-th);">📢 Broadcast</button>';
 
   container.innerHTML = html;
 
@@ -1836,9 +1850,12 @@ function renderAdminBroadcast(activeCount) {
 }
 
 function confirmBroadcast(type, value, label) {
-  if (!confirm('📢 ยืนยันส่ง Broadcast\n\n"' + label + '"\n\nจะส่งถึง ' + broadcastActiveCount_ + ' คน\n\nดำเนินการต่อ?')) return;
+  var targetCount = broadcastTarget_ === 'admin' ? broadcastAdminCount_ : broadcastActiveCount_;
+  var targetLabel = broadcastTarget_ === 'admin' ? 'Admin เท่านั้น' : 'ทุกคน';
+  if (!confirm('📢 ยืนยันส่ง Broadcast\n\n"' + label + '"\n\nส่งถึง: ' + targetLabel + '\nจำนวน: ' + targetCount + ' คน\n\nดำเนินการต่อ?')) return;
   showLoading('กำลังส่ง...');
   var apiParams = type === 'preset' ? { presetId: value } : { message: value };
+  apiParams.target = broadcastTarget_;
   apiCall('adminBroadcast', apiParams).then(function(data) {
     hideLoading();
     if (data.success) showToast('✅ ส่งแล้ว ' + data.sent + ' คน');
