@@ -603,15 +603,16 @@ function exportPaymentsCSV() {
       user.orders.forEach(function(o) {
         if (selected.size === 0 || selected.has(o.orderId)) total += parseFloat(o.amount) || 0;
       });
-      var acct = String(user.bankAccount || '').replace(/[^0-9]/g, '');
+      var acct = String(user.bankAccount || '').replace(/[\s\-]/g, '').replace(/[^0-9]/g, '');
       var phone = String(user.phone || '').replace(/[^0-9]/g, '');
+      if (phone.length === 9) phone = '0' + phone;
       rows.push(
         (g + ci + 1) + ',' +
         '"' + (user.displayName || '') + '",' +
         '"' + (user.bankName || '') + '",' +
-        acct + ',' +
+        '="' + acct + '",' +
         '"' + (user.accountName || '') + '",' +
-        phone + ',' +
+        '="' + phone + '",' +
         total.toFixed(2)
       );
     });
