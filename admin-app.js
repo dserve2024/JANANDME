@@ -371,7 +371,7 @@ function loadAdminPayments() {
         mergeMap[u.userId] = {
           userId: u.userId, displayName: u.displayName, profileUrl: u.profileUrl,
           bankName: u.bankName, bankAccount: u.bankAccount,
-          accountName: u.accountName, phone: u.phone, orders: []
+          accountName: u.accountName, phone: u.phone, bankId: u.bankId || '', orders: []
         };
         mergeOrder.push(u.userId);
       }
