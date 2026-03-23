@@ -382,6 +382,15 @@ function loadAdminPayments() {
       });
     });
     adminPaymentData = mergeOrder.map(function(uid) { return mergeMap[uid]; });
+    // Sort by BANK_ID ascending, users without BANK_ID go to end
+    adminPaymentData.sort(function(a, b) {
+      var aId = (a.bankId || '').toString().trim();
+      var bId = (b.bankId || '').toString().trim();
+      if (aId === '' && bId === '') return 0;
+      if (aId === '') return 1;
+      if (bId === '') return -1;
+      return aId.localeCompare(bId, undefined, { numeric: true, sensitivity: 'base' });
+    });
     paymentSelections = {};
     adminPaymentData.forEach(function(u) {
       paymentSelections[u.userId] = new Set(u.orders.map(function(o) { return o.orderId; }));
